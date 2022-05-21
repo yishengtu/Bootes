@@ -36,6 +36,7 @@ int main(){
     const int outputIM2 = static_cast<int>(IM2);
     const int outputIM3 = static_cast<int>(IM3);
     const int outputIEN = static_cast<int>(IEN);
+    const int outputIDP = static_cast<int>(IDP);
     const int outputIV1 = static_cast<int>(IV1);
     const int outputIV2 = static_cast<int>(IV2);
     const int outputIV3 = static_cast<int>(IV3);
