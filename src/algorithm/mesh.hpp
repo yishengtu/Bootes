@@ -17,42 +17,42 @@ class mesh{
     public:
         /** grid **/
         int dim;
-        BootesArray<float> x1v;       // cell center (1D array)
-        BootesArray<float> x2v;
-        BootesArray<float> x3v;
-        BootesArray<float> x1f;       // cell face (1D array)
-        BootesArray<float> x2f;
-        BootesArray<float> x3f;
-        BootesArray<float> dx1;       // delta x (1D array), coordinate unit
-        BootesArray<float> dx2;
-        BootesArray<float> dx3;
-        BootesArray<float> dx1p;      // delta x (1D array), physical unit
-        BootesArray<float> dx2p;
-        BootesArray<float> dx3p;
+        BootesArray<double> x1v;       // cell center (1D array)
+        BootesArray<double> x2v;
+        BootesArray<double> x3v;
+        BootesArray<double> x1f;       // cell face (1D array)
+        BootesArray<double> x2f;
+        BootesArray<double> x3f;
+        BootesArray<double> dx1;       // delta x (1D array), coordinate unit
+        BootesArray<double> dx2;
+        BootesArray<double> dx3;
+        BootesArray<double> dx1p;      // delta x (1D array), physical unit
+        BootesArray<double> dx2p;
+        BootesArray<double> dx3p;
 
         // for spherical polar coordinate, since dxi is not sufficient.
-        BootesArray<float> vol;          // volume of each cell
-        BootesArray<float> f1a;          // face size in x1 (3D array), size (Nx3, Nx2, Nx1 + 1), Nxi = nxi + 2 * ngi
-        BootesArray<float> f2a;          //
-        BootesArray<float> f3a;          //
-        BootesArray<float> one_orgeo;    // = 0.5 * (rp^2 - rm^2) / (1/3 * rp^3 - rm^3) used in geometry terms
-        BootesArray<float> rV;           // = (rm + rp) * 1/3 * (rp^3 - rm^3)
-        BootesArray<float> geo_cot;         // = (sin(tp) - sin(tm)) / abs(cos(tp) - cos(tm))
-        BootesArray<float> geo_sm;         // = (sin(tp) - sin(tm)) / abs(cos(tp) - cos(tm))
-        BootesArray<float> geo_sp;         // = (sin(tp) - sin(tm)) / abs(cos(tp) - cos(tm))
+        BootesArray<double> vol;          // volume of each cell
+        BootesArray<double> f1a;          // face size in x1 (3D array), size (Nx3, Nx2, Nx1 + 1), Nxi = nxi + 2 * ngi
+        BootesArray<double> f2a;          //
+        BootesArray<double> f3a;          //
+        BootesArray<double> one_orgeo;    // = 0.5 * (rp^2 - rm^2) / (1/3 * rp^3 - rm^3) used in geometry terms
+        BootesArray<double> rV;           // = (rm + rp) * 1/3 * (rp^3 - rm^3)
+        BootesArray<double> geo_cot;         // = (sin(tp) - sin(tm)) / abs(cos(tp) - cos(tm))
+        BootesArray<double> geo_sm;         // = (sin(tp) - sin(tm)) / abs(cos(tp) - cos(tm))
+        BootesArray<double> geo_sp;         // = (sin(tp) - sin(tm)) / abs(cos(tp) - cos(tm))
 
         int x1s, x2s, x3s;                     // start index of active domain
         int x1l, x2l, x3l;                     // end index of active domain
         int nx1, nx2, nx3;                     // number of active zones in each direction
         int ng1, ng2, ng3;                     // number of ghost zones in each direction, implement for 2D and 1D simulation
 
-        float hydro_gamma;
+        double hydro_gamma;
 
         /** cons **/
-        BootesArray<float> cons;           // 4D (5, z, y, x)
+        BootesArray<double> cons;           // 4D (5, z, y, x)
 
         /** prim **/
-        BootesArray<float> prim;            // 4D (4, z, y, x)
+        BootesArray<double> prim;            // 4D (4, z, y, x)
 
         /** functions **/
         void prim_to_cons();
@@ -60,30 +60,30 @@ class mesh{
 
         /** setup grid functions **/
         void SetupCartesian(int dimension,
-                            float x1min, float x1max, int numx1, int ngh1,
-                            float x2min, float x2max, int numx2, int ngh2,
-                            float x3min, float x3max, int numx3, int ngh3);
+                            double x1min, double x1max, int numx1, int ngh1,
+                            double x2min, double x2max, int numx2, int ngh2,
+                            double x3min, double x3max, int numx3, int ngh3);
         void SetupSphericalPolar(int dimension,
-                                 float x1min, float x1max, int numx1, float ratio1, int ngh1,
-                                 float x2min, float x2max, int numx2,               int ngh2,
-                                 float x3min, float x3max, int numx3,               int ngh3);
+                                 double x1min, double x1max, int numx1, double ratio1, int ngh1,
+                                 double x2min, double x2max, int numx2,               int ngh2,
+                                 double x3min, double x3max, int numx3,               int ngh3);
 };
 
 
 
 void mesh::SetupCartesian(int dimension,
-                          float x1min, float x1max, int numx1, int ngh1,
-                          float x2min, float x2max, int numx2, int ngh2,
-                          float x3min, float x3max, int numx3, int ngh3){
+                          double x1min, double x1max, int numx1, int ngh1,
+                          double x2min, double x2max, int numx2, int ngh2,
+                          double x3min, double x3max, int numx3, int ngh3){
     dim = dimension;
     ng1 = ngh1;  ng2 = ngh2;  ng3 = ngh3;
     nx1 = numx1; nx2 = numx2; nx3 = numx3;
     x1s = ng1; x1l = numx1 + ng1;
     x2s = ng2; x2l = numx2 + ng2;
     x3s = ng3; x3l = numx3 + ng3;
-    float dx1_num = (x1max - x1min) / numx1;
-    float dx2_num = (x2max - x2min) / numx2;
-    float dx3_num = (x3max - x3min) / numx3;
+    double dx1_num = (x1max - x1min) / numx1;
+    double dx2_num = (x2max - x2min) / numx2;
+    double dx3_num = (x3max - x3min) / numx3;
 
     x1f = linspace(x1min - ng1 * dx1_num, x1max + ng1 * dx1_num, numx1 + 2 * ng1 + 1, true);
     x2f = linspace(x2min - ng2 * dx2_num, x2max + ng2 * dx2_num, numx2 + 2 * ng2 + 1, true);
@@ -113,9 +113,9 @@ void mesh::SetupCartesian(int dimension,
 
 
 void mesh::SetupSphericalPolar(int dimension,
-                               float x1min, float x1max, int numx1, float ratio1, int ngh1,
-                               float x2min, float x2max, int numx2,               int ngh2,
-                               float x3min, float x3max, int numx3,               int ngh3){
+                               double x1min, double x1max, int numx1, double ratio1, int ngh1,
+                               double x2min, double x2max, int numx2,               int ngh2,
+                               double x3min, double x3max, int numx3,               int ngh3){
     // 1 - r; 2 - theta; 3 - phi
     dim = dimension;
     ng1 = ngh1;  ng2 = ngh2;  ng3 = ngh3;
@@ -123,9 +123,9 @@ void mesh::SetupSphericalPolar(int dimension,
     x1s = ng1; x1l = numx1 + ng1;
     x2s = ng2; x2l = numx2 + ng2;
     x3s = ng3; x3l = numx3 + ng3;
-    float dx2_num = (x2max - x2min) / numx2;
-    float dx3_num = (x3max - x3min) / numx3;
-    float mx1 = (x1max - x1min) * (1 - ratio1) / (1 - pow(ratio1, numx1));
+    double dx2_num = (x2max - x2min) / numx2;
+    double dx3_num = (x3max - x3min) / numx3;
+    double mx1 = (x1max - x1min) * (1 - ratio1) / (1 - pow(ratio1, numx1));
 
     // step 1: setup boundary locations
     x1f.NewBootesArray(nx1 + 2 * ng1 + 1);
@@ -210,8 +210,8 @@ void mesh::SetupSphericalPolar(int dimension,
     one_orgeo.NewBootesArray(x1v.shape()[0]);
     rV.NewBootesArray(x1v.shape()[0]);
     for (int ii = 0; ii < x1v.shape()[0]; ii ++ ){
-        float rp = x1f(ii + 1);
-        float rm = x1f(ii);
+        double rp = x1f(ii + 1);
+        double rm = x1f(ii);
         one_orgeo(ii) = 0.5 * (rp * rp - rm * rm) / (1./3. * (rp * rp * rp - rm * rm * rm));
         rV(ii) = (rm + rp) * 1. / 3. * (rp * rp * rp - rm * rm * rm);
     }
@@ -220,13 +220,13 @@ void mesh::SetupSphericalPolar(int dimension,
     geo_sm.NewBootesArray(x2v.shape()[0]);
     geo_sp.NewBootesArray(x2v.shape()[0]);
     for (int jj = 0; jj < geo_cot.shape()[0]; jj ++){
-        float sm = std::sin(x2f(jj));
-        float sp = std::sin(x2f(jj+1));
-        float cm = std::cos(x2f(jj));
-        float cp = std::cos(x2f(jj+1));
+        double sm = std::sin(x2f(jj));
+        double sp = std::sin(x2f(jj+1));
+        double cm = std::cos(x2f(jj));
+        double cp = std::cos(x2f(jj+1));
         geo_sm(jj) = sm;
         geo_sp(jj) = sp;
-        geo_cot(jj) = (sp - sm) / abs(cm - cp);
+        geo_cot(jj) = (sp - sm) / (cm - cp);
     }
 
 
@@ -246,9 +246,9 @@ void mesh::cons_to_prim(){
     for (int kk = x3s; kk < x3l ; kk++){
         for (int jj = x2s; jj < x2l; jj++){
             for (int ii = x1s; ii < x1l; ii++){
-                float v1 = cons(IM1, kk, jj, ii) / cons(IDN, kk, jj, ii);
-                float v2 = cons(IM2, kk, jj, ii) / cons(IDN, kk, jj, ii);
-                float v3 = cons(IM3, kk, jj, ii) / cons(IDN, kk, jj, ii);
+                double v1 = cons(IM1, kk, jj, ii) / cons(IDN, kk, jj, ii);
+                double v2 = cons(IM2, kk, jj, ii) / cons(IDN, kk, jj, ii);
+                double v3 = cons(IM3, kk, jj, ii) / cons(IDN, kk, jj, ii);
                 prim(IDN, kk, jj, ii) = cons(IDN, kk, jj, ii);
                 prim(IV1, kk, jj, ii) = v1;
                 prim(IV2, kk, jj, ii) = v2;

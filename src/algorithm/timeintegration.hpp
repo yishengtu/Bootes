@@ -11,25 +11,25 @@
 #include "hydro/donercell.hpp"
 #include "boundary_condition/apply_bc.hpp"
 
-void first_order(mesh &m, float &dt){
+void first_order(mesh &m, double &dt){
 
     /* commented out, first order doesn't need intermediate steps.
-    BootesArray<float> rho_a; rho_a.NewBootesArray(m.rho.shape()[0], m.rho.shape()[1], m.rho.shape()[2]);
-    BootesArray<float> mo1_a; mo1_a.NewBootesArray(m.rho.shape()[0], m.rho.shape()[1], m.rho.shape()[2]);
-    BootesArray<float> mo2_a; mo2_a.NewBootesArray(m.rho.shape()[0], m.rho.shape()[1], m.rho.shape()[2]);
-    BootesArray<float> mo3_a; mo3_a.NewBootesArray(m.rho.shape()[0], m.rho.shape()[1], m.rho.shape()[2]);
-    BootesArray<float> ene_a; ene_a.NewBootesArray(m.rho.shape()[0], m.rho.shape()[1], m.rho.shape()[2]);     */
+    BootesArray<double> rho_a; rho_a.NewBootesArray(m.rho.shape()[0], m.rho.shape()[1], m.rho.shape()[2]);
+    BootesArray<double> mo1_a; mo1_a.NewBootesArray(m.rho.shape()[0], m.rho.shape()[1], m.rho.shape()[2]);
+    BootesArray<double> mo2_a; mo2_a.NewBootesArray(m.rho.shape()[0], m.rho.shape()[1], m.rho.shape()[2]);
+    BootesArray<double> mo3_a; mo3_a.NewBootesArray(m.rho.shape()[0], m.rho.shape()[1], m.rho.shape()[2]);
+    BootesArray<double> ene_a; ene_a.NewBootesArray(m.rho.shape()[0], m.rho.shape()[1], m.rho.shape()[2]);     */
 
     // First order integration
     // (axis, z, y, x)
     // Step 1: calculate flux
-    BootesArray<float> fcons;
+    BootesArray<double> fcons;
     fcons.NewBootesArray(NUMCONS, 3, m.cons.shape()[1] + 1, m.cons.shape()[2] + 1, m.cons.shape()[3] + 1);
 
     // store the reconstructed value
     // index: (advecting direction, quantity, kk, jj, ii)
-    BootesArray<float> valsL;
-    BootesArray<float> valsR;
+    BootesArray<double> valsL;
+    BootesArray<double> valsR;
     valsL.NewBootesArray(3, NUMCONS, m.nx3 + 1, m.nx2 + 1, m.nx1 + 1);
     valsR.NewBootesArray(3, NUMCONS, m.nx3 + 1, m.nx2 + 1, m.nx1 + 1);
     for (int axis = 0; axis < m.dim; axis ++){
@@ -47,9 +47,9 @@ void first_order(mesh &m, float &dt){
         for (int kk = 0; kk < m.nx3 + x3excess; kk ++){
             for (int jj = 0; jj < m.nx2 + x2excess; jj ++){
                 for (int ii = 0; ii < m.nx1 + x1excess; ii ++){
-                    BootesArray<float> valL; valL.NewBootesArray(NUMCONS);
-                    BootesArray<float> valR; valR.NewBootesArray(NUMCONS);
-                    BootesArray<float> fxs;  fxs.NewBootesArray(NUMCONS);
+                    BootesArray<double> valL; valL.NewBootesArray(NUMCONS);
+                    BootesArray<double> valR; valR.NewBootesArray(NUMCONS);
+                    BootesArray<double> fxs;  fxs.NewBootesArray(NUMCONS);
                     valL(IDN) = valsL(axis, IDN, kk, jj, ii); valR(IDN) = valsR(axis, IDN, kk, jj, ii);
                     valL(IM1) = valsL(axis, IM1, kk, jj, ii); valR(IM1) = valsR(axis, IM1, kk, jj, ii);
                     valL(IM2) = valsL(axis, IM2, kk, jj, ii); valR(IM2) = valsR(axis, IM2, kk, jj, ii);
@@ -134,15 +134,14 @@ void first_order(mesh &m, float &dt){
                     m.cons(IM3, kk, jj, ii) -= dt * m.geo_cot(jj) * m.one_orgeo(ii) * (m.prim(IDN, kk, jj, ii) * (m.prim(IV2, kk, jj, ii) * m.prim(IV3, kk, jj, ii)));
                     */
 
-                    float rp = m.x1f(ii + 1);
-                    float rm = m.x1f(ii);
+                    double rp = m.x1f(ii + 1);
+                    double rm = m.x1f(ii);
                     m.cons(IM1, kk, jj, ii) += dt * m.one_orgeo(ii) * (m.prim(IDN, kk, jj, ii) * (pow(m.prim(IV2, kk, jj, ii), 2) + pow(m.prim(IV3, kk, jj, ii), 2)) + 2 * m.prim(IPN, kk, jj, ii));
 
                     m.cons(IM2, kk, jj, ii) -= dt * m.dx1(ii) / m.rV(ii) * (rm * rm * valsL(0, IM2, kkf, jjf, iif) + rp * rp * valsR(0, IM2, kkf, jjf, iif + 1));
                     m.cons(IM2, kk, jj, ii) += dt * m.geo_cot(jj) * m.one_orgeo(ii) * (m.prim(IDN, kk, jj, ii) * pow(m.prim(IV3, kk, jj, ii), 2) + m.prim(IPN, kk, jj, ii));
 
                     m.cons(IM3, kk, jj, ii) -= dt * m.dx1(ii) / m.rV(ii) * (rm * rm * valsL(0, IM3, kkf, jjf, iif) + rp * rp * valsR(0, IM3, kkf, jjf, iif + 1));
-                    //m.cons(IM3, kk, jj, ii) -= dt * m.geo_cot(jj) * m.one_orgeo(ii) * (m.prim(IDN, kk, jj, ii) * (m.prim(IV2, kk, jj, ii) * m.prim(IV3, kk, jj, ii)));
                     m.cons(IM3, kk, jj, ii) -= dt * m.one_orgeo(ii) * m.geo_cot(jj) / (m.geo_sm(jj) + m.geo_sp(jj)) *
                                                             (m.geo_sm(jj) * valsL(1, IM3, kkf, jjf, iif) + m.geo_sp(jj) * valsR(1, IM3, kkf, jjf + 1, iif));
 
@@ -184,6 +183,33 @@ void first_order(mesh &m, float &dt){
     m.cons_to_prim();
     // step 4: apply boundary conditions
     apply_boundary_condition(m);
+
+
+    for (int kk = m.x3s; kk < m.x3l; kk++){
+        for (int jj = m.x2s; jj < m.x2l; jj++){
+            for (int ii = m.x1s; ii < m.x1l; ii++){
+                // 1
+                // if (abs(m.x1v(ii) * cos(m.x2v(jj))) < 0.3){
+                if (abs(m.x2v(jj) - M_PI / 2.) < M_PI / 20. && abs(m.x1v(ii) - 1.0) < 0.1){
+                    m.cons(IDN, kk, jj, ii) = 2.0;
+                    m.cons(IM1, kk, jj, ii) = 5. * m.cons(IDN, kk, jj, ii);
+                    m.cons(IM2, kk, jj, ii) = 0.0; //- 0.5 * cos(m.x2v(jj)) * m.cons(IDN, kk, jj, ii);
+                    m.cons(IM1, kk, jj, ii) += 0.01 * ((double) rand()/RAND_MAX  - 0.5) * m.cons(IDN, kk, jj, ii);
+                    m.cons(IM2, kk, jj, ii) += 0.01 * ((double) rand()/RAND_MAX  - 0.5) * m.cons(IDN, kk, jj, ii);
+                    m.cons(IM3, kk, jj, ii) = 0;
+                    m.prim(IPN, kk, jj, ii) = 2.5;
+                    double vel1 = m.cons(IM1, kk, jj, ii) / m.cons(IDN, kk, jj, ii);
+                    double vel2 = m.cons(IM2, kk, jj, ii) / m.cons(IDN, kk, jj, ii);
+                    double vel3 = m.cons(IM3, kk, jj, ii) / m.cons(IDN, kk, jj, ii);
+                    m.cons(IEN, kk, jj, ii) = ene(m.cons(IDN, kk, jj, ii), m.prim(IPN, kk, jj, ii),
+                                                                  vel1,
+                                                                  vel2,
+                                                                  vel3, m.hydro_gamma);
+                }
+            }
+        }
+    }
+
 }
 
 #endif // TIME_INTEGRATION_HPP_

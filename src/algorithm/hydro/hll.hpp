@@ -5,26 +5,26 @@
 #include <cmath>
 
 
-void hll( BootesArray<float> &valsL,
-          BootesArray<float> &valsR,
-          BootesArray<float> &fluxs,
+void hll( BootesArray<double> &valsL,
+          BootesArray<double> &valsR,
+          BootesArray<double> &fluxs,
           int IMP,
-          float &gamma){
+          double &gamma){
 
     // calculate pressure and velocities
-    float pL = pres(valsL(IDN), valsL(IEN), valsL(IM1), valsL(IM2), valsL(IM3), gamma);
-    float pR = pres(valsR(IDN), valsR(IEN), valsR(IM1), valsR(IM2), valsR(IM3), gamma);
-    float uL = valsL(IMP) / valsL(IDN);
-    float uR = valsR(IMP) / valsR(IDN);
+    double pL = pres(valsL(IDN), valsL(IEN), valsL(IM1), valsL(IM2), valsL(IM3), gamma);
+    double pR = pres(valsR(IDN), valsR(IEN), valsR(IM1), valsR(IM2), valsR(IM3), gamma);
+    double uL = valsL(IMP) / valsL(IDN);
+    double uR = valsR(IMP) / valsR(IDN);
     // step 1: wave speed estimates, Toro 10.5.1
-    float aL = soundspeed(valsL(IDN), pL, gamma);
-    float aR = soundspeed(valsR(IDN), pR, gamma);
-    float sL = uL - aL;
-    float sR = uR + aR;
+    double aL = soundspeed(valsL(IDN), pL, gamma);
+    double aR = soundspeed(valsR(IDN), pR, gamma);
+    double sL = uL - aL;
+    double sR = uR + aR;
     // step 2: calculate flux
     for (int val_ind = 0; val_ind < fluxs.shape()[0]; val_ind ++){
-        float flux_L = valsL(val_ind) * uL;
-        float flux_R = valsR(val_ind) * uR;
+        double flux_L = valsL(val_ind) * uL;
+        double flux_R = valsR(val_ind) * uR;
         if (val_ind == IMP){
             flux_L += pL;
             flux_R += pR;

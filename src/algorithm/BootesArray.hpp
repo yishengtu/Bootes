@@ -169,7 +169,7 @@ class BootesArray {
 
     void set_uniform(int x){
         for (int ii = 0; ii < arrsize_; ii ++){
-            arr_[ii] = (float) x;
+            arr_[ii] = (double) x;
         }
     }
     void set_uniform(float x){
@@ -179,7 +179,7 @@ class BootesArray {
     }
     void set_uniform(double x){
         for (int ii = 0; ii < arrsize_; ii ++){
-            arr_[ii] = (float) x;
+            arr_[ii] = (double) x;
         }
     }
 

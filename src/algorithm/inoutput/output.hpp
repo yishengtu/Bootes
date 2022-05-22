@@ -241,7 +241,6 @@ class Output{
 class ReadOutput{
     public:
         string fn;
-        BootesArray<float> grain_list;
         H5File* file;
     ReadOutput(string fn_input){
         fn = fn_input;

@@ -4,17 +4,17 @@
 #include "../YishengArray.hpp"
 
 void reconstruct(mesh &m,
-                   YishengArray<float> &rhoL, YishengArray<float> &rhoR,
-                   YishengArray<float> &v1L, YishengArray<float> &v1R,
-                   YishengArray<float> &v2L, YishengArray<float> &v2R,
-                   YishengArray<float> &v3L, YishengArray<float> &v3R,
-                   YishengArray<float> &pressL, YishengArray<float> &pressR,
-                   YishengArray<float> &m1L, YishengArray<float> &m1R,
-                   YishengArray<float> &m2L, YishengArray<float> &m2R,
-                   YishengArray<float> &m3L, YishengArray<float> &m3R,
-                   YishengArray<float> &eneL, YishengArray<float> &eneR,
+                   YishengArray<double> &rhoL, YishengArray<double> &rhoR,
+                   YishengArray<double> &v1L, YishengArray<double> &v1R,
+                   YishengArray<double> &v2L, YishengArray<double> &v2R,
+                   YishengArray<double> &v3L, YishengArray<double> &v3R,
+                   YishengArray<double> &pressL, YishengArray<double> &pressR,
+                   YishengArray<double> &m1L, YishengArray<double> &m1R,
+                   YishengArray<double> &m2L, YishengArray<double> &m2R,
+                   YishengArray<double> &m3L, YishengArray<double> &m3R,
+                   YishengArray<double> &eneL, YishengArray<double> &eneR,
                    int &axis,
-                   float dt     // not used, just here to simplify shifting between constructions
+                   double dt     // not used, just here to simplify shifting between constructions
                    ){
     int x1excess, x2excess, x3excess;
     if      (axis == 0){ x1excess = 1; x2excess = 0; x3excess = 0; }

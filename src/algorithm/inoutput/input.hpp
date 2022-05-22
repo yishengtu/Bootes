@@ -54,6 +54,16 @@ class input_file{
         }
     }
 
+    double getDouble(string name){
+        try{
+            return stod(inputdict[name]);
+        }
+        catch (std::invalid_argument e){
+            cout << "\"" << name << "\"" << " does not exist in input file" << endl << flush;
+            throw e;
+        }
+    }
+
     string getString(string name){
         try{
             return inputdict[name];

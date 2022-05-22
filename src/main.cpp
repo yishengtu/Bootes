@@ -13,10 +13,10 @@
 #include <omp.h>
 
 
-void doloop(float &ot, float &next_exit_loop_time, mesh &m, float &CFL){
+void doloop(double &ot, double &next_exit_loop_time, mesh &m, double &CFL){
     int loop_cycle = 0;
     while (ot < next_exit_loop_time){
-        float dt = timestep(m, CFL);
+        double dt = timestep(m, CFL);
         dt = min(dt, next_exit_loop_time - ot);
         cout << "\t integrate cycle: " << loop_cycle << "\t time: " << ot << "\t dt: " << dt << endl << flush;
         first_order(m, dt);
@@ -46,23 +46,23 @@ int main(){
     /** read in necessary information from input file **/
     input_file finput("input.txt");
 
-    float CFL = finput.getFloat("CFL");
+    double CFL = finput.getDouble("CFL");
 
     /** setup grid and initial condition **/
     mesh m;
-    float gamma_hydro = finput.getFloat("gamma_hydro");
+    double gamma_hydro = finput.getDouble("gamma_hydro");
 
     int dim      = finput.getInt("dimension");
-    float x1min  = finput.getFloat("x1min");
-    float x1max  = finput.getFloat("x1max");
+    double x1min  = finput.getDouble("x1min");
+    double x1max  = finput.getDouble("x1max");
     int nx1      = finput.getInt("nx1");
-    float x2min  = finput.getFloat("x2min");
-    float x2max  = finput.getFloat("x2max");
+    double x2min  = finput.getDouble("x2min");
+    double x2max  = finput.getDouble("x2max");
     int nx2      = finput.getInt("nx2");
-    float x3min  = finput.getFloat("x3min");
-    float x3max  = finput.getFloat("x3max");
+    double x3min  = finput.getDouble("x3min");
+    double x3max  = finput.getDouble("x3max");
     int nx3      = finput.getInt("nx3");
-    float ratio1 = pow(x1max / x1min, (1./ (float) nx1));
+    double ratio1 = pow(x1max / x1min, (1./ (double) nx1));
     // determine number of ghost zones
     int ng1, ng2, ng3;
     if      (dim == 1){ ng1 = 2; ng2 = 0; ng3 = 0; }
@@ -83,20 +83,20 @@ int main(){
     apply_boundary_condition(m);
 
     /** initialize simulation parameters **/
-    float t_tot = finput.getFloat("t_tot");
-    float output_dt = finput.getFloat("output_dt");
+    double t_tot = finput.getDouble("t_tot");
+    double output_dt = finput.getDouble("output_dt");
     string foutput_root = finput.getString("foutput_root");
     string foutput_pre  = finput.getString("foutput_pre");
     string foutput_aft  = finput.getString("foutput_aft");
 
     /** initialize time and cycle trackings **/
     int frame = 0;
-    float ot = 0;
+    double ot = 0;
     int cycle = 0;
 
     /** initialize decisions in loop **/
-    float next_output_time = ot;
-    float next_exit_loop_time = next_output_time;
+    double next_output_time = ot;
+    double next_exit_loop_time = next_output_time;
     bool det_output = false;
     bool det_doloop = false;
 
@@ -119,7 +119,7 @@ int main(){
         }
         if (det_output){
             Output output(foutput_root + foutput_pre + "." + choosenumber(frame) + "." + foutput_aft, 'w');
-            output.writeattribute<float>(&ot, "time", H5::PredType::NATIVE_FLOAT, 1);
+            output.writeattribute<double>(&ot, "time", H5::PredType::NATIVE_DOUBLE, 1);
             output.writeattribute<int>(&frame, "frame", H5::PredType::NATIVE_INT32, 1);
             output.writeattribute<int>(&cycle, "main_cycle", H5::PredType::NATIVE_INT32, 1);
             output.writeattribute<int>(&m.x1s, "x1s", H5::PredType::NATIVE_INT32, 1);
@@ -138,17 +138,17 @@ int main(){
             output.writeattribute<const int>(&outputIV2, "ve2IND", H5::PredType::NATIVE_INT32, 1);
             output.writeattribute<const int>(&outputIV3, "ve3IND", H5::PredType::NATIVE_INT32, 1);
             output.writeattribute<const int>(&outputIPN, "prsIND", H5::PredType::NATIVE_INT32, 1);
-            output.writeattribute<float>(&m.hydro_gamma, "hydro_gamma", H5::PredType::NATIVE_FLOAT, 1);
-            output.write1Ddataset(m.x1v, "x1v", H5::PredType::NATIVE_FLOAT);
-            output.write1Ddataset(m.x2v, "x2v", H5::PredType::NATIVE_FLOAT);
-            output.write1Ddataset(m.x3v, "x3v", H5::PredType::NATIVE_FLOAT);
-            output.write1Ddataset(m.x1f, "x1f", H5::PredType::NATIVE_FLOAT);
-            output.write1Ddataset(m.x2f, "x2f", H5::PredType::NATIVE_FLOAT);
-            output.write1Ddataset(m.x3f, "x3f", H5::PredType::NATIVE_FLOAT);
-            output.write4Ddataset(m.prim, "prim", H5::PredType::NATIVE_FLOAT);
-            output.write4Ddataset(m.cons, "cons", H5::PredType::NATIVE_FLOAT);
+            output.writeattribute<double>(&m.hydro_gamma, "hydro_gamma", H5::PredType::NATIVE_DOUBLE, 1);
+            output.write1Ddataset(m.x1v, "x1v", H5::PredType::NATIVE_DOUBLE);
+            output.write1Ddataset(m.x2v, "x2v", H5::PredType::NATIVE_DOUBLE);
+            output.write1Ddataset(m.x3v, "x3v", H5::PredType::NATIVE_DOUBLE);
+            output.write1Ddataset(m.x1f, "x1f", H5::PredType::NATIVE_DOUBLE);
+            output.write1Ddataset(m.x2f, "x2f", H5::PredType::NATIVE_DOUBLE);
+            output.write1Ddataset(m.x3f, "x3f", H5::PredType::NATIVE_DOUBLE);
+            output.write4Ddataset(m.prim, "prim", H5::PredType::NATIVE_DOUBLE);
+            output.write4Ddataset(m.cons, "cons", H5::PredType::NATIVE_DOUBLE);
             output.close();
-            float elasped = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start).count() / 1000.;
+            double elasped = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start).count() / 1000.;
             std::cout << "Output frame " << frame << '\t' << "Elapsed real time =" << elasped << " seconds" << std::endl;
             frame += 1;
             next_output_time += output_dt;

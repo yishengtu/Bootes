@@ -5,17 +5,17 @@
 
 using namespace std;
 
-BootesArray<float> linspace(float vmin, float vmax, int n, bool endpoint){
-    BootesArray<float> out;
+BootesArray<double> linspace(double vmin, double vmax, int n, bool endpoint){
+    BootesArray<double> out;
     out.NewBootesArray(n);
     if (endpoint){
-        float dx = (vmax - vmin) / ((float) n - 1.);
+        double dx = (vmax - vmin) / ((double) n - 1.);
         for (int ii = 0; ii < n; ii ++){
             out(ii) = vmin + dx * ii;
         }
     }
     else {
-        float dx = (vmax - vmin) / ((float) n);
+        double dx = (vmax - vmin) / ((double) n);
         for (int ii = 0; ii < n; ii ++){
             out(ii) = vmin + dx * ii;
         }
@@ -24,17 +24,17 @@ BootesArray<float> linspace(float vmin, float vmax, int n, bool endpoint){
 }
 
 
-BootesArray<float> logspace(float vmin, float vmax, int n, bool endpoint){
-    BootesArray<float> out;
+BootesArray<double> logspace(double vmin, double vmax, int n, bool endpoint){
+    BootesArray<double> out;
     out.NewBootesArray(n);
     if (endpoint){
-        float dx = (vmax - vmin) / ((float) n - 1.);
+        double dx = (vmax - vmin) / ((double) n - 1.);
         for (int ii = 0; ii < n; ii ++){
             out(ii) = pow(10, vmin + dx * ii);
         }
     }
     else {
-        float dx = (vmax - vmin) / ((float) n);
+        double dx = (vmax - vmin) / ((double) n);
         for (int ii = 0; ii < n; ii ++){
             out(ii) = pow(10, vmin + dx * ii);
         }
@@ -43,7 +43,7 @@ BootesArray<float> logspace(float vmin, float vmax, int n, bool endpoint){
 }
 
 
-void cross_prod(float a[3], float b[3], float a_cross_b[3]){
+void cross_prod(double a[3], double b[3], double a_cross_b[3]){
     // Note: cross-product is only properly defined for vectors in R^3 and R^7
     // (see https://www.jstor.org/stable/2323537?seq=2#metadata_info_tab_contents for proof)
     a_cross_b[0] = a[1] * b[2] - a[2] * b[1];
@@ -52,7 +52,7 @@ void cross_prod(float a[3], float b[3], float a_cross_b[3]){
 }
 
 
-int searchsorted(float x, BootesArray<float> &xlist){
+int searchsorted(double x, BootesArray<double> &xlist){
     /*for (int ii = 0; ii < xlist.shape()[0]; ii++){
         cout << xlist(ii) << '\t';
     }
@@ -120,9 +120,9 @@ string choosenumber(int num)
 }
 
 
-void generate_uniform_grav(float unif_grav_acc, unsigned int GridSize[3], BootesArray<float> &Phi,
-                           BootesArray<float> &xcoord, BootesArray<float> &ycoord, BootesArray<float> &zcoord){
-    float Phi_calc = 0;
+void generate_uniform_grav(double unif_grav_acc, unsigned int GridSize[3], BootesArray<double> &Phi,
+                           BootesArray<double> &xcoord, BootesArray<double> &ycoord, BootesArray<double> &zcoord){
+    double Phi_calc = 0;
     Phi.NewBootesArray(GridSize[2], GridSize[1], GridSize[0]);
     for (int kk = 0; kk < GridSize[2]; kk ++){
         for (int jj = 0; jj < GridSize[1]; jj ++){

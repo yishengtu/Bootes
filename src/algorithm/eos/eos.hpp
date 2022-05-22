@@ -3,17 +3,17 @@
 
 #include <cmath>
 
-float soundspeed(float &rho, float &p, float &gamma){
+double soundspeed(double &rho, double &p, double &gamma){
     return sqrt(gamma * p / rho);
 }
 
 
-float pres(float &dens, float &ene, float &m1, float &m2, float &m3, float &gamma){
+double pres(double &dens, double &ene, double &m1, double &m2, double &m3, double &gamma){
     return (ene - 0.5 * (m1 * m1 + m2 * m2 + m3 * m3) / dens) * (gamma - 1.);
 }
 
 
-float ene(float &rho, float &pres, float &v1, float &v2, float &v3, float &gamma){
+double ene(double &rho, double &pres, double &v1, double &v2, double &v3, double &gamma){
     return pres / (gamma - 1.) + 0.5 * rho * (v1 * v1 + v2 * v2 + v3 * v3);
 }
 #endif // EOS_HPP_

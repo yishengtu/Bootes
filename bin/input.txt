@@ -1,22 +1,22 @@
 CFL        = 0.3
-t_tot      = 1.0
-output_dt  = 0.01
+t_tot      = 50.0
+output_dt  = 0.1
 foutput_root = ./out/
 foutput_pre  = SteadySphere
 foutput_aft  = boot
 
 gamma_hydro = 1.4
 
-dimension  = 3
+dimension  = 2
 
 x1min      = 1
 x1max      = 10
-nx1        = 64
+nx1        = 512
 
 x2min      = 0
 x2max      = 3.14159265358979323846
-nx2        = 64
+nx2        = 512
 
 x3min      = 0
 x3max      = 1.57079632679 
-nx3        = 64
+nx3        = 1
