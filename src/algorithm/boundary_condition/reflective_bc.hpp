@@ -33,11 +33,11 @@ void reflective_boundary_condition_x1o(BootesArray<double> &quan, int &x1s, int 
         for (int gind1 = 0; gind1 < ng1; gind1 ++){
             for (int kk = x3s; kk < x3l; kk++){
                 for (int jj = x2s; jj < x2l; jj++){
-                    quan(IEN, kk, jj, x1l + gind1)     = quan(IEN, kk, jj, x1l - (gind1 + 1));
-                    quan(IM3, kk, jj, x1l + gind1)     = - quan(IM3, kk, jj, x1l - (gind1 + 1));
-                    quan(IM2, kk, jj, x1l + gind1)     = quan(IM2, kk, jj, x1l - (gind1 + 1));
-                    quan(IM1, kk, jj, x1l + gind1)     = quan(IM1, kk, jj, x1l - (gind1 + 1));
                     quan(IDN, kk, jj, x1l + gind1)     = quan(IDN, kk, jj, x1l - (gind1 + 1));
+                    quan(IM1, kk, jj, x1l + gind1)     = - quan(IM1, kk, jj, x1l - (gind1 + 1));
+                    quan(IM2, kk, jj, x1l + gind1)     = quan(IM2, kk, jj, x1l - (gind1 + 1));
+                    quan(IM3, kk, jj, x1l + gind1)     = quan(IM3, kk, jj, x1l - (gind1 + 1));
+                    quan(IEN, kk, jj, x1l + gind1)     = quan(IEN, kk, jj, x1l - (gind1 + 1));
                 }
             }
         }
@@ -75,11 +75,11 @@ void reflective_boundary_condition_x2o(BootesArray<double> &quan, int &x1s, int 
         for (int gind2 = 0; gind2 < ng2; gind2 ++){
             for (int kk = x3s; kk < x3l; kk++){
                 for (int ii = x1s; ii < x1l; ii++){
-                    quan(IEN, kk, x2l + gind2, ii)     = quan(IEN, kk, x2l - (gind2 + 1), ii);
-                    quan(IM3, kk, x2l + gind2, ii)     = quan(IM3, kk, x2l - (gind2 + 1), ii);
-                    quan(IM2, kk, x2l + gind2, ii)     = - quan(IM2, kk, x2l - (gind2 + 1), ii);
-                    quan(IM1, kk, x2l + gind2, ii)     = quan(IM1, kk, x2l - (gind2 + 1), ii);
                     quan(IDN, kk, x2l + gind2, ii)     = quan(IDN, kk, x2l - (gind2 + 1), ii);
+                    quan(IM1, kk, x2l + gind2, ii)     = quan(IM1, kk, x2l - (gind2 + 1), ii);
+                    quan(IM2, kk, x2l + gind2, ii)     = - quan(IM2, kk, x2l - (gind2 + 1), ii);
+                    quan(IM3, kk, x2l + gind2, ii)     = quan(IM3, kk, x2l - (gind2 + 1), ii);
+                    quan(IEN, kk, x2l + gind2, ii)     = quan(IEN, kk, x2l - (gind2 + 1), ii);
                 }
             }
         }

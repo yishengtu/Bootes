@@ -12,6 +12,7 @@ int NUMCONS = 5;
 int NUMPRIM = 5;
 enum ConsIndex:int{IDN=0, IM1=1, IM2=2, IM3=3, IEN=4};
 enum PrimIndex:int{IDP=0, IV1=1, IV2=2, IV3=3, IPN=4};
+enum AddiIndex:int{IGN=5}; // additional indices (gravity)
 
 class mesh{
     public:
@@ -38,8 +39,8 @@ class mesh{
         BootesArray<double> one_orgeo;    // = 0.5 * (rp^2 - rm^2) / (1/3 * rp^3 - rm^3) used in geometry terms
         BootesArray<double> rV;           // = (rm + rp) * 1/3 * (rp^3 - rm^3)
         BootesArray<double> geo_cot;         // = (sin(tp) - sin(tm)) / abs(cos(tp) - cos(tm))
-        BootesArray<double> geo_sm;         // = (sin(tp) - sin(tm)) / abs(cos(tp) - cos(tm))
-        BootesArray<double> geo_sp;         // = (sin(tp) - sin(tm)) / abs(cos(tp) - cos(tm))
+        BootesArray<double> geo_sm;         // sin(tm)
+        BootesArray<double> geo_sp;         // sin(tp)
 
         int x1s, x2s, x3s;                     // start index of active domain
         int x1l, x2l, x3l;                     // end index of active domain
@@ -53,6 +54,9 @@ class mesh{
 
         /** prim **/
         BootesArray<double> prim;            // 4D (4, z, y, x)
+
+        /** grav **/
+        BootesArray<double> Phi_grav;
 
         /** functions **/
         void prim_to_cons();
@@ -151,30 +155,8 @@ void mesh::SetupSphericalPolar(int dimension,
         x3v(ii) = (x3f(ii) + x3f(ii + 1)) / 2.0;
     }
 
-    // step 3: setup cell size values
-    dx1.NewBootesArray(x1f.shape()[0] - 1);
-    dx2.NewBootesArray(x2f.shape()[0] - 1);
-    dx3.NewBootesArray(x3f.shape()[0] - 1);
-    for (int ii = 0; ii < dx1.shape()[0]; ii ++) { dx1(ii) = x1f(ii + 1) - x1f(ii); }
-    for (int ii = 0; ii < dx2.shape()[0]; ii ++) { dx2(ii) = x2f(ii + 1) - x2f(ii); }
-    for (int ii = 0; ii < dx3.shape()[0]; ii ++) { dx3(ii) = x3f(ii + 1) - x3f(ii); }
-    dx1p.NewBootesArray(x3v.shape()[0], x2v.shape()[0], x1v.shape()[0]);
-    dx2p.NewBootesArray(x3v.shape()[0], x2v.shape()[0], x1v.shape()[0]);
-    dx3p.NewBootesArray(x3v.shape()[0], x2v.shape()[0], x1v.shape()[0]);
-    // TODO: replace x1v(ii) with higher order ones.
-    for (int kk = 0; kk < x3v.shape()[0]; kk ++){
-        for (int jj = 0; jj < x2v.shape()[0]; jj ++){
-            for (int ii = 0; ii < x1v.shape()[0]; ii ++){
-                dx1p(kk, jj, ii) = dx1(ii);
-                dx2p(kk, jj, ii) = dx2(jj) * x1v(ii);
-                dx3p(kk, jj, ii) = dx3(kk) * 1.0 / x1v(ii) * -1 * (cos(x2f(jj)) - cos(x2f(jj + 1))) / (dx2(jj));
-            }
-        }
-    }
 
-    // step 3.1: setup cell size value in physical units
-
-    // step 4: setup face sizes
+    // step 3: setup face sizes
     f1a.NewBootesArray(x3v.shape()[0], x2v.shape()[0], x1f.shape()[0]);
     f2a.NewBootesArray(x3v.shape()[0], x2f.shape()[0], x1v.shape()[0]);
     f3a.NewBootesArray(x3f.shape()[0], x2v.shape()[0], x1v.shape()[0]);
@@ -195,7 +177,7 @@ void mesh::SetupSphericalPolar(int dimension,
         }
     }
 
-    // step 5: setup volume size of each cell
+    // step 4: setup volume size of each cell
     vol.NewBootesArray(x3v.shape()[0], x2v.shape()[0], x1v.shape()[0]);
     for (int kk = 0; kk < x3v.shape()[0]; kk ++){
         for (int jj = 0; jj < x2v.shape()[0]; jj ++){
@@ -204,6 +186,30 @@ void mesh::SetupSphericalPolar(int dimension,
             }
         }
     }
+
+    // step 5: setup cell size values
+    // step 5.1: setup cell size value in coordinate units
+    dx1.NewBootesArray(x1f.shape()[0] - 1);
+    dx2.NewBootesArray(x2f.shape()[0] - 1);
+    dx3.NewBootesArray(x3f.shape()[0] - 1);
+    for (int ii = 0; ii < dx1.shape()[0]; ii ++) { dx1(ii) = x1f(ii + 1) - x1f(ii); }
+    for (int ii = 0; ii < dx2.shape()[0]; ii ++) { dx2(ii) = x2f(ii + 1) - x2f(ii); }
+    for (int ii = 0; ii < dx3.shape()[0]; ii ++) { dx3(ii) = x3f(ii + 1) - x3f(ii); }
+    dx1p.NewBootesArray(x3v.shape()[0], x2v.shape()[0], x1v.shape()[0]);
+    dx2p.NewBootesArray(x3v.shape()[0], x2v.shape()[0], x1v.shape()[0]);
+    dx3p.NewBootesArray(x3v.shape()[0], x2v.shape()[0], x1v.shape()[0]);
+    // step 5.2: setup cell size value in physical units
+    // TODO: use higher order terms
+    for (int kk = 0; kk < x3v.shape()[0]; kk ++){
+        for (int jj = 0; jj < x2v.shape()[0]; jj ++){
+            for (int ii = 0; ii < x1v.shape()[0]; ii ++){
+                dx1p(kk, jj, ii) = dx1(ii);
+                dx2p(kk, jj, ii) = dx2(jj) * x1v(ii);
+                dx3p(kk, jj, ii) = dx3(kk) * 1.0 / x1v(ii) * -1 * (cos(x2f(jj)) - cos(x2f(jj + 1))) / (dx2(jj));
+            }
+        }
+    }
+
 
     // step 6: setup other geometric terms
     // step 6.1: radial direction

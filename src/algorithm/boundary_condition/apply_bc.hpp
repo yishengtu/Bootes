@@ -4,7 +4,7 @@
 #include "standard_bc.hpp"
 #include "periodic_bc.hpp"
 #include "reflective_bc.hpp"
-
+#include "spherical_polar_pole.hpp"
 
 void apply_boundary_condition(mesh &m){
     standard_boundary_condition_x1i(m.cons, m.x1s, m.x1l, m.ng1,
@@ -21,17 +21,17 @@ void apply_boundary_condition(mesh &m){
                                            m.x2s, m.x2l, m.ng2,
                                            m.x3s, m.x3l, m.ng3);
 
-    reflective_boundary_condition_x2i(m.cons, m.x1s, m.x1l, m.ng1,
+    sph_polar_pole_boundary_condition_x2i(m.cons, m.x1s, m.x1l, m.ng1,
                                         m.x2s, m.x2l, m.ng2,
                                         m.x3s, m.x3l, m.ng3);
-    reflective_boundary_condition_x2i(m.prim, m.x1s, m.x1l, m.ng1,
+    sph_polar_pole_boundary_condition_x2i(m.prim, m.x1s, m.x1l, m.ng1,
                                         m.x2s, m.x2l, m.ng2,
                                         m.x3s, m.x3l, m.ng3);
 
-    reflective_boundary_condition_x2o(m.cons, m.x1s, m.x1l, m.ng1,
+    sph_polar_pole_boundary_condition_x2o(m.cons, m.x1s, m.x1l, m.ng1,
                                         m.x2s, m.x2l, m.ng2,
                                         m.x3s, m.x3l, m.ng3);
-    reflective_boundary_condition_x2o(m.prim, m.x1s, m.x1l, m.ng1,
+    sph_polar_pole_boundary_condition_x2o(m.prim, m.x1s, m.x1l, m.ng1,
                                         m.x2s, m.x2l, m.ng2,
                                         m.x3s, m.x3l, m.ng3);
 

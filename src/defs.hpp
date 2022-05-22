@@ -1,3 +1,5 @@
 
 #define SPHERICAL_POLAR_COORD
 //#define CARTESIAN_COORD
+//#define PROTECTION
+#define ENABLE_GRAVITY

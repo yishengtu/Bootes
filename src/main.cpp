@@ -8,6 +8,7 @@
 #include "algorithm/inoutput/input.hpp"
 #include "setup/sphericalCoord.cpp"
 #include "defs.hpp"
+#include "algorithm/gravity/gravity.hpp"
 
 #include <chrono>
 #include <omp.h>
@@ -19,7 +20,12 @@ void doloop(double &ot, double &next_exit_loop_time, mesh &m, double &CFL){
         double dt = timestep(m, CFL);
         dt = min(dt, next_exit_loop_time - ot);
         cout << "\t integrate cycle: " << loop_cycle << "\t time: " << ot << "\t dt: " << dt << endl << flush;
+        // step 1: evolve the grid by dt
         first_order(m, dt);
+        // step 2: work after loop
+        work_after_loop(m);
+
+        // last step: iterate counter
         ot += dt;
         loop_cycle += 1;
     }
@@ -147,6 +153,9 @@ int main(){
             output.write1Ddataset(m.x3f, "x3f", H5::PredType::NATIVE_DOUBLE);
             output.write4Ddataset(m.prim, "prim", H5::PredType::NATIVE_DOUBLE);
             output.write4Ddataset(m.cons, "cons", H5::PredType::NATIVE_DOUBLE);
+            #if defined(ENABLE_GRAVITY)
+            output.write3Ddataset(m.Phi_grav, "Phi", H5::PredType::NATIVE_DOUBLE);
+            #endif
             output.close();
             double elasped = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start).count() / 1000.;
             std::cout << "Output frame " << frame << '\t' << "Elapsed real time =" << elasped << " seconds" << std::endl;
