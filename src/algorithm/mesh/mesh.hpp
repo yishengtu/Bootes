@@ -107,9 +107,20 @@ void mesh::SetupCartesian(int dimension,
     for (int ii = 0; ii < dx1.shape()[0]; ii ++) { dx1(ii) = x1f(ii + 1) - x1f(ii); }
     for (int ii = 0; ii < dx2.shape()[0]; ii ++) { dx2(ii) = x2f(ii + 1) - x2f(ii); }
     for (int ii = 0; ii < dx3.shape()[0]; ii ++) { dx3(ii) = x3f(ii + 1) - x3f(ii); }
-    dx1p = dx1;
-    dx2p = dx2;
-    dx3p = dx3;
+    dx1p.NewBootesArray(x3v.shape()[0], x2v.shape()[0], x1v.shape()[0]);
+    dx2p.NewBootesArray(x3v.shape()[0], x2v.shape()[0], x1v.shape()[0]);
+    dx3p.NewBootesArray(x3v.shape()[0], x2v.shape()[0], x1v.shape()[0]);
+    // step 5.2: setup cell size value in physical units
+    // TODO: use higher order terms
+    for (int kk = 0; kk < x3v.shape()[0]; kk ++){
+        for (int jj = 0; jj < x2v.shape()[0]; jj ++){
+            for (int ii = 0; ii < x1v.shape()[0]; ii ++){
+                dx1p(kk, jj, ii) = dx1(ii);
+                dx2p(kk, jj, ii) = dx2(jj);
+                dx3p(kk, jj, ii) = dx3(kk);
+            }
+        }
+    }
 
     // allocate memory for hydro quantities
     cons.NewBootesArray(NUMCONS, x3v.shape()[0], x2v.shape()[0], x1v.shape()[0]);

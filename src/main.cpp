@@ -6,13 +6,15 @@
 #include "algorithm/hydro/donercell.hpp"
 #include "algorithm/inoutput/output.hpp"
 #include "algorithm/inoutput/input.hpp"
-#include "setup/sphericalCoord.cpp"
 #include "defs.hpp"
-#include "algorithm/gravity/gravity.hpp"
-
 #include <chrono>
 #include <omp.h>
 
+#if defined(ENABLE_GRAVITY)
+#include "algorithm/gravity/gravity.hpp"
+#endif // defined(ENABLE_GRAVITY)
+
+#include "setup/3D_blub.cpp"
 
 void doloop(double &ot, double &next_exit_loop_time, mesh &m, double &CFL){
     int loop_cycle = 0;
@@ -75,11 +77,19 @@ int main(){
     else if (dim == 2){ ng1 = 2; ng2 = 2; ng3 = 0; }
     else if (dim == 3){ ng1 = 2; ng2 = 2; ng3 = 2; }
     else { cout << "dimension not recognized! " << endl << flush; throw 1; }
-    m.SetupSphericalPolar(dim,                           // 3D problem
+    #if defined(CARTESIAN_COORD)
+    m.SetupCartesian(dim,
+                      x1min, x1max, nx1, ng1,                       // ax1
+                      x2min, x2max, nx2, ng2,                       // ax2
+                      x3min, x3max, nx3, ng3                        // ax3
+                      );
+    #elif defined(SPHERICAL_POLAR_COORD)
+    m.SetupSphericalPolar(dim,
                           x1min, x1max, nx1, ratio1, ng1,                       // ax1
                           x2min, x2max, nx2,         ng2,                       // ax2
                           x3min, x3max, nx3,         ng3                        // ax3
                           );
+    #endif // defined (COORDINATE)
     m.hydro_gamma = gamma_hydro;
 
     /** setup initial condition **/

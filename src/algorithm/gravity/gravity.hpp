@@ -29,7 +29,7 @@ void gravity::pointsource_grav(double m_source, double x1_s, double x2_s, double
                 double x3_h = mpt->x3v(kk);
                 double r;
                 #if defined(CARTESIAN_COORD)
-                    r = sqrt(pow(x1h-x1s, 2) + pow(x2h-x2s, 2) + pow(x3h-x3s, 2));
+                    r = sqrt(pow(x1_h-x1_s, 2) + pow(x2_h-x2_s, 2) + pow(x3_h-x3_s, 2));
                 #elif defined(SPHERICAL_POLAR_COORD)
                     r = sqrt(pow(x1_h, 2) + pow(x1_s, 2) - 2 * x1_h * x1_s * (sin(x2_h) * sin(x2_s) * cos(x3_h - x3_s) + cos(x2_h) * cos(x2_s)));
                 #endif // defined

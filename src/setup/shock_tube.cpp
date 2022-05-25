@@ -1,4 +1,4 @@
-#include "../algorithm/mesh.hpp"
+#include "../algorithm/mesh/mesh.hpp"
 #include "../algorithm/YishengArray.hpp"
 
 void setup(mesh &m){
