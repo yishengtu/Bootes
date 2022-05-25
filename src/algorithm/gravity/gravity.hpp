@@ -1,7 +1,7 @@
 #ifndef GRAVITY_HPP_
 #define GRAVITY_HPP_
 
-#include "../mesh.hpp"
+#include "../mesh/mesh.hpp"
 #include "../BootesArray.hpp"
 #include "../physical_constants.hpp"
 #include "../../defs.hpp"

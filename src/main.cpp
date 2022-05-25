@@ -1,4 +1,4 @@
-#include "algorithm/mesh.hpp"
+#include "algorithm/mesh/mesh.hpp"
 #include "algorithm/util.hpp"
 #include "algorithm/time_step/time_step.hpp"
 #include "algorithm/hydro/hllc.hpp"

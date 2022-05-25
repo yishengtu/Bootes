@@ -1,6 +1,6 @@
 #include <cstdlib>
 
-#include "../algorithm/mesh.hpp"
+#include "../algorithm/mesh/mesh.hpp"
 #include "../algorithm/BootesArray.hpp"
 #include "../algorithm/boundary_condition/standard_bc.hpp"
 #include "../algorithm/inoutput/input.hpp"

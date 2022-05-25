@@ -12,14 +12,6 @@
 #include "boundary_condition/apply_bc.hpp"
 
 void first_order(mesh &m, double &dt){
-
-    /* commented out, first order doesn't need intermediate steps.
-    BootesArray<double> rho_a; rho_a.NewBootesArray(m.rho.shape()[0], m.rho.shape()[1], m.rho.shape()[2]);
-    BootesArray<double> mo1_a; mo1_a.NewBootesArray(m.rho.shape()[0], m.rho.shape()[1], m.rho.shape()[2]);
-    BootesArray<double> mo2_a; mo2_a.NewBootesArray(m.rho.shape()[0], m.rho.shape()[1], m.rho.shape()[2]);
-    BootesArray<double> mo3_a; mo3_a.NewBootesArray(m.rho.shape()[0], m.rho.shape()[1], m.rho.shape()[2]);
-    BootesArray<double> ene_a; ene_a.NewBootesArray(m.rho.shape()[0], m.rho.shape()[1], m.rho.shape()[2]);     */
-
     // First order integration
     // (axis, z, y, x)
     // Step 1: calculate flux
@@ -143,14 +135,12 @@ void first_order(mesh &m, double &dt){
                     m.cons(IM3, kk, jj, ii) -= dt * m.geo_cot(jj) * m.one_orgeo(ii) * (m.prim(IDN, kk, jj, ii) * (m.prim(IV2, kk, jj, ii) * m.prim(IV3, kk, jj, ii)));
                     */
 
-                    double rp = m.x1f(ii + 1);
-                    double rm = m.x1f(ii);
                     m.cons(IM1, kk, jj, ii) += dt * m.one_orgeo(ii) * (m.prim(IDN, kk, jj, ii) * (pow(m.prim(IV2, kk, jj, ii), 2) + pow(m.prim(IV3, kk, jj, ii), 2)) + 2 * m.prim(IPN, kk, jj, ii));
 
-                    m.cons(IM2, kk, jj, ii) -= dt * m.dx1(ii) / m.rV(ii) * (rm * rm * valsL(0, IM2, kkf, jjf, iif) + rp * rp * valsR(0, IM2, kkf, jjf, iif + 1));
+                    m.cons(IM2, kk, jj, ii) -= dt * m.dx1(ii) / m.rV(ii) * (m.rsq(ii) * valsL(0, IM2, kkf, jjf, iif) + m.rsq(ii + 1) * valsR(0, IM2, kkf, jjf, iif + 1));
                     m.cons(IM2, kk, jj, ii) += dt * m.geo_cot(jj) * m.one_orgeo(ii) * (m.prim(IDN, kk, jj, ii) * pow(m.prim(IV3, kk, jj, ii), 2) + m.prim(IPN, kk, jj, ii));
 
-                    m.cons(IM3, kk, jj, ii) -= dt * m.dx1(ii) / m.rV(ii) * (rm * rm * valsL(0, IM3, kkf, jjf, iif) + rp * rp * valsR(0, IM3, kkf, jjf, iif + 1));
+                    m.cons(IM3, kk, jj, ii) -= dt * m.dx1(ii) / m.rV(ii) * (m.rsq(ii) * valsL(0, IM3, kkf, jjf, iif) + m.rsq(ii + 1) * valsR(0, IM3, kkf, jjf, iif + 1));
                     m.cons(IM3, kk, jj, ii) -= dt * m.one_orgeo(ii) * m.geo_cot(jj) / (m.geo_sm(jj) + m.geo_sp(jj)) *
                                                             (m.geo_sm(jj) * valsL(1, IM2, kkf, jjf, iif) * valsL(1, IM3, kkf, jjf, iif)
                                                             + m.geo_sp(jj) * valsR(1, IM2, kkf, jjf + 1, iif) * valsR(1, IM3, kkf, jjf + 1, iif));

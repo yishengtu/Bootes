@@ -3,10 +3,10 @@
 #include <string>
 #include <memory>
 #include <iostream>
-#include "BootesArray.hpp"
-#include "util.hpp"
-#include "eos/eos.hpp"
-#include "boundary_condition/standard_bc.hpp"
+#include "../BootesArray.hpp"
+#include "../util.hpp"
+#include "../eos/eos.hpp"
+#include "../boundary_condition/standard_bc.hpp"
 
 int NUMCONS = 5;
 int NUMPRIM = 5;
@@ -41,6 +41,7 @@ class mesh{
         BootesArray<double> geo_cot;         // = (sin(tp) - sin(tm)) / abs(cos(tp) - cos(tm))
         BootesArray<double> geo_sm;         // sin(tm)
         BootesArray<double> geo_sp;         // sin(tp)
+        BootesArray<double> rsq;            // r^2
 
         int x1s, x2s, x3s;                     // start index of active domain
         int x1l, x2l, x3l;                     // end index of active domain
@@ -220,6 +221,10 @@ void mesh::SetupSphericalPolar(int dimension,
         double rm = x1f(ii);
         one_orgeo(ii) = 0.5 * (rp * rp - rm * rm) / (1./3. * (rp * rp * rp - rm * rm * rm));
         rV(ii) = (rm + rp) * 1. / 3. * (rp * rp * rp - rm * rm * rm);
+    }
+    rsq.NewBootesArray(x1f.shape()[0]);
+    for (int ii = 0; ii < x1f.shape()[0]; ii ++){
+        rsq(ii) = x1f(ii) * x1f(ii);
     }
     // step 6.2: theta direction
     geo_cot.NewBootesArray(x2v.shape()[0]);
