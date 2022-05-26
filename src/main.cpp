@@ -6,15 +6,16 @@
 #include "algorithm/hydro/donercell.hpp"
 #include "algorithm/inoutput/output.hpp"
 #include "algorithm/inoutput/input.hpp"
+#include "algorithm/index_def.hpp"
 #include "defs.hpp"
 #include <chrono>
 #include <omp.h>
 
 #if defined(ENABLE_GRAVITY)
-#include "algorithm/gravity/gravity.hpp"
+    #include "algorithm/gravity/gravity.hpp"
 #endif // defined(ENABLE_GRAVITY)
 
-#include "setup/3D_blub.cpp"
+#include "setup/sphericalCoord.cpp"
 
 void doloop(double &ot, double &next_exit_loop_time, mesh &m, double &CFL){
     int loop_cycle = 0;
@@ -95,9 +96,11 @@ int main(){
     /** setup initial condition **/
     setup(m, finput);   // setup according to the input file
 
+    m.grav->pointsource_grav(m, 3.e4, 0, 0, 0);
+    m.grav->calc_surface_vals(m);
+
     m.cons_to_prim();
     apply_boundary_condition(m);
-
     /** initialize simulation parameters **/
     double t_tot = finput.getDouble("t_tot");
     double output_dt = finput.getDouble("output_dt");
@@ -164,7 +167,7 @@ int main(){
             output.write4Ddataset(m.prim, "prim", H5::PredType::NATIVE_DOUBLE);
             output.write4Ddataset(m.cons, "cons", H5::PredType::NATIVE_DOUBLE);
             #if defined(ENABLE_GRAVITY)
-            output.write3Ddataset(m.Phi_grav, "Phi", H5::PredType::NATIVE_DOUBLE);
+            output.write3Ddataset(m.grav->Phi_grav, "Phi", H5::PredType::NATIVE_DOUBLE);
             #endif
             output.close();
             double elasped = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start).count() / 1000.;

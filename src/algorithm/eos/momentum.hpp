@@ -2,9 +2,7 @@
 #define MOMENMTUM_HPP_
 
 
-double vel(double &mom, double &den){
-    return mom / den;
-}
+double vel(double &mom, double &den);
 
 
 #endif

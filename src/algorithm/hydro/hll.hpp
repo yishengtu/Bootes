@@ -62,18 +62,20 @@ void hll_grav( double *valsL,
     double sL = uL - aL;
     double sR = uR + aR;
     // step 2: calculate flux
-    double grhoL_ap = valsL[IDN] * PhiL + pL;
-    double grhoR_ap = valsR[IDN] * PhiR + pR;
+    double p_a_grhoL = pL + valsL[IDN] * PhiL;
+    double p_a_grhoR = pR + valsR[IDN] * PhiR;
+    double p_m_grhoL = pL - valsL[IDN] * PhiL;
+    double p_m_grhoR = pR - valsR[IDN] * PhiR;
     for (int val_ind = 0; val_ind < 5; val_ind ++){
         double flux_L = valsL[val_ind] * uL;
         double flux_R = valsR[val_ind] * uR;
         if (val_ind == IMP){
-            flux_L += grhoL_ap;
-            flux_R += grhoR_ap;
+            flux_L += p_m_grhoL;
+            flux_R += p_m_grhoR;
         }
         if (val_ind == IEN){
-            flux_L += grhoL_ap * uL;
-            flux_R += grhoR_ap * uR;
+            flux_L += p_a_grhoL * uL;
+            flux_R += p_a_grhoR * uR;
         }
         //cout << "flux: " << flux_L << '\t' << flux_R << endl;
         if      (0 <= sL){ fluxs[val_ind] = flux_L; }

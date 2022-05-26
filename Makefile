@@ -1,6 +1,38 @@
-CC = g++
-CFLAGS = -lhdf5 -lhdf5_cpp
+CC := g++
+CFLAGS := -lhdf5 -lhdf5_cpp -O3 -fopenmp
+EXE_DIR := bin/
+EXECUTABLE := $(EXE_DIR)bootes.out
 
-compile_main.cpp: src/main.cpp
-	$(CC) src/main.cpp $(CFLAGS) -o bin/bootes.out -O3 -fopenmp
+SRC_FILES := $(wildcard src/algorithm/eos/*.cpp) \
+	     src/algorithm/util.cpp \
+	     $(wildcard src/algorithm/boundary_condition/*.cpp) \
+	     $(wildcard src/algorithm/gravity/*.cpp) \
+	     $(wildcard src/algorithm/hydro/*.cpp) \
+	     $(wildcard src/algorithm/mesh/*.cpp) \
+	     $(wildcard src/main.cpp)
+
+OBJ_DIR := obj/
+OBJ_FILES := $(addprefix $(OBJ_DIR), $(notdir $(SRC_FILES:.cpp=.o)))
+SRC_DIRS := $(dir $(SRC_FILES))
+VPATH := $(SRC_DIRS)
+
+.PHONY : all dirs clean
+
+all : dirs $(EXECUTABLE)
+
+objs: dirs $(OBJ_FILES)
+
+dirs : $(EXE_DIR) $(OBJ_DIR)
+
+$(EXECUTABLE) : $(OBJ_FILES)
+	$(CC) $(CFLAGS) -o $@ $(OBJ_FILES)
+
+$(OBJ_DIR)%.o : %.cpp
+	$(CC) $(CFLAGS) -c $< -o $@
+
+
+clean:
+	rm obj/*
+	rm $(EXECUTABLE)
+
 

@@ -10,11 +10,11 @@ void setup(mesh &m, input_file &finput){
             for (int ii = m.x1s; ii < m.x1l; ii++){
                 // 1
                 if (pow(m.x1v(ii), 2) + pow(m.x2v(jj), 2) + pow(m.x3v(kk), 2) < pow(0.1, 2)){
-                    m.cons(IDN, kk, jj, ii) = 5.;
+                    m.cons(IDN, kk, jj, ii) = 2.;
                     m.cons(IM1, kk, jj, ii) = 0;
                     m.cons(IM2, kk, jj, ii) = 0;
                     m.cons(IM3, kk, jj, ii) = 0;
-                    m.prim(IPN, kk, jj, ii) = 4.5;
+                    m.prim(IPN, kk, jj, ii) = 2.5;
                     double vel1 = m.cons(IM1, kk, jj, ii) / m.cons(IDN, kk, jj, ii);
                     double vel2 = m.cons(IM2, kk, jj, ii) / m.cons(IDN, kk, jj, ii);
                     double vel3 = m.cons(IM3, kk, jj, ii) / m.cons(IDN, kk, jj, ii);
@@ -40,10 +40,8 @@ void setup(mesh &m, input_file &finput){
             }
         }
     }
-    //for (int jj = m.x2s; jj < m.x2l; jj ++){
-    //    m.mom1(m.nghost, jj, m.nghost) = 3;
-    //}
-    //m.mom1(1, m.x2s + m.nx2 * 1 / 4 + 2, 101) = 10;
+    gravity grav(m);
+    grav.pointsource_grav(100, 0, 0, 0);
 }
 
 

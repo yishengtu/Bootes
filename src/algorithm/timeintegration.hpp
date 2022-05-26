@@ -10,6 +10,7 @@
 #include "hydro/hll.hpp"
 #include "hydro/donercell.hpp"
 #include "boundary_condition/apply_bc.hpp"
+#include "index_def.hpp"
 
 void first_order(mesh &m, double &dt){
     // First order integration
@@ -22,13 +23,8 @@ void first_order(mesh &m, double &dt){
     // index: (advecting direction, quantity, kk, jj, ii)
     BootesArray<double> valsL;
     BootesArray<double> valsR;
-    #if defined(ENABLE_GRAVITY)
-    valsL.NewBootesArray(3, NUMCONS + 1, m.nx3 + 1, m.nx2 + 1, m.nx1 + 1);
-    valsR.NewBootesArray(3, NUMCONS + 1, m.nx3 + 1, m.nx2 + 1, m.nx1 + 1);
-    #else
     valsL.NewBootesArray(3, NUMCONS, m.nx3 + 1, m.nx2 + 1, m.nx1 + 1);
     valsR.NewBootesArray(3, NUMCONS, m.nx3 + 1, m.nx2 + 1, m.nx1 + 1);
-    #endif
     for (int axis = 0; axis < m.dim; axis ++){
         // step 1.1: reconstruct left/right values
         int x1excess, x2excess, x3excess;
@@ -52,19 +48,10 @@ void first_order(mesh &m, double &dt){
                     valL[IM2] = valsL(axis, IM2, kk, jj, ii); valR[IM2] = valsR(axis, IM2, kk, jj, ii);
                     valL[IM3] = valsL(axis, IM3, kk, jj, ii); valR[IM3] = valsR(axis, IM3, kk, jj, ii);
                     valL[IEN] = valsL(axis, IEN, kk, jj, ii); valR[IEN] = valsR(axis, IEN, kk, jj, ii);
-                    # if defined(ENABLE_GRAVITY)
-                        hll_grav(valL, valR, fxs,
-                                 IMP,                   // the momentum term to add pressure and gravity
-                                 valsL(axis, IGN, kk, jj, ii),      // phi
-                                 valsR(axis, IGN, kk, jj, ii),
-                                 m.hydro_gamma
-                                 );
-                    # else
-                        hll( valL, valR, fxs,
-                             IMP,                   // the momentum term to add pressure; shift by one index (since first index is density)
-                             m.hydro_gamma
-                             );
-                    #endif
+                    hll( valL, valR, fxs,
+                         IMP,                   // the momentum term to add pressure; shift by one index (since first index is density)
+                         m.hydro_gamma
+                         );
                     fcons(IDN, axis, kk, jj, ii) = fxs[IDN];
                     fcons(IM1, axis, kk, jj, ii) = fxs[IM1];
                     fcons(IM2, axis, kk, jj, ii) = fxs[IM2];
@@ -145,10 +132,7 @@ void first_order(mesh &m, double &dt){
                                                             (m.geo_sm(jj) * valsL(1, IM2, kkf, jjf, iif) * valsL(1, IM3, kkf, jjf, iif)
                                                             + m.geo_sp(jj) * valsR(1, IM2, kkf, jjf + 1, iif) * valsR(1, IM3, kkf, jjf + 1, iif));
 
-                    #if defined(ENABLE_GRAVITY)
-                    m.cons(IM1, kk, jj, ii) += dt * m.one_orgeo(ii) * 2 * m.Phi_grav(kk, jj, ii) * m.prim(IDN, kk, jj, ii);
-                    m.cons(IM2, kk, jj, ii) += dt * m.geo_cot(jj) * m.one_orgeo(ii) * m.Phi_grav(kk, jj, ii) * m.prim(IDN, kk, jj, ii);
-                    #endif
+
 
                 }
             }
@@ -157,16 +141,59 @@ void first_order(mesh &m, double &dt){
         # error need coordinate defined
     #endif
 
-    // step 3: add source terms
-    ;
-    // protections
+    // step 3: source terms
+    // step 3.1: apply source terms
+    #if defined (ENABLE_GRAVITY)
+        #if defined (CARTESIAN_COORDINATE)
+            #pragma omp parallel for collapse (3)
+            for (int kk = m.x3s; kk < m.x3l; kk ++){
+                for (int jj = m.x2s; jj < m.x2l; jj ++){
+                    for (int ii = m.x1s; ii < m.x1l; ii ++){
+                        double rhogradphix1 = m.prim(IDN, kk, jj, ii) * (m.grav->Phi_grav_x1surface(kk, jj, ii + 1) - m.grav->Phi_grav_x1surface(kk, jj, ii)) / m.dx1p(kk, jj, ii);
+                        double rhogradphix2 = m.prim(IDN, kk, jj, ii) * (m.grav->Phi_grav_x2surface(kk, jj + 1, ii) - m.grav->Phi_grav_x2surface(kk, jj, ii)) / m.dx2p(kk, jj, ii);
+                        double rhogradphix3 = m.prim(IDN, kk, jj, ii) * (m.grav->Phi_grav_x3surface(kk + 1, jj, ii) - m.grav->Phi_grav_x3surface(kk, jj, ii)) / m.dx3p(kk, jj, ii);
+                        m.cons(IM1, kk, jj, ii) += rhogradphix1;
+                        m.cons(IM2, kk, jj, ii) += rhogradphix2;
+                        m.cons(IM3, kk, jj, ii) += rhogradphix3;
+                        m.cons(IEN, kk, jj, ii) -= rhogradphix1 * m.prim(IV1, kk, jj, ii) + rhogradphix2 * m.prim(IV2, kk, jj, ii) + rhogradphix3 * m.prim(IV3, kk, jj, ii);
+                    }
+                }
+            }
+            // TODO
+        #elif defined (SPHERICAL_POLAR_COORD)
+            #pragma omp parallel for collapse (3)
+            for (int kk = m.x3s; kk < m.x3l; kk ++){
+                for (int jj = m.x2s; jj < m.x2l; jj ++){
+                    for (int ii = m.x1s; ii < m.x1l; ii ++){
+                        double rhogradphix1 = m.prim(IDN, kk, jj, ii) * (m.grav->Phi_grav_x1surface(kk, jj, ii + 1) - m.grav->Phi_grav_x1surface(kk, jj, ii)) / m.dx1p(kk, jj, ii);
+                        double rhogradphix2 = m.prim(IDN, kk, jj, ii) * (m.grav->Phi_grav_x2surface(kk, jj + 1, ii) - m.grav->Phi_grav_x2surface(kk, jj, ii)) / m.dx2p(kk, jj, ii);
+                        double rhogradphix3 = m.prim(IDN, kk, jj, ii) * (m.grav->Phi_grav_x3surface(kk + 1, jj, ii) - m.grav->Phi_grav_x3surface(kk, jj, ii)) / m.dx3p(kk, jj, ii);
+                        m.cons(IM1, kk, jj, ii) += rhogradphix1;
+                        m.cons(IM2, kk, jj, ii) += rhogradphix2;
+                        m.cons(IM3, kk, jj, ii) += rhogradphix3;
+                        m.cons(IEN, kk, jj, ii) -= rhogradphix1 * m.prim(IV1, kk, jj, ii) + rhogradphix2 * m.prim(IV2, kk, jj, ii) + rhogradphix3 * m.prim(IV3, kk, jj, ii);
+                    }
+                }
+            }
+        #endif // defined (coordinate)
+    #endif // defined (enable gravity)
+
+    // step 3.2: calculate source terms
+    // step 3.1.1: gravity
+    #if defined (ENABLE_GRAVITY)
+        m.grav->pointsource_grav(m, 3.e4, 0, 0, 0);
+        m.grav->calc_surface_vals(m);
+    #endif // defined (ENABLE_GRAVITY)
+
+
+    // step 4: protections
     #if defined (PROTECTION_PROTECTION)
     #pragma omp parallel for collapse (3)
     for (int kk = m.x3s; kk < m.x3l; kk ++){
         for (int jj = m.x2s; jj < m.x2l; jj ++){
             for (int ii = m.x1s; ii < m.x1l; ii ++){
-                if (isnan(m.cons(IDN, kk, jj, ii)) || m.cons(IDN, kk, jj, ii) < 1e-8){
-                    m.cons(IDN, kk, jj, ii) = 1e-8;
+                if (isnan(m.cons(IDN, kk, jj, ii)) || m.cons(IDN, kk, jj, ii) < 1e-16){
+                    m.cons(IDN, kk, jj, ii) = 1e-16;
                 }
                 if (isnan(m.cons(IM1, kk, jj, ii))){
                     m.cons(IM1, kk, jj, ii) = 0;
@@ -177,19 +204,18 @@ void first_order(mesh &m, double &dt){
                 if (isnan(m.cons(IM3, kk, jj, ii))){
                     m.cons(IM3, kk, jj, ii) = 0;
                 }
-                if (isnan(m.cons(IEN, kk, jj, ii)) || m.cons(IEN, kk, jj, ii) < 1e-8){
-                    m.cons(IEN, kk, jj, ii) = 1e-8;
+                if (isnan(m.cons(IEN, kk, jj, ii)) || m.cons(IEN, kk, jj, ii) < 1e-16){
+                    m.cons(IEN, kk, jj, ii) = 1e-16;
                 }
             }
         }
     }
     #endif // defined(PROTECTION_PROTECTION)
 
-    // step 3: use E.O.S. and relations to get primitive variables.
+    // step 5: use E.O.S. and relations to get primitive variables.
     m.cons_to_prim();
-    // step 4: apply boundary conditions
+    // step 6: apply boundary conditions
     apply_boundary_condition(m);
-
 }
 
 #endif // TIME_INTEGRATION_HPP_
