@@ -53,6 +53,10 @@ class mesh{
         /** prim **/
         BootesArray<double> prim;            // 4D (4, z, y, x)
 
+        /** multi-fluid for dust **/
+        BootesArray<double> dcons;
+        BootesArray<double> dprim;
+
         /** grav **/
         #if defined (ENABLE_GRAVITY)
             gravity *grav = new gravity;

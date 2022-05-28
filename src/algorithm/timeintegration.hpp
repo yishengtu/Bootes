@@ -12,19 +12,10 @@
 #include "boundary_condition/apply_bc.hpp"
 #include "index_def.hpp"
 
-void first_order(mesh &m, double &dt){
-    // First order integration
-    // (axis, z, y, x)
-    // Step 1: calculate flux
-    BootesArray<double> fcons;
-    fcons.NewBootesArray(NUMCONS, 3, m.cons.shape()[1] + 1, m.cons.shape()[2] + 1, m.cons.shape()[3] + 1);
 
+void calc_flux(mesh &m, double &dt, BootesArray<double> &fcons, BootesArray<double> &valsL, BootesArray<double> &valsR){
     // store the reconstructed value
     // index: (advecting direction, quantity, kk, jj, ii)
-    BootesArray<double> valsL;
-    BootesArray<double> valsR;
-    valsL.NewBootesArray(3, NUMCONS, m.nx3 + 1, m.nx2 + 1, m.nx1 + 1);
-    valsR.NewBootesArray(3, NUMCONS, m.nx3 + 1, m.nx2 + 1, m.nx1 + 1);
     for (int axis = 0; axis < m.dim; axis ++){
         // step 1.1: reconstruct left/right values
         int x1excess, x2excess, x3excess;
@@ -76,6 +67,20 @@ void first_order(mesh &m, double &dt){
             }
         }
     }
+}
+
+
+void first_order(mesh &m, double &dt){
+    // First order integration
+    // (axis, z, y, x)
+    // Step 1: calculate flux
+    BootesArray<double> valsL;      // boundary left value
+    BootesArray<double> valsR;      // boundary right value
+    BootesArray<double> fcons;      // flux of conservative variables
+    valsL.NewBootesArray(3, NUMCONS, m.nx3 + 1, m.nx2 + 1, m.nx1 + 1);
+    valsR.NewBootesArray(3, NUMCONS, m.nx3 + 1, m.nx2 + 1, m.nx1 + 1);
+    fcons.NewBootesArray(NUMCONS, 3, m.cons.shape()[1] + 1, m.cons.shape()[2] + 1, m.cons.shape()[3] + 1);
+    calc_flux(m, dt, fcons, valsL, valsR);
 
     // step 2: time integrate to update CONSERVATIVE variables, solve Riemann Problem
     // First order for now
@@ -181,7 +186,7 @@ void first_order(mesh &m, double &dt){
     // step 3.2: calculate source terms
     // step 3.1.1: gravity
     #if defined (ENABLE_GRAVITY)
-        m.grav->pointsource_grav(m, 3.e4, 0, 0, 0);
+        m.grav->pointsource_grav(m, 1.e4, 0, 0, 0);
         m.grav->calc_surface_vals(m);
     #endif // defined (ENABLE_GRAVITY)
 

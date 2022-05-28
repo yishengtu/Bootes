@@ -15,7 +15,7 @@
     #include "algorithm/gravity/gravity.hpp"
 #endif // defined(ENABLE_GRAVITY)
 
-#include "setup/sphericalCoord.cpp"
+#include "setup/sphericalCoord_unif.cpp"
 
 void doloop(double &ot, double &next_exit_loop_time, mesh &m, double &CFL){
     int loop_cycle = 0;
@@ -96,7 +96,7 @@ int main(){
     /** setup initial condition **/
     setup(m, finput);   // setup according to the input file
 
-    m.grav->pointsource_grav(m, 3.e4, 0, 0, 0);
+    m.grav->pointsource_grav(m, 1.e4, 0, 0, 0);
     m.grav->calc_surface_vals(m);
 
     m.cons_to_prim();
