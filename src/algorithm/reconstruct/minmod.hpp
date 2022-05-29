@@ -37,7 +37,6 @@ void reconstruct(mesh &m,
                    ){
     // Computation starts in first ghost zone, for first active cell left boundary flux
     double zero = 0;
-    //cout << "---" << endl;
     #pragma omp parallel for collapse (3) schedule (static)
     for (int kk = -x3excess; kk < m.nx3 + x3excess; kk++){
         for (int jj = -x2excess; jj < m.nx2 + x2excess; jj++){
@@ -70,7 +69,6 @@ void reconstruct(mesh &m,
                                   m.cons(IDN, m.x3s + kk, m.x2s + jj, m.x1s)
                                   );
                 /** conservatives **/
-                //cout << " 1---" << endl << flush;
                 double BrhoL, BrhoR;
                 minmod(m.cons(IDN, m.x3s + kk + x3excess, m.x2s + jj + x2excess, m.x1s + ii + x1excess),
                        m.cons(IDN, m.x3s + kk,            m.x2s + jj,            m.x1s + ii),
@@ -159,7 +157,6 @@ void reconstruct(mesh &m,
             }
         }
     }
-    //cout << "===" << endl << flush;
 }
 
 

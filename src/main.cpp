@@ -15,7 +15,11 @@
     #include "algorithm/gravity/gravity.hpp"
 #endif // defined(ENABLE_GRAVITY)
 
-#include "setup/sphericalCoord_unif.cpp"
+#if defined(ENABLE_DUSTFLUID)
+    #include "algorithm/timeintegration_dust.hpp"
+#endif
+
+#include "setup/dust_SPcoord.cpp"
 
 void doloop(double &ot, double &next_exit_loop_time, mesh &m, double &CFL){
     int loop_cycle = 0;
@@ -23,9 +27,21 @@ void doloop(double &ot, double &next_exit_loop_time, mesh &m, double &CFL){
         double dt = timestep(m, CFL);
         dt = min(dt, next_exit_loop_time - ot);
         cout << "\t integrate cycle: " << loop_cycle << "\t time: " << ot << "\t dt: " << dt << endl << flush;
-        // step 1: evolve the grid by dt
+        // step 1: evolve the hydro by dt
         first_order(m, dt);
-        // step 2: work after loop
+        #if defined (ENABLE_DUSTFLUID)
+            first_order_dust(m, dt);
+        #endif // defined(ENABLE_DUSTFLUID)
+
+        // step 2: update other fields
+        // step 2.1: calculate source terms
+        // step 2.1.1: gravity
+        #if defined (ENABLE_GRAVITY)
+            m.grav->pointsource_grav(m, 1.e4, 0, 0, 0);
+            m.grav->calc_surface_vals(m);
+        #endif // defined (ENABLE_GRAVITY)
+
+        // step 3: work after loop
         work_after_loop(m);
 
         // last step: iterate counter
@@ -61,16 +77,16 @@ int main(){
     mesh m;
     double gamma_hydro = finput.getDouble("gamma_hydro");
 
-    int dim      = finput.getInt("dimension");
+    int dim       = finput.getInt("dimension");
     double x1min  = finput.getDouble("x1min");
     double x1max  = finput.getDouble("x1max");
-    int nx1      = finput.getInt("nx1");
+    int nx1       = finput.getInt("nx1");
     double x2min  = finput.getDouble("x2min");
     double x2max  = finput.getDouble("x2max");
-    int nx2      = finput.getInt("nx2");
+    int nx2       = finput.getInt("nx2");
     double x3min  = finput.getDouble("x3min");
     double x3max  = finput.getDouble("x3max");
-    int nx3      = finput.getInt("nx3");
+    int nx3       = finput.getInt("nx3");
     double ratio1 = pow(x1max / x1min, (1./ (double) nx1));
     // determine number of ghost zones
     int ng1, ng2, ng3;
@@ -93,8 +109,14 @@ int main(){
     #endif // defined (COORDINATE)
     m.hydro_gamma = gamma_hydro;
 
+    #if defined(ENABLE_DUSTFLUID)
+        int ns      = finput.getInt("num_species");
+        m.setupDustFluidMesh(ns);
+    #endif // defined(ENABLE_DUSTFLUID)
     /** setup initial condition **/
     setup(m, finput);   // setup according to the input file
+
+    cout << ns << endl << flush;
 
     m.grav->pointsource_grav(m, 1.e4, 0, 0, 0);
     m.grav->calc_surface_vals(m);
@@ -168,6 +190,10 @@ int main(){
             output.write4Ddataset(m.cons, "cons", H5::PredType::NATIVE_DOUBLE);
             #if defined(ENABLE_GRAVITY)
             output.write3Ddataset(m.grav->Phi_grav, "Phi", H5::PredType::NATIVE_DOUBLE);
+            #endif
+            #if defined(ENABLE_DUSTFLUID)
+            output.write5Ddataset(m.dcons, "dcons", H5::PredType::NATIVE_DOUBLE);
+            output.write5Ddataset(m.dprim, "dprim", H5::PredType::NATIVE_DOUBLE);
             #endif
             output.close();
             double elasped = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start).count() / 1000.;

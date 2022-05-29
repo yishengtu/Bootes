@@ -223,6 +223,54 @@ class Output{
         delete dataset;
     }
 
+    template<typename T>
+    void write5Ddataset(BootesArray<T> &datain, string name, PredType hdf5_type){
+        if (datain.dimension() != 5){
+            throw 1;
+        }
+
+        const unsigned int FSPACE_DIM1 = datain.shape()[0];
+        const unsigned int FSPACE_DIM2 = datain.shape()[1];
+        const unsigned int FSPACE_DIM3 = datain.shape()[2];
+        const unsigned int FSPACE_DIM4 = datain.shape()[3];
+        const unsigned int FSPACE_DIM5 = datain.shape()[4];
+        unsigned int FSPACE_RANK = 5;
+
+        hsize_t fdim[] = {FSPACE_DIM1, FSPACE_DIM2, FSPACE_DIM3, FSPACE_DIM4, FSPACE_DIM5}; // dim sizes of ds (on disk)
+        DataSpace fspace( FSPACE_RANK, fdim );
+
+        DataSet* dataset = new DataSet(file_->createDataSet(name, hdf5_type, fspace));
+        /*
+         * Select hyperslab for the dataset in the file, using 3x2 blocks,
+         * (4,3) stride and (2,4) count starting at the position (0,1).
+         */
+        hsize_t start[5];  // Start of hyperslab
+        hsize_t stride[5]; // Stride of hyperslab
+        hsize_t count[5];  // Block count
+        hsize_t block[5];  // Block sizes
+        start[0]  = 0;           start[1]  = 0;           start[2]  = 0;           start[3]  = 0;           start[4]  = 0;
+        stride[0] = FSPACE_DIM1; stride[1] = 1;           stride[2] = 1;           stride[3] = 1;           stride[4] = 1;
+        count[0]  = 1;           count[1]  = FSPACE_DIM2; count[2]  = FSPACE_DIM3; count[3]  = FSPACE_DIM4; count[4]  = FSPACE_DIM5;
+        block[0]  = FSPACE_DIM1; block[1]  = 1;           block[2]  = 1;           block[3]  = 1;           block[4]  = 1;
+        fspace.selectHyperslab( H5S_SELECT_SET, count, start, stride, block);
+
+        /*
+         * Create dataspace for the first dataset.
+         */
+        hsize_t mdim[datain.dimension()] = {FSPACE_DIM1, FSPACE_DIM2, FSPACE_DIM3, FSPACE_DIM4, FSPACE_DIM5};      /* Dimension size of the first dataset (in memory) */
+
+        DataSpace mspace( (unsigned int) datain.dimension(), mdim );
+
+        start[0]  = 0;           start[1]  = 0;           start[2]  = 0;           start[3]  = 0;           start[4]  = 0;
+        stride[0] = FSPACE_DIM1; stride[1] = 1;           stride[2] = 1;           stride[3] = 1;           stride[4] = 1;
+        count[0]  = 1;           count[1]  = FSPACE_DIM2; count[2]  = FSPACE_DIM3; count[3]  = FSPACE_DIM4; count[4]  = FSPACE_DIM5;
+        block[0]  = FSPACE_DIM1; block[1]  = 1;           block[2]  = 1;           block[3]  = 1;           block[4]  = 1;
+        mspace.selectHyperslab( H5S_SELECT_SET, count, start, stride, block);
+
+        dataset->write( datain.get_arr(), hdf5_type, mspace, fspace );
+        delete dataset;
+    }
+
     void close(){
         file_->close();
     }

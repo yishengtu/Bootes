@@ -53,11 +53,6 @@ void mesh::SetupCartesian(int dimension,
     cons.NewBootesArray(NUMCONS, x3v.shape()[0], x2v.shape()[0], x1v.shape()[0]);
     prim.NewBootesArray(NUMPRIM, x3v.shape()[0], x2v.shape()[0], x1v.shape()[0]);
 
-    #if defined (ENABLE_DUSTFLUID)
-        dcons.NewBootesArray(NUMSPECIES, NUMCONS, x3v.shape()[0], x2v.shape()[0], x1v.shape()[0]);
-        dprim.NewBootesArray(NUMSPECIES, NUMCONS, x3v.shape()[0], x2v.shape()[0], x1v.shape()[0]);
-    #endif
-
     // allocate memory for other necessary fields
     #if defined (ENABLE_GRAVITY)
         grav->setup_Phimesh(x3v.shape()[0], x2v.shape()[0], x1v.shape()[0]);
@@ -192,10 +187,6 @@ void mesh::SetupSphericalPolar(int dimension,
     // step 7: allocate memory for hydro quantities
     cons.NewBootesArray(NUMCONS, x3v.shape()[0], x2v.shape()[0], x1v.shape()[0]);
     prim.NewBootesArray(NUMPRIM, x3v.shape()[0], x2v.shape()[0], x1v.shape()[0]);
-    #if defined (ENABLE_DUSTFLUID)
-        dcons.NewBootesArray(NUMSPECIES, NUMCONS, x3v.shape()[0], x2v.shape()[0], x1v.shape()[0]);
-        dprim.NewBootesArray(NUMSPECIES, NUMCONS, x3v.shape()[0], x2v.shape()[0], x1v.shape()[0]);
-    #endif
     // allocate memory for other necessary fields
     #if defined (ENABLE_GRAVITY)
         grav->setup_Phimesh(x3v.shape()[0], x2v.shape()[0], x1v.shape()[0]);
@@ -226,4 +217,10 @@ void mesh::cons_to_prim(){
         }
     }
 }
-
+#if defined (ENABLE_DUSTFLUID)
+void mesh::setupDustFluidMesh(int NS){
+    NUMSPECIES = NS;
+    dcons.NewBootesArray(NS, NUMCONS, x3v.shape()[0], x2v.shape()[0], x1v.shape()[0]);
+    dprim.NewBootesArray(NS, NUMPRIM, x3v.shape()[0], x2v.shape()[0], x1v.shape()[0]);
+}
+#endif

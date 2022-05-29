@@ -116,17 +116,6 @@ void first_order(mesh &m, double &dt){
                     }
                     // geometry term
 
-                    /*   // lower order, but easier to understand..
-                    m.cons(IM1, kk, jj, ii) += dt * m.one_orgeo(ii) * \
-                                (m.prim(IDN, kk, jj, ii) * (pow(m.prim(IV2, kk, jj, ii), 2) + pow(m.prim(IV3, kk, jj, ii), 2)) + 2 * m.prim(IPN, kk, jj, ii));
-
-                    m.cons(IM2, kk, jj, ii) -= dt * m.one_orgeo(ii) * m.prim(IDN, kk, jj, ii) * m.prim(IV1, kk, jj, ii) * m.prim(IV2, kk, jj, ii);
-                    m.cons(IM2, kk, jj, ii) += dt * m.geo_cot(jj) * m.one_orgeo(ii) * (m.prim(IDN, kk, jj, ii) * pow(m.prim(IV3, kk, jj, ii), 2) + m.prim(IPN, kk, jj, ii));
-
-                    m.cons(IM3, kk, jj, ii) -= dt * m.one_orgeo(ii) * m.prim(IDN, kk, jj, ii) * m.prim(IV1, kk, jj, ii) * m.prim(IV3, kk, jj, ii);
-                    m.cons(IM3, kk, jj, ii) -= dt * m.geo_cot(jj) * m.one_orgeo(ii) * (m.prim(IDN, kk, jj, ii) * (m.prim(IV2, kk, jj, ii) * m.prim(IV3, kk, jj, ii)));
-                    */
-
                     m.cons(IM1, kk, jj, ii) += dt * m.one_orgeo(ii) * (m.prim(IDN, kk, jj, ii) * (pow(m.prim(IV2, kk, jj, ii), 2) + pow(m.prim(IV3, kk, jj, ii), 2)) + 2 * m.prim(IPN, kk, jj, ii));
 
                     m.cons(IM2, kk, jj, ii) -= dt * m.dx1(ii) / m.rV(ii) * (m.rsq(ii) * valsL(0, IM2, kkf, jjf, iif) + m.rsq(ii + 1) * valsR(0, IM2, kkf, jjf, iif + 1));
@@ -183,14 +172,6 @@ void first_order(mesh &m, double &dt){
         #endif // defined (coordinate)
     #endif // defined (enable gravity)
 
-    // step 3.2: calculate source terms
-    // step 3.1.1: gravity
-    #if defined (ENABLE_GRAVITY)
-        m.grav->pointsource_grav(m, 1.e4, 0, 0, 0);
-        m.grav->calc_surface_vals(m);
-    #endif // defined (ENABLE_GRAVITY)
-
-
     // step 4: protections
     #if defined (PROTECTION_PROTECTION)
     #pragma omp parallel for collapse (3)
@@ -222,5 +203,6 @@ void first_order(mesh &m, double &dt){
     // step 6: apply boundary conditions
     apply_boundary_condition(m);
 }
+
 
 #endif // TIME_INTEGRATION_HPP_

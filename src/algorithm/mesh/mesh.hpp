@@ -54,6 +54,7 @@ class mesh{
         BootesArray<double> prim;            // 4D (4, z, y, x)
 
         /** multi-fluid for dust **/
+        int NUMSPECIES;
         BootesArray<double> dcons;
         BootesArray<double> dprim;
 
@@ -73,8 +74,11 @@ class mesh{
                             double x3min, double x3max, int numx3, int ngh3);
         void SetupSphericalPolar(int dimension,
                                  double x1min, double x1max, int numx1, double ratio1, int ngh1,
-                                 double x2min, double x2max, int numx2,               int ngh2,
-                                 double x3min, double x3max, int numx3,               int ngh3);
+                                 double x2min, double x2max, int numx2,                int ngh2,
+                                 double x3min, double x3max, int numx3,                int ngh3);
+        #if defined (ENABLE_DUSTFLUID)
+            void setupDustFluidMesh(int NS);
+        #endif
 };
 
 
