@@ -96,3 +96,20 @@ void work_after_loop(mesh &m){
         }
     }
 }
+
+void setup_dust(mesh &m, input_file &finput){
+    double smin    = finput.getDouble("smin");
+    double smax    = finput.getDouble("smax");
+    double rhodm   = finput.getDouble("srho");
+    int ns         = finput.getInt("num_species");
+    m.NUMSPECIES = ns;
+    m.rhodm = rhodm;
+
+    m.GrainEdgeList = logspace(log10(smin), log10(smax), ns + 1, true);
+    m.GrainSizeList.NewBootesArray(ns);
+    for (int specIND = 0; specIND < m.NUMSPECIES; specIND ++){
+        double s2 = m.GrainEdgeList(specIND + 1);
+        double s1 = m.GrainEdgeList(specIND);
+        m.GrainSizeList(specIND) = pow((pow(s2, 4) - pow(s1, 4)) / (4 * (s2 - s1)), 1./3.);
+    }
+}

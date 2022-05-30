@@ -46,6 +46,7 @@ class mesh{
         int ng1, ng2, ng3;                     // number of ghost zones in each direction, implement for 2D and 1D simulation
 
         double hydro_gamma;
+        double vth_coeff;
 
         /** cons **/
         BootesArray<double> cons;           // 4D (5, z, y, x)
@@ -55,6 +56,11 @@ class mesh{
 
         /** multi-fluid for dust **/
         int NUMSPECIES;
+        double rhodm;           // material density of dust grain. (1D array)
+        BootesArray<double> GrainEdgeList;              // edge of dust grains. (1D array, size NUMSPECIES + 1)
+        BootesArray<double> GrainSizeList;              // size of dust grains. (1D array)
+        BootesArray<double> GrainMassList;              // mass of dust grains. (1D array)
+        BootesArray<double> GrainSizeTimesGrainDensity; // rhodm * s
         BootesArray<double> dcons;
         BootesArray<double> dprim;
 
@@ -62,10 +68,6 @@ class mesh{
         #if defined (ENABLE_GRAVITY)
             gravity *grav = new gravity;
         #endif
-
-        /** functions **/
-        void prim_to_cons();
-        void cons_to_prim();
 
         /** setup grid functions **/
         void SetupCartesian(int dimension,

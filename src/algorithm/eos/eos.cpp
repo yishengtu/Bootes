@@ -1,5 +1,13 @@
 #include <cmath>
 #include "eos.hpp"
+#include "../../defs.hpp"
+#include "../index_def.hpp"
+#include "../mesh/mesh.hpp"
+
+
+double thermalspeed(double &rho, double &p, double &vthcoeff){
+    return sqrt(vthcoeff * p / rho);
+}
 
 
 double soundspeed(double &rho, double &p, double &gamma){
@@ -15,3 +23,42 @@ double pres(double &dens, double &ene, double &m1, double &m2, double &m3, doubl
 double ene(double &rho, double &pres, double &v1, double &v2, double &v3, double &gamma){
     return pres / (gamma - 1.) + 0.5 * rho * (v1 * v1 + v2 * v2 + v3 * v3);
 }
+
+
+void cons_to_prim(mesh &m){
+    #pragma omp parallel for collapse (3) schedule (static)
+    for (int kk = m.x3s; kk < m.x3l ; kk++){
+        for (int jj = m.x2s; jj < m.x2l; jj++){
+            for (int ii = m.x1s; ii < m.x1l; ii++){
+                double v1 = m.cons(IM1, kk, jj, ii) / m.cons(IDN, kk, jj, ii);
+                double v2 = m.cons(IM2, kk, jj, ii) / m.cons(IDN, kk, jj, ii);
+                double v3 = m.cons(IM3, kk, jj, ii) / m.cons(IDN, kk, jj, ii);
+                m.prim(IDN, kk, jj, ii) = m.cons(IDN, kk, jj, ii);
+                m.prim(IV1, kk, jj, ii) = v1;
+                m.prim(IV2, kk, jj, ii) = v2;
+                m.prim(IV3, kk, jj, ii) = v3;
+                m.prim(IPN, kk, jj, ii) = pres(m.cons(IDN, kk, jj, ii), m.cons(IEN, kk, jj, ii),
+                                                 m.cons(IM1, kk, jj, ii), m.cons(IM2, kk, jj, ii), m.cons(IM3, kk, jj, ii), m.hydro_gamma);
+            }
+        }
+    }
+}
+
+#ifdef ENABLE_DUSTFLUID
+void cons_to_prim_dust(mesh &m){
+    #pragma omp parallel for collapse (4) schedule (static)
+    for (int specIND = 0; specIND < m.NUMSPECIES; specIND ++){
+        for (int kk = m.x3s; kk < m.x3l ; kk++){
+            for (int jj = m.x2s; jj < m.x2l; jj++){
+                for (int ii = m.x1s; ii < m.x1l; ii++){
+                    m.dprim(specIND, IDN, kk, jj, ii) = m.dcons(specIND, IDN, kk, jj, ii);
+                    m.dprim(specIND, IV1, kk, jj, ii) = m.dcons(specIND, IM1, kk, jj, ii) / m.dcons(specIND, IDN, kk, jj, ii);
+                    m.dprim(specIND, IV2, kk, jj, ii) = m.dcons(specIND, IM2, kk, jj, ii) / m.dcons(specIND, IDN, kk, jj, ii);
+                    m.dprim(specIND, IV3, kk, jj, ii) = m.dcons(specIND, IM3, kk, jj, ii) / m.dcons(specIND, IDN, kk, jj, ii);
+                }
+            }
+        }
+    }
+}
+#endif // ENABLE_DUSTFLUID
+

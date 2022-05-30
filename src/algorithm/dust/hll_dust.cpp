@@ -1,7 +1,5 @@
-#ifndef HLL_DUST_HPP_
-#define HLL_DUST_HPP_
-
 #include "../eos/eos.hpp"
+#include "../index_def.hpp"
 #include <cmath>
 
 
@@ -30,5 +28,3 @@ void hll_dust( double *valsL,
     }
 }
 
-
-#endif // HLL_DUST_HPP_

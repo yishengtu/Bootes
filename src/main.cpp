@@ -2,11 +2,13 @@
 #include "algorithm/util.hpp"
 #include "algorithm/time_step/time_step.hpp"
 #include "algorithm/hydro/hllc.hpp"
-#include "algorithm/timeintegration.hpp"
+#include "algorithm/timeadvance/timeintegration.hpp"
 #include "algorithm/hydro/donercell.hpp"
 #include "algorithm/inoutput/output.hpp"
 #include "algorithm/inoutput/input.hpp"
 #include "algorithm/index_def.hpp"
+#include "algorithm/boundary_condition/apply_bc.hpp"
+#include "algorithm/eos/eos.hpp"
 #include "defs.hpp"
 #include <chrono>
 #include <omp.h>
@@ -14,10 +16,6 @@
 #if defined(ENABLE_GRAVITY)
     #include "algorithm/gravity/gravity.hpp"
 #endif // defined(ENABLE_GRAVITY)
-
-#if defined(ENABLE_DUSTFLUID)
-    #include "algorithm/timeintegration_dust.hpp"
-#endif
 
 #include "setup/dust_SPcoord.cpp"
 
@@ -29,9 +27,6 @@ void doloop(double &ot, double &next_exit_loop_time, mesh &m, double &CFL){
         cout << "\t integrate cycle: " << loop_cycle << "\t time: " << ot << "\t dt: " << dt << endl << flush;
         // step 1: evolve the hydro by dt
         first_order(m, dt);
-        #if defined (ENABLE_DUSTFLUID)
-            first_order_dust(m, dt);
-        #endif // defined(ENABLE_DUSTFLUID)
 
         // step 2: update other fields
         // step 2.1: calculate source terms
@@ -108,20 +103,28 @@ int main(){
                           );
     #endif // defined (COORDINATE)
     m.hydro_gamma = gamma_hydro;
+    m.vth_coeff = 8.0 / M_PI * gamma_hydro;         // for calculating gas thermal speed
 
-    #if defined(ENABLE_DUSTFLUID)
-        int ns      = finput.getInt("num_species");
-        m.setupDustFluidMesh(ns);
-    #endif // defined(ENABLE_DUSTFLUID)
+    #ifdef ENABLE_DUSTFLUID
+        setup_dust(m, finput);          // fill in m.GrainEdgeList, m.GrainSizeList and m.NUMSPECIES
+        m.setupDustFluidMesh(m.NUMSPECIES);
+        for (int ii = 0; ii < m.NUMSPECIES; ii ++){
+            cout << m.GrainSizeList(ii) << endl << flush;
+        }
+        m.GrainSizeTimesGrainDensity.NewBootesArray(m.NUMSPECIES);
+        m.GrainMassList.NewBootesArray(m.NUMSPECIES);
+        for (int specIND = 0; specIND < m.NUMSPECIES; specIND ++){
+            m.GrainSizeTimesGrainDensity(specIND) = m.GrainSizeList(specIND) * m.rhodm;
+            m.GrainMassList(specIND) = 4. / 3. * M_PI * pow(m.GrainSizeList(specIND), 3) * m.rhodm;
+        }
+    #endif // ENABLE_DUSTFLUID
     /** setup initial condition **/
     setup(m, finput);   // setup according to the input file
-
-    cout << ns << endl << flush;
 
     m.grav->pointsource_grav(m, 1.e4, 0, 0, 0);
     m.grav->calc_surface_vals(m);
 
-    m.cons_to_prim();
+    cons_to_prim(m);
     apply_boundary_condition(m);
     /** initialize simulation parameters **/
     double t_tot = finput.getDouble("t_tot");

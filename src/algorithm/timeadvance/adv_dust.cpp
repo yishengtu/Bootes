@@ -1,16 +1,11 @@
-#ifndef TIME_INTEGRATION_DUST_HPP_
-#define TIME_INTEGRATION_DUST_HPP_
+#include "adv_dust.hpp"
 
-#include "reconstruct/minmod_dust.hpp"
-//#include "redconstruct/dconst_recon.hpp"
-#include "time_step/time_step.hpp"
-#include "BootesArray.hpp"
-#include "util.hpp"
-#include "hydro/hll_dust.hpp"
-#include "hydro/donercell.hpp"
-#include "boundary_condition/apply_bc.hpp"
-#include "index_def.hpp"
-
+#include "../reconstruct/minmod_dust.hpp"
+#include "../time_step/time_step.hpp"
+#include "../util.hpp"
+#include "../dust/hll_dust.hpp"
+#include "../boundary_condition/apply_bc.hpp"
+#include "../mesh/mesh.hpp"
 
 void calc_flux_dust(mesh &m, double &dt, int &NUMSPECIES, BootesArray<double> &fdcons, BootesArray<double> &valsL, BootesArray<double> &valsR){
     // store the redconstructed value
@@ -68,20 +63,7 @@ void calc_flux_dust(mesh &m, double &dt, int &NUMSPECIES, BootesArray<double> &f
 }
 
 
-void first_order_dust(mesh &m, double &dt){
-    // First order integration
-    // (axis, z, y, x)
-    // Step 1: calculate flux
-    BootesArray<double> valsL;      // boundary left value
-    BootesArray<double> valsR;      // boundary right value
-    BootesArray<double> fdcons;      // flux of dconservative variables
-    valsL.NewBootesArray(m.NUMSPECIES, 3, NUMCONS - 1, m.nx3 + 1, m.nx2 + 1, m.nx1 + 1);
-    valsR.NewBootesArray(m.NUMSPECIES, 3, NUMCONS - 1, m.nx3 + 1, m.nx2 + 1, m.nx1 + 1);
-    fdcons.NewBootesArray(m.NUMSPECIES,   NUMCONS - 1, 3, m.dcons.shape()[2] + 1, m.dcons.shape()[3] + 1, m.dcons.shape()[4] + 1);
-    calc_flux_dust(m, dt, m.NUMSPECIES, fdcons, valsL, valsR);
-
-    // step 2: time integrate to update dconsERVATIVE variables, solve Riemann Problem
-    // First order for now
+void advect_cons_dust(mesh &m, double &dt, int &NUMSPECIES, BootesArray<double> &fdcons, BootesArray<double> &valsL, BootesArray<double> &valsR){
     #if defined(CARTESIAN_COORD)
         #pragma omp parallel for collapse (4) schedule (static)
         for (int specIND  = 0; specIND < m.NUMSPECIES; specIND++){
@@ -137,48 +119,50 @@ void first_order_dust(mesh &m, double &dt){
     #else
         # error need coordinate defined
     #endif
+}
 
-    // step 3: source terms
-    // step 3.1: apply source terms
-    #if defined (ENABLE_GRAVITY)
-        #if defined (CARTESIAN_COORDINATE)
-            #pragma omp parallel for collapse (4)
-            for (int specIND  = 0; specIND < m.NUMSPECIES; specIND++){
-                for (int kk = m.x3s; kk < m.x3l; kk ++){
-                    for (int jj = m.x2s; jj < m.x2l; jj ++){
-                        for (int ii = m.x1s; ii < m.x1l; ii ++){
-                            double rhogradphix1 = m.dprim(specIND, IDN, kk, jj, ii) * (m.grav->Phi_grav_x1surface(kk, jj, ii + 1) - m.grav->Phi_grav_x1surface(kk, jj, ii)) / m.dx1p(kk, jj, ii);
-                            double rhogradphix2 = m.dprim(specIND, IDN, kk, jj, ii) * (m.grav->Phi_grav_x2surface(kk, jj + 1, ii) - m.grav->Phi_grav_x2surface(kk, jj, ii)) / m.dx2p(kk, jj, ii);
-                            double rhogradphix3 = m.dprim(specIND, IDN, kk, jj, ii) * (m.grav->Phi_grav_x3surface(kk + 1, jj, ii) - m.grav->Phi_grav_x3surface(kk, jj, ii)) / m.dx3p(kk, jj, ii);
-                            m.dcons(specIND, IM1, kk, jj, ii) += rhogradphix1;
-                            m.dcons(specIND, IM2, kk, jj, ii) += rhogradphix2;
-                            m.dcons(specIND, IM3, kk, jj, ii) += rhogradphix3;
-                        }
+
+#if defined (ENABLE_GRAVITY)
+void apply_grav_source_terms_dust(mesh &m, double &dt){
+    #if defined (CARTESIAN_COORDINATE)
+        #pragma omp parallel for collapse (4)
+        for (int specIND  = 0; specIND < m.NUMSPECIES; specIND++){
+            for (int kk = m.x3s; kk < m.x3l; kk ++){
+                for (int jj = m.x2s; jj < m.x2l; jj ++){
+                    for (int ii = m.x1s; ii < m.x1l; ii ++){
+                        double rhogradphix1 = m.dprim(specIND, IDN, kk, jj, ii) * (m.grav->Phi_grav_x1surface(kk, jj, ii + 1) - m.grav->Phi_grav_x1surface(kk, jj, ii)) / m.dx1p(kk, jj, ii);
+                        double rhogradphix2 = m.dprim(specIND, IDN, kk, jj, ii) * (m.grav->Phi_grav_x2surface(kk, jj + 1, ii) - m.grav->Phi_grav_x2surface(kk, jj, ii)) / m.dx2p(kk, jj, ii);
+                        double rhogradphix3 = m.dprim(specIND, IDN, kk, jj, ii) * (m.grav->Phi_grav_x3surface(kk + 1, jj, ii) - m.grav->Phi_grav_x3surface(kk, jj, ii)) / m.dx3p(kk, jj, ii);
+                        m.dcons(specIND, IM1, kk, jj, ii) += rhogradphix1 * dt;
+                        m.dcons(specIND, IM2, kk, jj, ii) += rhogradphix2 * dt;
+                        m.dcons(specIND, IM3, kk, jj, ii) += rhogradphix3 * dt;
                     }
                 }
             }
-            // TODO
-        #elif defined (SPHERICAL_POLAR_COORD)
-            #pragma omp parallel for collapse (4)
-            for (int specIND  = 0; specIND < m.NUMSPECIES; specIND++){
-                for (int kk = m.x3s; kk < m.x3l; kk ++){
-                    for (int jj = m.x2s; jj < m.x2l; jj ++){
-                        for (int ii = m.x1s; ii < m.x1l; ii ++){
-                            double rhogradphix1 = m.dprim(specIND, IDN, kk, jj, ii) * (m.grav->Phi_grav_x1surface(kk, jj, ii + 1) - m.grav->Phi_grav_x1surface(kk, jj, ii)) / m.dx1p(kk, jj, ii);
-                            double rhogradphix2 = m.dprim(specIND, IDN, kk, jj, ii) * (m.grav->Phi_grav_x2surface(kk, jj + 1, ii) - m.grav->Phi_grav_x2surface(kk, jj, ii)) / m.dx2p(kk, jj, ii);
-                            double rhogradphix3 = m.dprim(specIND, IDN, kk, jj, ii) * (m.grav->Phi_grav_x3surface(kk + 1, jj, ii) - m.grav->Phi_grav_x3surface(kk, jj, ii)) / m.dx3p(kk, jj, ii);
-                            m.dcons(specIND, IM1, kk, jj, ii) += rhogradphix1;
-                            m.dcons(specIND, IM2, kk, jj, ii) += rhogradphix2;
-                            m.dcons(specIND, IM3, kk, jj, ii) += rhogradphix3;
-                        }
+        }
+        // TODO
+    #elif defined (SPHERICAL_POLAR_COORD)
+        #pragma omp parallel for collapse (4)
+        for (int specIND  = 0; specIND < m.NUMSPECIES; specIND++){
+            for (int kk = m.x3s; kk < m.x3l; kk ++){
+                for (int jj = m.x2s; jj < m.x2l; jj ++){
+                    for (int ii = m.x1s; ii < m.x1l; ii ++){
+                        double rhogradphix1 = m.dprim(specIND, IDN, kk, jj, ii) * (m.grav->Phi_grav_x1surface(kk, jj, ii + 1) - m.grav->Phi_grav_x1surface(kk, jj, ii)) / m.dx1p(kk, jj, ii);
+                        double rhogradphix2 = m.dprim(specIND, IDN, kk, jj, ii) * (m.grav->Phi_grav_x2surface(kk, jj + 1, ii) - m.grav->Phi_grav_x2surface(kk, jj, ii)) / m.dx2p(kk, jj, ii);
+                        double rhogradphix3 = m.dprim(specIND, IDN, kk, jj, ii) * (m.grav->Phi_grav_x3surface(kk + 1, jj, ii) - m.grav->Phi_grav_x3surface(kk, jj, ii)) / m.dx3p(kk, jj, ii);
+                        m.dcons(specIND, IM1, kk, jj, ii) += rhogradphix1 * dt;
+                        m.dcons(specIND, IM2, kk, jj, ii) += rhogradphix2 * dt;
+                        m.dcons(specIND, IM3, kk, jj, ii) += rhogradphix3 * dt;
                     }
                 }
             }
-        #endif // defined (coordinate)
-    #endif // defined (enable gravity)
+        }
+    #endif // defined (coordinate)
+}
+#endif // defined (enable gravity)
 
-    // step 4: protections
-    #if defined (DUST_PROTECTION)
+#ifdef DUST_PROTECTION
+void protection_dust(mesh &m){
     #pragma omp parallel for collapse (4)
     for (int specIND = 0; specIND < m.NUMSPECIES; specIND++){
         for (int kk = m.x3s; kk < m.x3l; kk ++){
@@ -200,25 +184,8 @@ void first_order_dust(mesh &m, double &dt){
             }
         }
     }
-    #endif // defined(PROTECTION_PROTECTION)
-
-    // step 5: use E.O.S. and relations to get dprimitive variables.
-    #pragma omp parallel for collapse (3) schedule (static)
-    for (int specIND = 0; specIND < m.NUMSPECIES; specIND++){
-        for (int kk = m.x3s; kk < m.x3l ; kk++){
-            for (int jj = m.x2s; jj < m.x2l; jj++){
-                for (int ii = m.x1s; ii < m.x1l; ii++){
-                    m.dprim(specIND, IDN, kk, jj, ii) = m.dcons(specIND, IDN, kk, jj, ii);
-                    m.dprim(specIND, IV1, kk, jj, ii) = m.dcons(specIND, IM1, kk, jj, ii) / m.dcons(specIND, IDN, kk, jj, ii);
-                    m.dprim(specIND, IV2, kk, jj, ii) = m.dcons(specIND, IM2, kk, jj, ii) / m.dcons(specIND, IDN, kk, jj, ii);
-                    m.dprim(specIND, IV3, kk, jj, ii) = m.dcons(specIND, IM3, kk, jj, ii) / m.dcons(specIND, IDN, kk, jj, ii);
-                }
-            }
-        }
-    }
-    // step 6: apply boundary conditions
-    apply_boundary_condition(m);
 }
+#endif // DUST_PROTECTION
 
 
-#endif // TIME_INTEGRATION_HPP_
+

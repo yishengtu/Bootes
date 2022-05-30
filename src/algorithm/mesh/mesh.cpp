@@ -62,8 +62,8 @@ void mesh::SetupCartesian(int dimension,
 
 void mesh::SetupSphericalPolar(int dimension,
                                double x1min, double x1max, int numx1, double ratio1, int ngh1,
-                               double x2min, double x2max, int numx2,               int ngh2,
-                               double x3min, double x3max, int numx3,               int ngh3){
+                               double x2min, double x2max, int numx2,                int ngh2,
+                               double x3min, double x3max, int numx3,                int ngh3){
     // 1 - r; 2 - theta; 3 - phi
     dim = dimension;
     ng1 = ngh1;  ng2 = ngh2;  ng3 = ngh3;
@@ -194,29 +194,6 @@ void mesh::SetupSphericalPolar(int dimension,
 }
 
 
-void mesh::prim_to_cons(){
-    ;
-}
-
-
-void mesh::cons_to_prim(){
-    #pragma omp parallel for collapse (3) schedule (static)
-    for (int kk = x3s; kk < x3l ; kk++){
-        for (int jj = x2s; jj < x2l; jj++){
-            for (int ii = x1s; ii < x1l; ii++){
-                double v1 = cons(IM1, kk, jj, ii) / cons(IDN, kk, jj, ii);
-                double v2 = cons(IM2, kk, jj, ii) / cons(IDN, kk, jj, ii);
-                double v3 = cons(IM3, kk, jj, ii) / cons(IDN, kk, jj, ii);
-                prim(IDN, kk, jj, ii) = cons(IDN, kk, jj, ii);
-                prim(IV1, kk, jj, ii) = v1;
-                prim(IV2, kk, jj, ii) = v2;
-                prim(IV3, kk, jj, ii) = v3;
-                prim(IPN, kk, jj, ii) = pres(cons(IDN, kk, jj, ii), cons(IEN, kk, jj, ii),
-                                             cons(IM1, kk, jj, ii), cons(IM2, kk, jj, ii), cons(IM3, kk, jj, ii), hydro_gamma);
-            }
-        }
-    }
-}
 #if defined (ENABLE_DUSTFLUID)
 void mesh::setupDustFluidMesh(int NS){
     NUMSPECIES = NS;
