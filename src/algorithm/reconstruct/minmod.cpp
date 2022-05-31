@@ -2,7 +2,9 @@
 
 #include "../BootesArray.hpp"
 #include "../eos/momentum.hpp"
+#include "../eos/eos.hpp"
 #include "../../defs.hpp"
+#include "../index_def.hpp"
 #include "../mesh/mesh.hpp"
 
 void minmod(double &quanp1, double &quan, double &quanm1, double &dx_axis, double &dt, double &Vui, double &acs, double &BquanL, double &BquanR){

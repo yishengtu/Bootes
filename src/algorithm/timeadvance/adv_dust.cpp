@@ -2,7 +2,7 @@
 
 #include "../reconstruct/minmod_dust.hpp"
 #include "../time_step/time_step.hpp"
-#include "../util.hpp"
+#include "../util/util.hpp"
 #include "../dust/hll_dust.hpp"
 #include "../boundary_condition/apply_bc.hpp"
 #include "../mesh/mesh.hpp"
@@ -45,8 +45,11 @@ void calc_flux_dust(mesh &m, double &dt, int &NUMSPECIES, BootesArray<double> &f
                 }
             }
         }
-        // Need to set values in the fdcons to zeros.
-        #pragma omp parallel for collapse (4) schedule (static)
+    }
+    // Need to set unused values in the fdcons to zeros.
+    // To do so the axis goes from "number of active axis" to 3
+    #pragma omp parallel for collapse (5) schedule (static)
+    for (int axis = m.dim; axis < 3; axis ++){
         for (int specIND = 0; specIND < NUMSPECIES; specIND++){
             for (int kk = 0; kk < fdcons.shape()[3]; kk ++){
                 for (int jj = 0; jj < fdcons.shape()[4]; jj ++){
@@ -121,45 +124,6 @@ void advect_cons_dust(mesh &m, double &dt, int &NUMSPECIES, BootesArray<double> 
     #endif
 }
 
-
-#if defined (ENABLE_GRAVITY)
-void apply_grav_source_terms_dust(mesh &m, double &dt){
-    #if defined (CARTESIAN_COORDINATE)
-        #pragma omp parallel for collapse (4)
-        for (int specIND  = 0; specIND < m.NUMSPECIES; specIND++){
-            for (int kk = m.x3s; kk < m.x3l; kk ++){
-                for (int jj = m.x2s; jj < m.x2l; jj ++){
-                    for (int ii = m.x1s; ii < m.x1l; ii ++){
-                        double rhogradphix1 = m.dprim(specIND, IDN, kk, jj, ii) * (m.grav->Phi_grav_x1surface(kk, jj, ii + 1) - m.grav->Phi_grav_x1surface(kk, jj, ii)) / m.dx1p(kk, jj, ii);
-                        double rhogradphix2 = m.dprim(specIND, IDN, kk, jj, ii) * (m.grav->Phi_grav_x2surface(kk, jj + 1, ii) - m.grav->Phi_grav_x2surface(kk, jj, ii)) / m.dx2p(kk, jj, ii);
-                        double rhogradphix3 = m.dprim(specIND, IDN, kk, jj, ii) * (m.grav->Phi_grav_x3surface(kk + 1, jj, ii) - m.grav->Phi_grav_x3surface(kk, jj, ii)) / m.dx3p(kk, jj, ii);
-                        m.dcons(specIND, IM1, kk, jj, ii) += rhogradphix1 * dt;
-                        m.dcons(specIND, IM2, kk, jj, ii) += rhogradphix2 * dt;
-                        m.dcons(specIND, IM3, kk, jj, ii) += rhogradphix3 * dt;
-                    }
-                }
-            }
-        }
-        // TODO
-    #elif defined (SPHERICAL_POLAR_COORD)
-        #pragma omp parallel for collapse (4)
-        for (int specIND  = 0; specIND < m.NUMSPECIES; specIND++){
-            for (int kk = m.x3s; kk < m.x3l; kk ++){
-                for (int jj = m.x2s; jj < m.x2l; jj ++){
-                    for (int ii = m.x1s; ii < m.x1l; ii ++){
-                        double rhogradphix1 = m.dprim(specIND, IDN, kk, jj, ii) * (m.grav->Phi_grav_x1surface(kk, jj, ii + 1) - m.grav->Phi_grav_x1surface(kk, jj, ii)) / m.dx1p(kk, jj, ii);
-                        double rhogradphix2 = m.dprim(specIND, IDN, kk, jj, ii) * (m.grav->Phi_grav_x2surface(kk, jj + 1, ii) - m.grav->Phi_grav_x2surface(kk, jj, ii)) / m.dx2p(kk, jj, ii);
-                        double rhogradphix3 = m.dprim(specIND, IDN, kk, jj, ii) * (m.grav->Phi_grav_x3surface(kk + 1, jj, ii) - m.grav->Phi_grav_x3surface(kk, jj, ii)) / m.dx3p(kk, jj, ii);
-                        m.dcons(specIND, IM1, kk, jj, ii) += rhogradphix1 * dt;
-                        m.dcons(specIND, IM2, kk, jj, ii) += rhogradphix2 * dt;
-                        m.dcons(specIND, IM3, kk, jj, ii) += rhogradphix3 * dt;
-                    }
-                }
-            }
-        }
-    #endif // defined (coordinate)
-}
-#endif // defined (enable gravity)
 
 #ifdef DUST_PROTECTION
 void protection_dust(mesh &m){

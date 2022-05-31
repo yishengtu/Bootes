@@ -1,4 +1,5 @@
 #include "mesh.hpp"
+#include "../util/util.hpp"
 #include "../index_def.hpp"
 #include "../gravity/gravity.hpp"
 #include "../../defs.hpp"

@@ -14,4 +14,4 @@
 // #define DUST_PROTECTION
 
 /** DEBUG **/
-// #define debug
+#define debug

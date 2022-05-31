@@ -53,12 +53,12 @@ void setup(mesh &m, input_file &finput){
         for (int kk = m.x3s; kk < m.x3l; kk++){
             for (int jj = m.x2s; jj < m.x2l; jj++){
                 for (int ii = m.x1s; ii < m.x1l; ii++){
-                    m.dcons(specIND, IDN, kk, jj, ii) = (double) specIND + 1.;
-                    m.dcons(specIND, IM1, kk, jj, ii) = 1.;
+                    m.dcons(specIND, IDN, kk, jj, ii) = 1.; // (double) specIND + 1.;
+                    m.dcons(specIND, IM1, kk, jj, ii) = 0.0;
                     m.dcons(specIND, IM2, kk, jj, ii) = 0.0;
                     m.dcons(specIND, IM3, kk, jj, ii) = 0.0; // sqrt(G * 10 / pow(100, 3)) * m.x1v(ii);
-                    m.dprim(specIND, IDN, kk, jj, ii) = (double) specIND + 1.;
-                    m.dprim(specIND, IM1, kk, jj, ii) = m.dcons(specIND, IM1, kk, jj, ii) / m.dcons(specIND, IDN, kk, jj, ii);
+                    m.dprim(specIND, IDN, kk, jj, ii) = 1.; // (double) specIND + 1.;
+                    m.dprim(specIND, IM1, kk, jj, ii) = 0.0;
                     m.dprim(specIND, IM2, kk, jj, ii) = 0.0;
                     m.dprim(specIND, IM3, kk, jj, ii) = 0.0; // sqrt(G * 10 / pow(100, 3)) * m.x1v(ii);
                 }

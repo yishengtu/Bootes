@@ -4,11 +4,18 @@ EXE_DIR := bin/
 EXECUTABLE := $(EXE_DIR)bootes.out
 
 SRC_FILES := $(wildcard src/algorithm/eos/*.cpp) \
-	     src/algorithm/util.cpp \
+	     $(wildcard src/algorithm/util/*.cpp) \
 	     $(wildcard src/algorithm/boundary_condition/*.cpp) \
 	     $(wildcard src/algorithm/gravity/*.cpp) \
 	     $(wildcard src/algorithm/hydro/*.cpp) \
+	     $(wildcard src/algorithm/hydro/srcterm/*cpp) \
 	     $(wildcard src/algorithm/mesh/*.cpp) \
+	     $(wildcard src/algorithm/timeadvance/*.cpp) \
+	     $(wildcard src/algorithm/reconstruct/*.cpp) \
+	     $(wildcard src/algorithm/time_step/*.cpp) \
+	     $(wildcard src/algorithm/dust/*.cpp) \
+	     $(wildcard src/algorithm/dust/srcterm/*.cpp) \
+	     $(wildcard src/algorithm/boundary_condition/dust/*.cpp) \
 	     $(wildcard src/main.cpp)
 
 OBJ_DIR := obj/

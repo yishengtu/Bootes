@@ -4,10 +4,6 @@
 #include <memory>
 #include <iostream>
 #include "../BootesArray.hpp"
-#include "../util.hpp"
-#include "../eos/eos.hpp"
-#include "../boundary_condition/standard_bc.hpp"
-#include "../../defs.hpp"
 #include "../gravity/gravity.hpp"
 
 

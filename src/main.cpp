@@ -1,5 +1,5 @@
 #include "algorithm/mesh/mesh.hpp"
-#include "algorithm/util.hpp"
+#include "algorithm/util/util.hpp"
 #include "algorithm/time_step/time_step.hpp"
 #include "algorithm/hydro/hllc.hpp"
 #include "algorithm/timeadvance/timeintegration.hpp"
@@ -16,6 +16,11 @@
 #if defined(ENABLE_GRAVITY)
     #include "algorithm/gravity/gravity.hpp"
 #endif // defined(ENABLE_GRAVITY)
+
+#ifdef ENABLE_DUSTFLUID
+    #include "algorithm/eos/eos_dust.hpp"
+    #include "algorithm/boundary_condition/dust/apply_bc_dust.hpp"
+#endif // ENABLE_DUSTFLUID
 
 #include "setup/dust_SPcoord.cpp"
 
@@ -126,6 +131,10 @@ int main(){
 
     cons_to_prim(m);
     apply_boundary_condition(m);
+    #ifdef ENABLE_DUSTFLUID
+    cons_to_prim_dust(m);
+    apply_boundary_condition_dust(m);
+    #endif
     /** initialize simulation parameters **/
     double t_tot = finput.getDouble("t_tot");
     double output_dt = finput.getDouble("output_dt");

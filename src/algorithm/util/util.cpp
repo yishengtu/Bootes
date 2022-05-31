@@ -1,5 +1,5 @@
 #include <cmath>
-#include "BootesArray.hpp"
+#include "../BootesArray.hpp"
 #include "util.hpp"
 
 using namespace std;

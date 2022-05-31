@@ -11,8 +11,5 @@ double stoppingtime(double &rhodmsize, double &rho, double &pres, double &vth_co
 double calc_stoppingtimemesh(mesh &m, BootesArray<double> &stoppingtimemesh);
 
 
-void apply_gas_drag_on_dust(mesh &m, double &dt, BootesArray<double> &stoppingtimemesh);
-
-
 #endif // GAS_DRAG_ON_DUST_HPP_
 

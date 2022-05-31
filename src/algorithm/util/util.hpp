@@ -1,7 +1,6 @@
 #ifndef UTIL_HPP_
 #define UTIL_HPP_
-#include <cmath>
-#include "BootesArray.hpp"
+#include "../BootesArray.hpp"
 
 using namespace std;
 
