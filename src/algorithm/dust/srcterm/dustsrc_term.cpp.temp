@@ -40,24 +40,33 @@ void apply_source_terms_dust(mesh &m, double &dt, BootesArray<double> &stoppingt
                         double rhogradphix1;
                         double rhogradphix2;
                         double rhogradphix3;
-                        #ifdef ENABLE_GRAVITY
-                        rhogradphix1 = m.dprim(specIND, IDN, kk, jj, ii) * (m.grav->Phi_grav_x1surface(kk, jj, ii + 1) - m.grav->Phi_grav_x1surface(kk, jj, ii)) / m.dx1p(kk, jj, ii);
-                        rhogradphix2 = m.dprim(specIND, IDN, kk, jj, ii) * (m.grav->Phi_grav_x2surface(kk, jj + 1, ii) - m.grav->Phi_grav_x2surface(kk, jj, ii)) / m.dx2p(kk, jj, ii);
-                        rhogradphix3 = m.dprim(specIND, IDN, kk, jj, ii) * (m.grav->Phi_grav_x3surface(kk + 1, jj, ii) - m.grav->Phi_grav_x3surface(kk, jj, ii)) / m.dx3p(kk, jj, ii);
-                        #else   // set gravity to zero
-                        rhogradphix1 = 0;
-                        rhogradphix2 = 0;
-                        rhogradphix3 = 0;
-                        #endif // ENABLE_GRAVITY
 
                         if (stoppingtimemesh(specIND, kk, jj, ii) < dt){
+                            #ifdef ENABLE_GRAVITY
+                            rhogradphix1 = m.dcons(specIND, IDN, kk, jj, ii) * (m.grav->Phi_grav_x1surface(kk, jj, ii + 1) - m.grav->Phi_grav_x1surface(kk, jj, ii)) / m.dx1p(kk, jj, ii);
+                            rhogradphix2 = m.dcons(specIND, IDN, kk, jj, ii) * (m.grav->Phi_grav_x2surface(kk, jj + 1, ii) - m.grav->Phi_grav_x2surface(kk, jj, ii)) / m.dx2p(kk, jj, ii);
+                            rhogradphix3 = m.dcons(specIND, IDN, kk, jj, ii) * (m.grav->Phi_grav_x3surface(kk + 1, jj, ii) - m.grav->Phi_grav_x3surface(kk, jj, ii)) / m.dx3p(kk, jj, ii);
+                            #else   // set gravity to zero
+                            rhogradphix1 = 0;
+                            rhogradphix2 = 0;
+                            rhogradphix3 = 0;
+                            #endif // ENABLE_GRAVITY
                             dust_terminalvelocityapprixmation_xyz(m.prim(IV1, kk, jj, ii), m.prim(IV2, kk, jj, ii), m.prim(IV3, kk, jj, ii),
                                                                   rhogradphix1, rhogradphix2, rhogradphix3,
-                                                                  m.dprim(specIND, IDN, kk, jj, ii), stoppingtimemesh(specIND, kk, jj, ii),
+                                                                  m.dcons(specIND, IDN, kk, jj, ii), stoppingtimemesh(specIND, kk, jj, ii),
                                                                   m.dcons(specIND, IM1, kk, jj, ii), m.dcons(specIND, IM2, kk, jj, ii), m.dcons(specIND, IM3, kk, jj, ii)
                                                                   );
                         }
                         else{
+                            #ifdef ENABLE_GRAVITY
+                            rhogradphix1 = m.dprim(specIND, IDN, kk, jj, ii) * (m.grav->Phi_grav_x1surface(kk, jj, ii + 1) - m.grav->Phi_grav_x1surface(kk, jj, ii)) / m.dx1p(kk, jj, ii);
+                            rhogradphix2 = m.dprim(specIND, IDN, kk, jj, ii) * (m.grav->Phi_grav_x2surface(kk, jj + 1, ii) - m.grav->Phi_grav_x2surface(kk, jj, ii)) / m.dx2p(kk, jj, ii);
+                            rhogradphix3 = m.dprim(specIND, IDN, kk, jj, ii) * (m.grav->Phi_grav_x3surface(kk + 1, jj, ii) - m.grav->Phi_grav_x3surface(kk, jj, ii)) / m.dx3p(kk, jj, ii);
+                            #else   // set gravity to zero
+                            rhogradphix1 = 0;
+                            rhogradphix2 = 0;
+                            rhogradphix3 = 0;
+                            #endif // ENABLE_GRAVITY
                             // apply gravity
                             m.dcons(specIND, IM1, kk, jj, ii) += rhogradphix1 * dt;
                             m.dcons(specIND, IM2, kk, jj, ii) += rhogradphix2 * dt;

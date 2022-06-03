@@ -13,12 +13,12 @@ void setup(mesh &m, input_file &finput){
             for (int ii = m.x1s; ii < m.x1l; ii++){
                 // 1
                 // if (abs(m.x1v(ii) * cos(m.x2v(jj))) < 0.3){
-                if (abs(m.x2v(jj) - M_PI / 2.) < M_PI / 16. && abs(m.x1v(ii) - 1.0) < 0.1){
+                if (abs(((double) jj) - ((double) m.x2v.shape()[0] - 1) / 2.) < ((double) m.x2v.shape()[0]) / 16. && abs(m.x1v(ii) - 1.0) < 0.1){
                     m.cons(IDN, kk, jj, ii) = 2.0;
                     m.cons(IM1, kk, jj, ii) = 5. * m.cons(IDN, kk, jj, ii) * sin(m.x2v(jj));
                     m.cons(IM2, kk, jj, ii) = 5. * m.cons(IDN, kk, jj, ii) * cos(m.x2v(jj));
-                    m.cons(IM1, kk, jj, ii) += 0.01 * ((double) rand()/RAND_MAX  - 0.5) * m.cons(IDN, kk, jj, ii);
-                    m.cons(IM2, kk, jj, ii) += 0.01 * ((double) rand()/RAND_MAX  - 0.5) * m.cons(IDN, kk, jj, ii);
+                    //m.cons(IM1, kk, jj, ii) += 0.01 * ((double) rand()/RAND_MAX  - 0.5) * m.cons(IDN, kk, jj, ii);
+                    //m.cons(IM2, kk, jj, ii) += 0.01 * ((double) rand()/RAND_MAX  - 0.5) * m.cons(IDN, kk, jj, ii);
                     m.cons(IM3, kk, jj, ii) = 0.0; // sqrt(G * 10 / pow(100, 3)) * m.x1v(ii);
                     m.prim(IPN, kk, jj, ii) = 2.5;
                     double vel1 = m.cons(IM1, kk, jj, ii) / m.cons(IDN, kk, jj, ii);
@@ -33,8 +33,8 @@ void setup(mesh &m, input_file &finput){
                     m.cons(IDN, kk, jj, ii) = 1.0;
                     m.cons(IM1, kk, jj, ii) = 0.0; // 0.5 * sin(m.x2v(jj)) * m.cons(IDN, kk, jj, ii);
                     m.cons(IM2, kk, jj, ii) = 0.0; // 0.5 * cos(m.x2v(jj)) * m.cons(IDN, kk, jj, ii);
-                    m.cons(IM1, kk, jj, ii) += 0.01 * ((double) rand()/RAND_MAX  - 0.5) * m.cons(IDN, kk, jj, ii);
-                    m.cons(IM2, kk, jj, ii) += 0.01 * ((double) rand()/RAND_MAX  - 0.5) * m.cons(IDN, kk, jj, ii);
+                    //m.cons(IM1, kk, jj, ii) += 0.01 * ((double) rand()/RAND_MAX  - 0.5) * m.cons(IDN, kk, jj, ii);
+                    //m.cons(IM2, kk, jj, ii) += 0.01 * ((double) rand()/RAND_MAX  - 0.5) * m.cons(IDN, kk, jj, ii);
                     m.cons(IM3, kk, jj, ii) = 0.0; // sqrt(G * 10 / pow(100, 3)) * m.x1v(ii);
                     m.prim(IPN, kk, jj, ii) = 2.5;
                     double vel1 = m.cons(IM1, kk, jj, ii) / m.cons(IDN, kk, jj, ii);
@@ -70,13 +70,14 @@ void setup(mesh &m, input_file &finput){
     // Right now, gravity is defined in main.cpp and time_integration.cpp.
 }
 
+
 void work_after_loop(mesh &m){
     for (int kk = m.x3s; kk < m.x3l; kk++){
         for (int jj = m.x2s; jj < m.x2l; jj++){
             for (int ii = m.x1s; ii < m.x1l; ii++){
                 // 1
                 // if (abs(m.x1v(ii) * cos(m.x2v(jj))) < 0.3){
-                if (abs(m.x2v(jj) - M_PI / 2.) < M_PI / 20. && abs(m.x1v(ii) - 1.0) < 0.1){
+                if (abs(((double) jj) - ((double) m.x2v.shape()[0] - 1) / 2.) < ((double) m.x2v.shape()[0]) / 16. && abs(m.x1v(ii) - 1.0) < 0.1){
                     m.cons(IDN, kk, jj, ii) = 2.0;
                     m.cons(IM1, kk, jj, ii) = 5. * m.cons(IDN, kk, jj, ii) * sin(m.x2v(jj));
                     m.cons(IM2, kk, jj, ii) = 5. * m.cons(IDN, kk, jj, ii) * cos(m.x2v(jj));
@@ -91,6 +92,9 @@ void work_after_loop(mesh &m){
                                                                   vel1,
                                                                   vel2,
                                                                   vel3, m.hydro_gamma);
+                    for (int specIND = 0; specIND < m.NUMSPECIES; specIND++){
+                        m.dcons(specIND, IDN, kk, jj, ii) = 1.; // (double) specIND + 1.;
+                    }
                 }
             }
         }

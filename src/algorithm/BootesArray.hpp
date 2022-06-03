@@ -126,37 +126,37 @@ class BootesArray {
     }
 
     T &operator() (const int x1) {
-        #ifdef debug
+        #ifdef DEBUG
             CHECKOK(x1);
         #endif
         return arr_[x1];
     }
     T &operator() (const int x2, const int x1) {
-        #ifdef debug
+        #ifdef DEBUG
             CHECKOK(x1 + size1_*x2);
         #endif
         return arr_[x1 + size1_*x2];
     }
     T &operator() (const int x3, const int x2, const int x1) {
-        #ifdef debug
+        #ifdef DEBUG
             CHECKOK(x1 + size1_*(x2 + size2_*x3));
         #endif
         return arr_[x1 + size1_*(x2 + size2_*x3)];
     }
     T &operator() (const int x4, const int x3, const int x2, const int x1) {
-        #ifdef debug
+        #ifdef DEBUG
             CHECKOK(x1 + size1_*(x2 + size2_*(x3 + size3_ * x4)));
         #endif
         return arr_[x1 + size1_*(x2 + size2_*(x3 + size3_ * x4))];
     }
     T &operator() (const int x5, const int x4, const int x3, const int x2, const int x1) {
-        #ifdef debug
+        #ifdef DEBUG
             CHECKOK(x1 + size1_*(x2 + size2_*(x3 + size3_ * (x4 + size4_ * x5))));
         #endif
         return arr_[x1 + size1_*(x2 + size2_*(x3 + size3_ * (x4 + size4_ * x5)))];
     }
     T &operator() (const int x6, const int x5, const int x4, const int x3, const int x2, const int x1) {
-        #ifdef debug
+        #ifdef DEBUG
             CHECKOK(x1 + size1_*(x2 + size2_*(x3 + size3_ * (x4 + size4_ * (x5 + size5_ * x6)))));
         #endif
         return arr_[x1 + size1_*(x2 + size2_*(x3 + size3_ * (x4 + size4_ * (x5 + size5_ * x6))))];
@@ -234,10 +234,13 @@ class BootesArray {
         arr_ = new T[arrsize_];
     }
 
-    #ifdef debug
+    #ifdef DEBUG
         void CHECKOK(int id){
             if (id >= arrsize_){
                 throw 1;
+            }
+            if (id < 0){
+                throw 2;
             }
         }
     #endif

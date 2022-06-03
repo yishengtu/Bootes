@@ -22,6 +22,10 @@
     #include "algorithm/boundary_condition/dust/apply_bc_dust.hpp"
 #endif // ENABLE_DUSTFLUID
 
+#ifdef DEBUG
+    #include "algorithm/util/checkok.hpp"
+#endif // DEBUG
+
 #include "setup/dust_SPcoord.cpp"
 
 void doloop(double &ot, double &next_exit_loop_time, mesh &m, double &CFL){
@@ -32,7 +36,6 @@ void doloop(double &ot, double &next_exit_loop_time, mesh &m, double &CFL){
         cout << "\t integrate cycle: " << loop_cycle << "\t time: " << ot << "\t dt: " << dt << endl << flush;
         // step 1: evolve the hydro by dt
         first_order(m, dt);
-
         // step 2: update other fields
         // step 2.1: calculate source terms
         // step 2.1.1: gravity
@@ -43,6 +46,16 @@ void doloop(double &ot, double &next_exit_loop_time, mesh &m, double &CFL){
 
         // step 3: work after loop
         work_after_loop(m);
+
+        #ifdef DEBUG
+            /** check the values are fine in program **/
+            #ifdef DEBUG
+            int stat = check_ok(m);
+            #endif // DEBUG
+            if (stat == 1){
+                throw 1;
+            }
+        #endif // DEBUG
 
         // last step: iterate counter
         ot += dt;

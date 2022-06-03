@@ -74,36 +74,36 @@ void reconstruct_dust(mesh &m,
                     /** dconservatives **/
                     double BrhoL, BrhoR;
                     minmod_dust(m.dcons(specIND, IDN, m.x3s + kk + x3excess, m.x2s + jj + x2excess, m.x1s + ii + x1excess),
-                           m.dcons(specIND, IDN, m.x3s + kk,            m.x2s + jj,            m.x1s + ii),
-                           m.dcons(specIND, IDN, m.x3s + kk - x3excess, m.x2s + jj - x2excess, m.x1s + ii - x1excess),
-                           dx_axis, dt,
-                           Vui, a,
-                           BrhoL,
-                           BrhoR);
+                                m.dcons(specIND, IDN, m.x3s + kk,            m.x2s + jj,            m.x1s + ii),
+                                m.dcons(specIND, IDN, m.x3s + kk - x3excess, m.x2s + jj - x2excess, m.x1s + ii - x1excess),
+                                dx_axis, dt,
+                                Vui, a,
+                                BrhoL,
+                                BrhoR);
                     double Bm1L, Bm1R;
                     minmod_dust(m.dcons(specIND, IM1, m.x3s + kk + x3excess, m.x2s + jj + x2excess, m.x1s + ii + x1excess),
-                           m.dcons(specIND, IM1, m.x3s + kk,            m.x2s + jj,            m.x1s + ii),
-                           m.dcons(specIND, IM1, m.x3s + kk - x3excess, m.x2s + jj - x2excess, m.x1s + ii - x1excess),
-                           dx_axis, dt,
-                           Vui, a,
-                           Bm1L,
-                           Bm1R);
+                                m.dcons(specIND, IM1, m.x3s + kk,            m.x2s + jj,            m.x1s + ii),
+                                m.dcons(specIND, IM1, m.x3s + kk - x3excess, m.x2s + jj - x2excess, m.x1s + ii - x1excess),
+                                dx_axis, dt,
+                                Vui, a,
+                                Bm1L,
+                                Bm1R);
                     double Bm2L, Bm2R;
                     minmod_dust(m.dcons(specIND, IM2, m.x3s + kk + x3excess, m.x2s + jj + x2excess, m.x1s + ii + x1excess),
-                           m.dcons(specIND, IM2, m.x3s + kk,            m.x2s + jj,            m.x1s + ii),
-                           m.dcons(specIND, IM2, m.x3s + kk - x3excess, m.x2s + jj - x2excess, m.x1s + ii - x1excess),
-                           dx_axis, dt,
-                           Vui, a,
-                           Bm2L,
-                           Bm2R);
+                                m.dcons(specIND, IM2, m.x3s + kk,            m.x2s + jj,            m.x1s + ii),
+                                m.dcons(specIND, IM2, m.x3s + kk - x3excess, m.x2s + jj - x2excess, m.x1s + ii - x1excess),
+                                dx_axis, dt,
+                                Vui, a,
+                                Bm2L,
+                                Bm2R);
                     double Bm3L, Bm3R;
                     minmod_dust(m.dcons(specIND, IM3, m.x3s + kk + x3excess, m.x2s + jj + x2excess, m.x1s + ii + x1excess),
-                           m.dcons(specIND, IM3, m.x3s + kk, m.x2s + jj, m.x1s + ii),
-                           m.dcons(specIND, IM3, m.x3s + kk - x3excess, m.x2s + jj - x2excess, m.x1s + ii - x1excess),
-                           dx_axis, dt,
-                           Vui, a,
-                           Bm3L,
-                           Bm3R);
+                                m.dcons(specIND, IM3, m.x3s + kk, m.x2s + jj, m.x1s + ii),
+                                m.dcons(specIND, IM3, m.x3s + kk - x3excess, m.x2s + jj - x2excess, m.x1s + ii - x1excess),
+                                dx_axis, dt,
+                                Vui, a,
+                                Bm3L,
+                                Bm3R);
 
                     // Left of a cell is the right of an edge.
                     if (kk == -1 || jj == -1 || ii == -1){

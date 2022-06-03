@@ -15,9 +15,10 @@
     #include "adv_dust.hpp"
     #include "../dust/gas_drag_on_dust.hpp"
     #include "../eos/eos_dust.hpp"
-    #include "../dust/srcterm/dustsrc_term.hpp"
+    // #include "../dust/srcterm/dustsrc_term.hpp"
     #include "../boundary_condition/dust/apply_bc_dust.hpp"
 #endif // ENABLE_DUSTFLUID
+
 
 void first_order(mesh &m, double &dt){
     // First order integration
@@ -31,6 +32,9 @@ void first_order(mesh &m, double &dt){
     fcons.NewBootesArray(NUMCONS, 3, m.cons.shape()[1] + 1, m.cons.shape()[2] + 1, m.cons.shape()[3] + 1);
     calc_flux(m, dt, fcons, valsL, valsR);
     #if defined(ENABLE_DUSTFLUID)
+    // TODO: the nan values probably comes from the fact that v_dust >> v_gas,
+    // so the CFL is not satisfied for dust. Periahps the way to get around this is to invoke
+    // adaptive time step, for grains which needs to evolve with more time steps
     BootesArray<double> dvalsL;      // boundary left value
     BootesArray<double> dvalsR;      // boundary right value
     BootesArray<double> fdcons;      // flux of dconservative variables
@@ -54,12 +58,12 @@ void first_order(mesh &m, double &dt){
         stoppingtime_mesh.NewBootesArray(m.NUMSPECIES, m.x3v.shape()[0], m.x2v.shape()[0], m.x1v.shape()[0]);
         double min_stoptime = calc_stoppingtimemesh(m, stoppingtime_mesh);
 
-        advect_cons_dust(m, dt, m.NUMSPECIES, fdcons, dvalsL, dvalsR);
+        advect_cons_dust(m, dt, m.NUMSPECIES, fdcons, dvalsL, dvalsR, stoppingtime_mesh);
         /** step 3.2: dust source **/
         /* all source terms are taken care in one function,
            because if ts too small the values are directly replaced with terminal velocity approximation.
         */
-        apply_source_terms_dust(m, dt, stoppingtime_mesh);
+        // apply_source_terms_dust(m, dt, stoppingtime_mesh);
     #endif // ENABLE_DUSTFLUID
 
     /** step 4: protections **/
