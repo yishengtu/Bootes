@@ -1,5 +1,6 @@
 #include "checkok.hpp"
 #include "../mesh/mesh.hpp"
+#include <cmath>
 
 
 int check_ok(mesh &m){

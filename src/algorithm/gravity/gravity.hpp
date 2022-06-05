@@ -2,7 +2,6 @@
 #define GRAVITY_HPP_
 
 #include "../BootesArray.hpp"
-#include "../physical_constants.hpp"
 #include "../../defs.hpp"
 
 

@@ -3,7 +3,8 @@ CFLAGS := -lhdf5 -lhdf5_cpp -O3 -fopenmp
 EXE_DIR := bin/
 EXECUTABLE := $(EXE_DIR)bootes.out
 
-SRC_FILES := $(wildcard src/algorithm/eos/*.cpp) \
+SRC_FILES := $(wildcard src/algorithm/*.cpp) \
+	     $(wildcard src/algorithm/eos/*.cpp) \
 	     $(wildcard src/algorithm/util/*.cpp) \
 	     $(wildcard src/algorithm/boundary_condition/*.cpp) \
 	     $(wildcard src/algorithm/gravity/*.cpp) \

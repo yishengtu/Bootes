@@ -1,5 +1,6 @@
+#include <cmath>
+
 #include "../reconstruct/minmod.hpp"
-//#include "reconstruct/const_recon.hpp"
 #include "../time_step/time_step.hpp"
 #include "../BootesArray.hpp"
 #include "../util/util.hpp"

@@ -9,6 +9,7 @@
 #include "algorithm/index_def.hpp"
 #include "algorithm/boundary_condition/apply_bc.hpp"
 #include "algorithm/eos/eos.hpp"
+#include "algorithm/physical_constants.hpp"
 #include "defs.hpp"
 #include <chrono>
 #include <omp.h>
@@ -26,7 +27,7 @@
     #include "algorithm/util/checkok.hpp"
 #endif // DEBUG
 
-#include "setup/dust_SPcoord.cpp"
+#include "setup/KH.cpp"
 
 void doloop(double &ot, double &next_exit_loop_time, mesh &m, double &CFL){
     int loop_cycle = 0;
@@ -88,6 +89,7 @@ int main(){
 
     /** setup grid and initial condition **/
     mesh m;
+    m.pconst.setup_physical_constants(finput);
     double gamma_hydro = finput.getDouble("gamma_hydro");
 
     int dim       = finput.getInt("dimension");
@@ -139,8 +141,10 @@ int main(){
     /** setup initial condition **/
     setup(m, finput);   // setup according to the input file
 
-    m.grav->pointsource_grav(m, 1.e4, 0, 0, 0);
-    m.grav->calc_surface_vals(m);
+    #if defined (ENABLE_GRAVITY)
+        m.grav->pointsource_grav(m, 1.e4, 0, 0, 0);
+        m.grav->calc_surface_vals(m);
+    #endif // defined (ENABLE_GRAVITY)
 
     cons_to_prim(m);
     apply_boundary_condition(m);

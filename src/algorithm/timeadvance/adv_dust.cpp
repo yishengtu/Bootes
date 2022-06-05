@@ -1,3 +1,5 @@
+#include <cmath>
+
 #include "adv_dust.hpp"
 
 // #include "../reconstruct/minmod_dust.hpp"
@@ -93,6 +95,7 @@ void dust_terminalvelocityapprixmation_rtp(double &vg1, double &vg2, double &vg3
 
 void advect_cons_dust(mesh &m, double &dt, int &NUMSPECIES, BootesArray<double> &fdcons, BootesArray<double> &valsL, BootesArray<double> &valsR, BootesArray<double> &stoppingtimemesh){
     #if defined(CARTESIAN_COORD)
+        // TODO: may need update
         #pragma omp parallel for collapse (4) schedule (static)
         for (int specIND  = 0; specIND < m.NUMSPECIES; specIND++){
             for (int kk = m.x3s; kk < m.x3l; kk ++){
@@ -112,21 +115,6 @@ void advect_cons_dust(mesh &m, double &dt, int &NUMSPECIES, BootesArray<double> 
             }
         }
     #elif defined(SPHERICAL_POLAR_COORD)
-        /** Steps to avoid over-drain **/
-        /*
-        // Step 1: calculate flux and store in temperary metrix
-        BootesArray<double> dcons_temp;  // temperarary store the values
-        BootesArray<bool> dcons_deter;   // stores whether the stored values are valid
-        for (int specIND  = 0; specIND < m.NUMSPECIES; specIND++){
-            for (int kk = m.x3s; kk < m.x3l; kk ++){
-                for (int jj = m.x2s; jj < m.x2l; jj ++){
-                    for (int ii = m.x1s; ii < m.x1l; ii ++){
-                        ;
-                    }
-                }
-            }
-        }
-        */
         #pragma omp parallel for collapse (3) schedule (static)
         for (int specIND  = 0; specIND < m.NUMSPECIES; specIND++){
             for (int kk = m.x3s; kk < m.x3l; kk ++){

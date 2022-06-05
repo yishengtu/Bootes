@@ -1,14 +1,14 @@
 #ifndef MESH_HPP_
 #define MESH_HPP_
-#include <string>
-#include <memory>
-#include <iostream>
 #include "../BootesArray.hpp"
 #include "../gravity/gravity.hpp"
+#include "../physical_constants.hpp"
 
 
 class mesh{
     public:
+        /** consts **/
+        PhysicalConst pconst;
         /** grid **/
         int dim;
         BootesArray<double> x1v;       // cell center (1D array)

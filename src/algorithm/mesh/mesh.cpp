@@ -3,6 +3,7 @@
 #include "../index_def.hpp"
 #include "../gravity/gravity.hpp"
 #include "../../defs.hpp"
+#include <cmath>
 
 void mesh::SetupCartesian(int dimension,
                           double x1min, double x1max, int numx1, int ngh1,
