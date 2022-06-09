@@ -67,8 +67,8 @@ void reconstruct(mesh &m,
                 #endif
                 //if (dx_axis == 0){ cout << axis << '\t' << kk << '\t' << jj << '\t' << ii << '\t' << dx_axis << endl << flush; }
                 /** speeds **/
-                double Vui   = vel(m.cons(IMP, m.x3s + kk, m.x2s + jj, m.x1s),
-                                  m.cons(IDN, m.x3s + kk, m.x2s + jj, m.x1s)
+                double Vui   = vel(m.cons(IMP, m.x3s + kk, m.x2s + jj, m.x1s + ii),
+                                  m.cons(IDN, m.x3s + kk, m.x2s + jj, m.x1s + ii)
                                   );
                 /** conservatives **/
                 double BrhoL, BrhoR;
