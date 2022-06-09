@@ -1,5 +1,6 @@
 #include "../eos/eos.hpp"
 #include "../index_def.hpp"
+#include "hll.hpp"
 #include <cmath>
 
 
