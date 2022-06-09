@@ -67,24 +67,15 @@ void first_order(mesh &m, double &dt){
     #endif // ENABLE_DUSTFLUID
 
     /** step 4: protections **/
-    #if defined (PROTECTION_PROTECTION)
+    #if defined (DENSITY_PROTECTION)
         protection(m);
-    #endif // defined(PROTECTION_PROTECTION)
+    #endif // defined(DENSITY_PROTECTION)
+    #ifdef ENABLE_TEMPERATURE_PROTECTION
+        temperature_protection(m, m.minTemp);
+    #endif // ENABLE_TEMPERATURE_PROTECTION
     #ifdef DUST_PROTECTION
         protection_dust(m);
     #endif // DUST_PROTECTION
-
-    /** step 5: use E.O.S. and relations to get primitive variables. **/
-    cons_to_prim(m);
-    #ifdef ENABLE_DUSTFLUID
-    cons_to_prim_dust(m);
-    #endif // ENABLE_DUSTFLUID
-
-    /** step 6: apply boundary conditions **/
-    apply_boundary_condition(m);
-    #ifdef ENABLE_DUSTFLUID
-    apply_boundary_condition_dust(m);
-    #endif
 }
 
 

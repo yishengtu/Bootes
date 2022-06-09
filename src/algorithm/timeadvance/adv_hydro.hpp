@@ -15,15 +15,12 @@ void calc_flux(mesh &m, double &dt, BootesArray<double> &fcons, BootesArray<doub
 void advect_cons(mesh &m, double &dt, BootesArray<double> &fcons, BootesArray<double> &valsL, BootesArray<double> &valsR);
 
 
-#ifdef PROTECTION_PROTECTION
+#ifdef DENSITY_PROTECTION
 void protection(mesh &m);
-#endif // PROTECTION_PROTECTION
+#endif // DENSITY_PROTECTION
 
-#if defined (ENABLE_GRAVITY)
-void apply_grav_source_terms(mesh &m, double &dt);
-#endif // defined (enable gravity)
-
-void first_order(mesh &m, double &dt);
-
+#ifdef ENABLE_TEMPERATURE_PROTECTION
+void temperature_protection(mesh &m, double &minTemp);
+#endif // ENABLE_TEMPERATURE_PROTECTION
 
 #endif // ADV_HYDRO_HPP_

@@ -71,7 +71,7 @@ void setup(mesh &m, input_file &finput){
 }
 
 
-void work_after_loop(mesh &m){
+void work_after_loop(mesh &m, double &dt){
     /*
     for (int kk = m.x3s; kk < m.x3l; kk++){
         for (int jj = m.x2s; jj < m.x2l; jj++){

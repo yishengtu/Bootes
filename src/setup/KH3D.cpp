@@ -10,7 +10,7 @@ void setup(mesh &m, input_file &finput){
         for (int jj = m.x2s; jj < m.x2l; jj++){
             for (int ii = m.x1s; ii < m.x1l; ii++){
                 // 1
-                if (abs(m.x2v(jj)) < 0.1 && abs(m.x3v(kk)) < 0.1){
+                if (abs(m.x2v(jj)) < 0.5 && abs(m.x3v(kk)) < 0.5){
                     m.cons(IDN, kk, jj, ii) = 2.0;
                     m.cons(IM1, kk, jj, ii) = - 0.5 * m.cons(IDN, kk, jj, ii);
                     m.cons(IM2, kk, jj, ii) = 0;
@@ -52,7 +52,7 @@ void setup(mesh &m, input_file &finput){
 }
 
 
-void work_after_loop(mesh &m){
+void work_after_loop(mesh &m, double &dt){
     ;
 }
 

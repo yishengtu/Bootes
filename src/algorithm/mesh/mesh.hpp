@@ -43,6 +43,9 @@ class mesh{
 
         double hydro_gamma;
         double vth_coeff;
+        #ifdef ENABLE_TEMPERATURE_PROTECTION
+        double minTemp;
+        #endif // ENABLE_TEMPERATURE_PROTECTION
 
         /** cons **/
         BootesArray<double> cons;           // 4D (5, z, y, x)
@@ -77,6 +80,9 @@ class mesh{
         #if defined (ENABLE_DUSTFLUID)
             void setupDustFluidMesh(int NS);
         #endif
+
+        /** user-defined miscellous quantities **/
+        BootesArray<double> UserScalers;
 };
 
 

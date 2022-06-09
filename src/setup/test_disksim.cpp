@@ -1,4 +1,5 @@
 #include <cstdlib>
+#include <cmath>
 
 #include "../algorithm/mesh/mesh.hpp"
 #include "../algorithm/BootesArray.hpp"
@@ -8,97 +9,76 @@
 #include "../algorithm/index_def.hpp"
 
 void setup(mesh &m, input_file &finput){
+    double kT_mu = finput.getDouble("kT_mu");
+    double A = finput.getDouble("A");
+    double omega = finput.getDouble("omega");
+    double asq = m.hydro_gamma * kT_mu;
+    double d_coef = asq * A / (4 * M_PI * m.pconst.G);
+    double e_coef = asq * d_coef / (m.hydro_gamma * (m.hydro_gamma - 1.));
     for (int kk = m.x3s; kk < m.x3l; kk++){
         for (int jj = m.x2s; jj < m.x2l; jj++){
             for (int ii = m.x1s; ii < m.x1l; ii++){
                 double r = m.x1v(ii);
-
-                if (abs(((double) jj) - ((double) m.x2v.shape()[0] - 1) / 2.) < ((double) m.x2v.shape()[0]) / 16. && abs(m.x1v(ii) - 6.0) < 0.1){
-                    m.cons(IDN, kk, jj, ii) = 1.0;
-                    m.cons(IM1, kk, jj, ii) = 0.0;
-                    m.cons(IM2, kk, jj, ii) = 0.0;
-                    m.cons(IM3, kk, jj, ii) = 0.0;
-                    m.prim(IPN, kk, jj, ii) = 5.5;
-                    double vel1 = m.cons(IM1, kk, jj, ii) / m.cons(IDN, kk, jj, ii);
-                    double vel2 = m.cons(IM2, kk, jj, ii) / m.cons(IDN, kk, jj, ii);
-                    double vel3 = m.cons(IM3, kk, jj, ii) / m.cons(IDN, kk, jj, ii);
-                    m.cons(IEN, kk, jj, ii) = ene(m.cons(IDN, kk, jj, ii), m.prim(IPN, kk, jj, ii),
-                                                                  vel1,
-                                                                  vel2,
-                                                                  vel3, m.hydro_gamma);
-                }
-                else{
-                    m.cons(IDN, kk, jj, ii) = 1.0;
-                    m.cons(IM1, kk, jj, ii) = 0.0; // 0.5 * sin(m.x2v(jj)) * m.cons(IDN, kk, jj, ii);
-                    m.cons(IM2, kk, jj, ii) = 0.0; // 0.5 * cos(m.x2v(jj)) * m.cons(IDN, kk, jj, ii);
-                    //m.cons(IM1, kk, jj, ii) += 0.01 * ((double) rand()/RAND_MAX  - 0.5) * m.cons(IDN, kk, jj, ii);
-                    //m.cons(IM2, kk, jj, ii) += 0.01 * ((double) rand()/RAND_MAX  - 0.5) * m.cons(IDN, kk, jj, ii);
-                    m.cons(IM3, kk, jj, ii) = 0.0; // sqrt(G * 10 / pow(100, 3)) * m.x1v(ii);
-                    m.prim(IPN, kk, jj, ii) = 2.5;
-                    double vel1 = m.cons(IM1, kk, jj, ii) / m.cons(IDN, kk, jj, ii);
-                    double vel2 = m.cons(IM2, kk, jj, ii) / m.cons(IDN, kk, jj, ii);
-                    double vel3 = m.cons(IM3, kk, jj, ii) / m.cons(IDN, kk, jj, ii);
-                    m.cons(IEN, kk, jj, ii) = ene(m.cons(IDN, kk, jj, ii), m.prim(IPN, kk, jj, ii),
-                                                                  vel1,
-                                                                  vel2,
-                                                                  vel3, m.hydro_gamma);
-                }
-            }
-        }
-    }
-
-    for (int specIND = 0; specIND < m.NUMSPECIES; specIND++){
-        for (int kk = m.x3s; kk < m.x3l; kk++){
-            for (int jj = m.x2s; jj < m.x2l; jj++){
-                for (int ii = m.x1s; ii < m.x1l; ii++){
-                    m.dcons(specIND, IDN, kk, jj, ii) = 1.; // (double) specIND + 1.;
-                    m.dcons(specIND, IM1, kk, jj, ii) = 0.0;
-                    m.dcons(specIND, IM2, kk, jj, ii) = 0.0;
-                    m.dcons(specIND, IM3, kk, jj, ii) = 0.0; // sqrt(G * 10 / pow(100, 3)) * m.x1v(ii);
-                    m.dprim(specIND, IDN, kk, jj, ii) = 1.; // (double) specIND + 1.;
-                    m.dprim(specIND, IM1, kk, jj, ii) = 0.0;
-                    m.dprim(specIND, IM2, kk, jj, ii) = 0.0;
-                    m.dprim(specIND, IM3, kk, jj, ii) = 0.0; // sqrt(G * 10 / pow(100, 3)) * m.x1v(ii);
-                }
+                // double a0 = finput.getDouble("iso_sound_speed");
+                double rm = m.x1f(ii);
+                double rp = m.x1f(ii + 1);
+                double invrsq = 3 * (rp - rm) / (rp * rp * rp - rm * rm * rm);
+                double sintheta = sin(m.x2v(jj));
+                double rho = d_coef * invrsq;
+                double vphi = omega * r * sintheta;
+                m.cons(IDN, kk, jj, ii) = rho;
+                m.cons(IM1, kk, jj, ii) = 0.0; // 0.5 * sin(m.x2v(jj)) * m.cons(IDN, kk, jj, ii);
+                m.cons(IM2, kk, jj, ii) = 0.0; // 0.5 * cos(m.x2v(jj)) * m.cons(IDN, kk, jj, ii);
+                //m.cons(IM1, kk, jj, ii) += 0.01 * ((double) rand()/RAND_MAX  - 0.5) * m.cons(IDN, kk, jj, ii);
+                //m.cons(IM2, kk, jj, ii) += 0.01 * ((double) rand()/RAND_MAX  - 0.5) * m.cons(IDN, kk, jj, ii);
+                m.cons(IM3, kk, jj, ii) = rho * vphi; // sqrt(G * 10 / pow(100, 3)) * m.x1v(ii);
+                m.cons(IEN, kk, jj, ii) = e_coef * invrsq + 0.5 * rho * vphi * vphi;
             }
         }
     }
 
     /** gravity **/
+    double point_mass = d_coef * 4 * M_PI * m.x1f(m.x1s);
+
+    m.UserScalers.NewBootesArray(1);    // 1 element: the point mass at the center
+    m.UserScalers(0) = point_mass;
+
+    double zero = 0.;
+    m.grav->zero_gravity(m);
+    m.grav->add_pointsource_grav(m, m.UserScalers(0), zero, zero, zero);
+    m.grav->add_self_grav(m);
+    m.grav->boundary_grav(m);
+    m.grav->calc_surface_vals(m);
     // Right now, gravity is defined in main.cpp and time_integration.cpp.
+    /** protection **/
+    m.minTemp = kT_mu;
 }
 
 
-void work_after_loop(mesh &m){
+void work_after_loop(mesh &m, double &dt){
+    // calculate accretion rate
+    double dmdt = 0;
+    for (int jj = m.x2s; jj < m.x2l; jj++){
+        dmdt -= m.cons(IDN, 0, jj, m.x1s) * std::min(m.prim(IV1, 0, jj, m.x1s), (double) 0) * m.f1a(0, jj, m.x1s);
+    }
+    m.UserScalers(0) += dmdt * dt;
+    m.grav->zero_gravity(m);
+    double zero = 0.;
+    m.grav->add_pointsource_grav(m, m.UserScalers(0), zero, zero, zero);
+    m.grav->add_self_grav(m);
+    m.grav->boundary_grav(m);
+    m.grav->calc_surface_vals(m);
     /*
+    cout << m.UserScalers(0) << endl << flush;
     for (int kk = m.x3s; kk < m.x3l; kk++){
         for (int jj = m.x2s; jj < m.x2l; jj++){
             for (int ii = m.x1s; ii < m.x1l; ii++){
-                // 1
-                // if (abs(m.x1v(ii) * cos(m.x2v(jj))) < 0.3){
-                if (abs(((double) jj) - ((double) m.x2v.shape()[0] - 1) / 2.) < ((double) m.x2v.shape()[0]) / 16. && abs(m.x1v(ii) - 1.0) < 0.1){
-                    m.cons(IDN, kk, jj, ii) = 2.0;
-                    m.cons(IM1, kk, jj, ii) = 5. * m.cons(IDN, kk, jj, ii) * sin(m.x2v(jj));
-                    m.cons(IM2, kk, jj, ii) = 5. * m.cons(IDN, kk, jj, ii) * cos(m.x2v(jj));
-                    m.cons(IM1, kk, jj, ii) += 0.01 * ((double) rand()/RAND_MAX  - 0.5) * m.cons(IDN, kk, jj, ii);
-                    m.cons(IM2, kk, jj, ii) += 0.01 * ((double) rand()/RAND_MAX  - 0.5) * m.cons(IDN, kk, jj, ii);
-                    m.cons(IM3, kk, jj, ii) = 0;
-                    m.prim(IPN, kk, jj, ii) = 2.5;
-                    double vel1 = m.cons(IM1, kk, jj, ii) / m.cons(IDN, kk, jj, ii);
-                    double vel2 = m.cons(IM2, kk, jj, ii) / m.cons(IDN, kk, jj, ii);
-                    double vel3 = m.cons(IM3, kk, jj, ii) / m.cons(IDN, kk, jj, ii);
-                    m.cons(IEN, kk, jj, ii) = ene(m.cons(IDN, kk, jj, ii), m.prim(IPN, kk, jj, ii),
-                                                                  vel1,
-                                                                  vel2,
-                                                                  vel3, m.hydro_gamma);
-                    for (int specIND = 0; specIND < m.NUMSPECIES; specIND++){
-                        m.dcons(specIND, IDN, kk, jj, ii) = 1.; // (double) specIND + 1.;
-                    }
-                }
+                m.cons(IEN, kk, jj, ii) += 0.001 * m.pconst.G * m.UserScalers(0) * dmdt / (m.x1v(ii) * m.x1v(ii)) * dt / (4 * M_PI * m.x1v(ii) * m.x1v(ii) * m.dx1p(ii));
             }
         }
     }
     */
+    // std::cout << dmdt << '\t' << m.UserScalers(0) << std::endl << std::flush;
 }
 
 void setup_dust(mesh &m, input_file &finput){

@@ -23,9 +23,7 @@ double ene(double &rho, double &pres, double &v1, double &v2, double &v3, double
 void cons_to_prim(mesh &m);
 
 
-#ifdef ENABLE_DUSTFLUID
-void cons_to_prim_dust(mesh &m);
-#endif // ENABLE_DUSTFLUID
+double energy_from_temperature_protection(double &dens, double &ene, double &m1, double &m2, double &m3, double &minTemp, double &gamma);
 
 
 #endif // EOS_HPP_

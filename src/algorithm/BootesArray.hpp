@@ -200,6 +200,10 @@ class BootesArray {
         return arr_;
     }
 
+    bool checkallocated(){
+        return allocated_;
+    }
+
     void set_uniform(int x){
         for (int ii = 0; ii < arrsize_; ii ++){
             arr_[ii] = (double) x;
@@ -233,6 +237,7 @@ class BootesArray {
         arrsize_ = size1_*size2_*size3_*size4_*size5_*size6_;
         arr_ = new T[arrsize_];
     }
+
 
     #ifdef DEBUG
         void CHECKOK(int id){

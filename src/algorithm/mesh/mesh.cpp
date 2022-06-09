@@ -75,16 +75,16 @@ void mesh::SetupSphericalPolar(int dimension,
     x3s = ng3; x3l = numx3 + ng3;
     double dx2_num = (x2max - x2min) / numx2;
     double dx3_num = (x3max - x3min) / numx3;
-    double mx1 = (x1max - x1min) * (1 - ratio1) / (1 - pow(ratio1, numx1));
+    double mx1 = (x1max - x1min) * (1 - ratio1) / (1 - pow(ratio1, numx1 + 1));
 
     // step 1: setup boundary locations
     x1f.NewBootesArray(nx1 + 2 * ng1 + 1);
-    x1f(0) = x1min;
+    x1f(ng1) = x1min;
     for (int ng_ii = 1; ng_ii < ng1 + 1; ng_ii ++){
-        x1f(0) -= mx1 * pow(ratio1, ng_ii);
+        x1f(ng1 - ng_ii) = x1f(ng1 - (ng_ii - 1)) - mx1 * pow(ratio1, ng_ii);
     }
-    for (int ii = 1; ii < x1f.shape()[0]; ii++){
-        x1f(ii) = x1f(ii - 1) + mx1 * pow(ratio1, ii);
+    for (int ii = ng1 + 1; ii < x1f.shape()[0]; ii++){
+        x1f(ii) = x1f(ii - 1) + mx1 * pow(ratio1, ii - ng1);
     }
     x2f = linspace(x2min - ng2 * dx2_num, x2max + ng2 * dx2_num, numx2 + 2 * ng2 + 1, true);
     x3f = linspace(x3min - ng3 * dx3_num, x3max + ng3 * dx3_num, numx3 + 2 * ng3 + 1, true);

@@ -21,7 +21,7 @@ class input_file{
         for (string line; getline(infile, line); ){
             int comment_ind = line.find('#');
             string pure_info = line.substr(0, comment_ind);
-            int equsign = line.find('=');
+            int equsign = pure_info.find('=');
             if (equsign == -1){
                 continue;   // If "=" is not found, then skip this line
             }

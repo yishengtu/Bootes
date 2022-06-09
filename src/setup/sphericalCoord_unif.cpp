@@ -52,6 +52,6 @@ void setup(mesh &m, input_file &finput){
     //grav.pointsource_grav(10, 0, 0, 0);
 }
 
-void work_after_loop(mesh &m){
+void work_after_loop(mesh &m, double &dt){
     ;
 }

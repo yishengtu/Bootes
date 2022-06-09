@@ -4,10 +4,12 @@
 #include "../time_step/time_step.hpp"
 #include "../BootesArray.hpp"
 #include "../util/util.hpp"
-#include "../hydro/hll.hpp"
+//#include "../hydro/hll.hpp"
+#include "../hydro/hlle.hpp"
 #include "../boundary_condition/apply_bc.hpp"
 #include "../index_def.hpp"
 #include "../mesh/mesh.hpp"
+#include "../eos/eos.hpp"
 
 
 void calc_flux(mesh &m, double &dt, BootesArray<double> &fcons, BootesArray<double> &valsL, BootesArray<double> &valsR){
@@ -36,7 +38,7 @@ void calc_flux(mesh &m, double &dt, BootesArray<double> &fcons, BootesArray<doub
                     valL[IM2] = valsL(axis, IM2, kk, jj, ii); valR[IM2] = valsR(axis, IM2, kk, jj, ii);
                     valL[IM3] = valsL(axis, IM3, kk, jj, ii); valR[IM3] = valsR(axis, IM3, kk, jj, ii);
                     valL[IEN] = valsL(axis, IEN, kk, jj, ii); valR[IEN] = valsR(axis, IEN, kk, jj, ii);
-                    hll( valL, valR, fxs,
+                    hlle(valL, valR, fxs,
                          IMP,                   // the momentum term to add pressure; shift by one index (since first index is density)
                          m.hydro_gamma
                          );
@@ -120,7 +122,7 @@ void advect_cons(mesh &m, double &dt, BootesArray<double> &fcons, BootesArray<do
 }
 
 
-#ifdef PROTECTION_PROTECTION
+#ifdef DENSITY_PROTECTION
 void protection(mesh &m){
     #pragma omp parallel for collapse (3)
     for (int kk = m.x3s; kk < m.x3l; kk ++){
@@ -145,5 +147,19 @@ void protection(mesh &m){
         }
     }
 }
-#endif // PROTECTION_PROTECTION
+#endif // DENSITY_PROTECTION
+
+#ifdef ENABLE_TEMPERATURE_PROTECTION
+void temperature_protection(mesh &m, double &minTemp){
+    for (int kk = m.x3s; kk < m.x3l; kk ++){
+        for (int jj = m.x2s; jj < m.x2l; jj ++){
+            for (int ii = m.x1s; ii < m.x1l; ii ++){
+                m.cons(IEN, kk, jj, ii) = energy_from_temperature_protection(m.cons(IDN, kk, jj, ii), m.cons(IEN, kk, jj, ii),
+                                                                             m.cons(IM1, kk, jj, ii), m.cons(IM2, kk, jj, ii), m.cons(IM3, kk, jj, ii), minTemp, m.hydro_gamma);
+            }
+        }
+    }
+}
+#endif // ENABLE_TEMPERATURE_PROTECTION
+
 

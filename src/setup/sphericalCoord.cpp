@@ -52,7 +52,7 @@ void setup(mesh &m, input_file &finput){
     //grav.pointsource_grav(10, 0, 0, 0);
 }
 
-void work_after_loop(mesh &m){
+void work_after_loop(mesh &m, double &dt){
     for (int kk = m.x3s; kk < m.x3l; kk++){
         for (int jj = m.x2s; jj < m.x2l; jj++){
             for (int ii = m.x1s; ii < m.x1l; ii++){

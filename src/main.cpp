@@ -27,7 +27,7 @@
     #include "algorithm/util/checkok.hpp"
 #endif // DEBUG
 
-#include "setup/KH.cpp"
+#include "setup/test_disksim.cpp"
 
 void doloop(double &ot, double &next_exit_loop_time, mesh &m, double &CFL){
     int loop_cycle = 0;
@@ -40,13 +40,25 @@ void doloop(double &ot, double &next_exit_loop_time, mesh &m, double &CFL){
         // step 2: update other fields
         // step 2.1: calculate source terms
         // step 2.1.1: gravity
-        #if defined (ENABLE_GRAVITY)
-            m.grav->pointsource_grav(m, 1.e4, 0, 0, 0);
-            m.grav->calc_surface_vals(m);
-        #endif // defined (ENABLE_GRAVITY)
+        //#if defined (ENABLE_GRAVITY)
+        //    m.grav->pointsource_grav(m, 1.e4, 0, 0, 0);
+        //    m.grav->calc_surface_vals(m);
+        //#endif // defined (ENABLE_GRAVITY)
 
         // step 3: work after loop
-        work_after_loop(m);
+        work_after_loop(m, dt);
+
+        /** step 5: use E.O.S. and relations to get primitive variables. **/
+        cons_to_prim(m);
+        #ifdef ENABLE_DUSTFLUID
+        cons_to_prim_dust(m);
+        #endif // ENABLE_DUSTFLUID
+
+        /** step 6: apply boundary conditions **/
+        apply_boundary_condition(m);
+        #ifdef ENABLE_DUSTFLUID
+        apply_boundary_condition_dust(m);
+        #endif
 
         #ifdef DEBUG
             /** check the values are fine in program **/
@@ -141,11 +153,6 @@ int main(){
     /** setup initial condition **/
     setup(m, finput);   // setup according to the input file
 
-    #if defined (ENABLE_GRAVITY)
-        m.grav->pointsource_grav(m, 1.e4, 0, 0, 0);
-        m.grav->calc_surface_vals(m);
-    #endif // defined (ENABLE_GRAVITY)
-
     cons_to_prim(m);
     apply_boundary_condition(m);
     #ifdef ENABLE_DUSTFLUID
@@ -170,6 +177,7 @@ int main(){
     bool det_output = false;
     bool det_doloop = false;
 
+    std::cout << "setup complete" << std::endl << flush;
     /** main loop **/
     while (ot < t_tot){
         // step 1: determine when to exit the time integration loop
@@ -215,15 +223,24 @@ int main(){
             output.write1Ddataset(m.x1f, "x1f", H5::PredType::NATIVE_DOUBLE);
             output.write1Ddataset(m.x2f, "x2f", H5::PredType::NATIVE_DOUBLE);
             output.write1Ddataset(m.x3f, "x3f", H5::PredType::NATIVE_DOUBLE);
+            output.write3Ddataset(m.dx1p, "dx1p", H5::PredType::NATIVE_DOUBLE);
+            output.write3Ddataset(m.dx2p, "dx2p", H5::PredType::NATIVE_DOUBLE);
+            output.write3Ddataset(m.dx3p, "dx3p", H5::PredType::NATIVE_DOUBLE);
             output.write4Ddataset(m.prim, "prim", H5::PredType::NATIVE_DOUBLE);
             output.write4Ddataset(m.cons, "cons", H5::PredType::NATIVE_DOUBLE);
             #if defined(ENABLE_GRAVITY)
             output.write3Ddataset(m.grav->Phi_grav, "Phi", H5::PredType::NATIVE_DOUBLE);
+            output.write3Ddataset(m.grav->Phi_grav_x1surface, "Phi_x1s", H5::PredType::NATIVE_DOUBLE);
+            output.write3Ddataset(m.grav->Phi_grav_x2surface, "Phi_x2s", H5::PredType::NATIVE_DOUBLE);
+            output.write3Ddataset(m.grav->Phi_grav_x3surface, "Phi_x3s", H5::PredType::NATIVE_DOUBLE);
             #endif
             #if defined(ENABLE_DUSTFLUID)
             output.write5Ddataset(m.dcons, "dcons", H5::PredType::NATIVE_DOUBLE);
             output.write5Ddataset(m.dprim, "dprim", H5::PredType::NATIVE_DOUBLE);
             #endif
+            if (m.UserScalers.checkallocated()){
+            output.write1Ddataset(m.UserScalers, "UserScalers", H5::PredType::NATIVE_DOUBLE);
+            }
             output.close();
             double elasped = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start).count() / 1000.;
             std::cout << "Output frame " << frame << '\t' << "Elapsed real time =" << elasped << " seconds" << std::endl;

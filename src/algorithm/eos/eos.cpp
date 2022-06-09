@@ -44,4 +44,12 @@ void cons_to_prim(mesh &m){
     }
 }
 
+double energy_from_temperature_protection(double &dens, double &ene, double &m1, double &m2, double &m3, double &minTemp, double &gamma){
+    double KE = 0.5 * (m1 * m1 + m2 * m2 + m3 * m3) / dens;
+    double eint = ene - KE;
+    return std::max(ene, dens * minTemp / (gamma - 1.) + KE);
+}
+
+
+
 
