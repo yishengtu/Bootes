@@ -16,7 +16,7 @@ void advect_cons(mesh &m, double &dt, BootesArray<double> &fcons, BootesArray<do
 
 
 #ifdef DENSITY_PROTECTION
-void protection(mesh &m);
+void protection(mesh &m, double &minDensity);
 #endif // DENSITY_PROTECTION
 
 #ifdef ENABLE_TEMPERATURE_PROTECTION

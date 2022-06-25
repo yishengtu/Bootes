@@ -36,6 +36,7 @@ class mesh{
         BootesArray<double> geo_sp;         // sin(tp)
         BootesArray<double> rsq;            // r^2
 
+        double minx1, maxx1, minx2, maxx2, minx3, maxx3, ratio_dim1;
         int x1s, x2s, x3s;                     // start index of active domain
         int x1l, x2l, x3l;                     // end index of active domain
         int nx1, nx2, nx3;                     // number of active zones in each direction
@@ -46,6 +47,9 @@ class mesh{
         #ifdef ENABLE_TEMPERATURE_PROTECTION
         double minTemp;
         #endif // ENABLE_TEMPERATURE_PROTECTION
+        #ifdef DENSITY_PROTECTION
+        double minDensity;
+        #endif
 
         /** cons **/
         BootesArray<double> cons;           // 4D (5, z, y, x)
@@ -67,6 +71,10 @@ class mesh{
         #if defined (ENABLE_GRAVITY)
             gravity *grav = new gravity;
         #endif
+        /** viscosity **/
+        #ifdef ENABLE_VISCOSITY
+            BootesArray<double> nu_vis;
+        #endif // ENABLE_VISCOSITY
 
         /** setup grid functions **/
         void SetupCartesian(int dimension,

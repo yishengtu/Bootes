@@ -4,7 +4,7 @@
 //#define CARTESIAN_COORD
 
 /** PROTECTION **/
-//#define DENSITY_PROTECTION
+#define DENSITY_PROTECTION
 #define ENABLE_TEMPERATURE_PROTECTION
 
 /** GRAVITY **/
@@ -16,3 +16,6 @@
 
 /** DEBUG **/
 #define DEBUG
+
+/** VISCOSITY **/
+//#define ENABLE_VISCOSITY

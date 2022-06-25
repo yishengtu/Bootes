@@ -1,6 +1,7 @@
 #ifndef OUTPUT_HPP_
 #define OUTPUT_HPP_
 
+#include <vector>
 #include <hdf5.h>
 #include <H5Cpp.h>
 #include <iostream>
@@ -45,7 +46,6 @@ class Output{
         delete att;
     }
 
-
     template<typename T>
     void write1Ddataset(BootesArray<T> &datain, string name, PredType hdf5_type){
         if (datain.dimension() != 1){
@@ -83,6 +83,32 @@ class Output{
 
         dataset->write( datain.get_arr(), hdf5_type, mspace, fspace );
         delete dataset;
+    }
+
+    void writeStringdataset(string &str, string dsetname){
+        const unsigned int FSPACE_DIM1 = str.size();
+        hsize_t         str_dimsf[1] {FSPACE_DIM1};
+        H5::DataSpace   dataspace(1, str_dimsf);
+
+        DataSpace fspace( 1, str_dimsf );
+        DataSpace mspace( 1, str_dimsf );
+
+        hsize_t start[1];  // Start of hyperslab
+        hsize_t stride[1]; // Stride of hyperslab
+        hsize_t count[1];  // Block count
+        hsize_t block[1];  // Block sizes
+        start[0]  = 0;
+        stride[0] = FSPACE_DIM1;
+        count[0]  = 1;
+        block[0]  = FSPACE_DIM1;
+        fspace.selectHyperslab( H5S_SELECT_SET, count, start, stride, block);
+        mspace.selectHyperslab( H5S_SELECT_SET, count, start, stride, block);
+
+        H5::StrType datatype(H5::PredType::C_S1, FSPACE_DIM1);
+        H5::DataSet *str_dataset = new DataSet(file_->createDataSet(dsetname, datatype, dataspace));
+
+        str_dataset->write(str, datatype, fspace, mspace);
+        delete str_dataset;
     }
 
     template<typename T>
@@ -316,20 +342,34 @@ class ReadOutput{
         return value;
     }
 
+    string getString(string DataSetName){
+        string data_out;
+        std::string field_name(DataSetName);
+        DataSet dataset = file->openDataSet(DataSetName);
+        StrType datatype = dataset.getStrType();
+        DataSpace dataspace = dataset.getSpace();
+
+        std::string field_value;
+        dataset.read(field_value, datatype, dataspace);
+
+        return field_value;
+    }
+
     template <typename T>
-    void getGrainList(string DataSetName, unsigned int hdf5Start[2], unsigned int hdf5Select[2], unsigned int outputshape[2], BootesArray<float> &data_out){
+    void get4Ddata(string DataSetName, unsigned int hdf5Start[4], unsigned int hdf5Select[4], unsigned int outputshape[4], BootesArray<double> &data_out){
+
         DataSet dataset = file->openDataSet(DataSetName);
         H5T_class_t type_class = dataset.getTypeClass();
 
-        FloatType floatype = dataset.getFloatType();
+        //FloatType floatype = dataset.getFloatType();
         /*
         * Get order of datatype and print message if it's a little endian.
         */
-        H5std_string order_string;
-        H5T_order_t order = floatype.getOrder( order_string );
+        //H5std_string order_string;
+        //H5T_order_t order = floatype.getOrder( order_string );
         // cout << order_string << endl;
 
-        size_t size = floatype.getSize();
+        // size_t size = floatype.getSize();
 
         DataSpace dataspace = dataset.getSpace();
         /*
@@ -337,48 +377,129 @@ class ReadOutput{
         */
 
         int rank = dataspace.getSimpleExtentNdims();
-        hsize_t dims_out[2];
+        hsize_t dims_out[4];
         int ndims = dataspace.getSimpleExtentDims( dims_out, NULL);
 
         /*
         * Define hyperslab in the dataset; implicitly giving strike and
         * block NULL.
         */
-        hsize_t      offset[2];      // hyperslab offset in the file
-        hsize_t      count[2];       // size of the hyperslab in the file
+        hsize_t      offset[4];      // hyperslab offset in the file
+        hsize_t      count[4];       // size of the hyperslab in the file
         offset[0] = hdf5Start[0];               // starting location of hyperslab in 1st axis
         offset[1] = hdf5Start[1];               // starting location of hyperslab in 2nd axis
+        offset[2] = hdf5Start[2];               // starting location of hyperslab in 3st axis
+        offset[3] = hdf5Start[3];               // starting location of hyperslab in 4nd axis
         count[0]  = hdf5Select[0];               // number of locations to be selected in 1st axis
         count[1]  = hdf5Select[1];               // number of locations to be selected in 2nd axis
+        count[2]  = hdf5Select[2];               // number of locations to be selected in 3st axis
+        count[3]  = hdf5Select[3];               // number of locations to be selected in 4nd axis
         dataspace.selectHyperslab( H5S_SELECT_SET, count, offset);
 
         /*
         * Define the memory dataspace.
         */
-        hsize_t dimsm[2];
+        hsize_t dimsm[4];
         dimsm[0] = outputshape[0];
         dimsm[1] = outputshape[1];
-        unsigned int RANK_OUT = 2;
+        dimsm[2] = outputshape[2];
+        dimsm[3] = outputshape[3];
+        unsigned int RANK_OUT = 4;
         DataSpace memspace( RANK_OUT, dimsm );
-
         /*
         * Define memory hyperslab.
         */
-        hsize_t      offset_out[2];   // hyperslab offset in memory
-        hsize_t      count_out[2];    // size of the hyperslab in memory
+        hsize_t      offset_out[4];   // hyperslab offset in memory
+        hsize_t      count_out[4];    // size of the hyperslab in memory
         offset_out[0] = 0;
         offset_out[1] = 0;
+        offset_out[2] = 0;
+        offset_out[3] = 0;
         count_out[0]  = outputshape[0];
         count_out[1]  = outputshape[1];
+        count_out[2]  = outputshape[2];
+        count_out[3]  = outputshape[3];
         memspace.selectHyperslab( H5S_SELECT_SET, count_out, offset_out );
         const int shape0 = outputshape[0];
         const int shape1 = outputshape[1];
-        float *data_out_temp = new float[shape0*shape1];
-        dataset.read( data_out_temp, PredType::NATIVE_FLOAT, memspace, dataspace );
-        for (int ii = 0; ii < outputshape[1]; ii ++){
-            for (int jj = 0; jj < outputshape[0]; jj ++){
-                data_out(jj, ii) = data_out_temp[jj * shape1 + ii];
+        const int shape2 = outputshape[2];
+        const int shape3 = outputshape[3];
+        double *data_out_temp = new double[shape0*shape1*shape2*shape3];
+        dataset.read( data_out_temp, PredType::NATIVE_DOUBLE, memspace, dataspace );
+        /*
+        for (int ss = 0; ss < outputshape[0]; ss ++){
+            for (int kk = 0; kk < outputshape[1]; kk ++){
+                for (int jj = 0; jj < outputshape[2]; jj ++){
+                    for (int ii = 0; ii < outputshape[3]; ii ++){
+                        data_out(ss, kk, jj, ii) = data_out_temp[((ss * shape2 + kk) * shape1 + jj) * shape0 + ii];
+                    }
+                }
             }
+        }
+        */
+        for (int ii = 0; ii < shape0*shape1*shape2*shape3; ii ++){
+            data_out(ii) = data_out_temp[ii];
+        }
+        delete []data_out_temp;
+    }
+
+
+    template <typename T>
+    void get1Ddata(string DataSetName, unsigned int hdf5Start[1], unsigned int hdf5Select[1], unsigned int outputshape[1], BootesArray<double> &data_out){
+        data_out.NewBootesArray(outputshape[0]);
+
+        DataSet dataset = file->openDataSet(DataSetName);
+        H5T_class_t type_class = dataset.getTypeClass();
+
+        //FloatType floatype = dataset.getFloatType();
+        /*
+        * Get order of datatype and print message if it's a little endian.
+        */
+        //H5std_string order_string;
+        //H5T_order_t order = floatype.getOrder( order_string );
+        // cout << order_string << endl;
+
+        // size_t size = floatype.getSize();
+
+        DataSpace dataspace = dataset.getSpace();
+        /*
+        * Get the number of dimensions in the dataspace.
+        */
+
+        int rank = dataspace.getSimpleExtentNdims();
+        hsize_t dims_out[1];
+        int ndims = dataspace.getSimpleExtentDims( dims_out, NULL);
+
+        /*
+        * Define hyperslab in the dataset; implicitly giving strike and
+        * block NULL.
+        */
+        hsize_t      offset[1];      // hyperslab offset in the file
+        hsize_t      count[1];       // size of the hyperslab in the file
+        offset[0] = hdf5Start[0];               // starting location of hyperslab in 1st axis
+        count[0]  = hdf5Select[0];               // number of locations to be selected in 1st axis
+        dataspace.selectHyperslab( H5S_SELECT_SET, count, offset);
+
+        /*
+        * Define the memory dataspace.
+        */
+        hsize_t dimsm[1];
+        dimsm[0] = outputshape[0];
+        unsigned int RANK_OUT = 1;
+        DataSpace memspace( RANK_OUT, dimsm );
+        /*
+        * Define memory hyperslab.
+        */
+        hsize_t      offset_out[1];   // hyperslab offset in memory
+        hsize_t      count_out[1];    // size of the hyperslab in memory
+        offset_out[0] = 0;
+        count_out[0]  = outputshape[0];
+        memspace.selectHyperslab( H5S_SELECT_SET, count_out, offset_out );
+        const int shape0 = outputshape[0];
+        double *data_out_temp = new double[shape0];
+        dataset.read( data_out_temp, PredType::NATIVE_DOUBLE, memspace, dataspace );
+        for (int ii = 0; ii < outputshape[0]; ii ++){
+            data_out(ii) = data_out_temp[ii];
         }
         delete []data_out_temp;
     }

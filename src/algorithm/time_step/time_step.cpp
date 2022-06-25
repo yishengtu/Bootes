@@ -32,7 +32,7 @@ double timestep(mesh &m, double &CFL){
                     double dx1_sig = std::min(std::min(m.dx1p(kk, jj, ii - 1), m.dx1p(kk, jj, ii)), m.dx1p(kk, jj, ii + 1));
                     double dx2_sig = std::min(std::min(m.dx2p(kk, jj - 1, ii), m.dx2p(kk, jj, ii)), m.dx2p(kk, jj + 1, ii));
                     min_dt = std::min(std::min(dx2_sig / vmx2, dx1_sig / vmx1), min_dt);
-                    if (std::min(dx2_sig / vmx2, dx1_sig / vmx1) < 0){
+                    if (std::min(dx2_sig / vmx2, dx1_sig / vmx1) < 0 || min_dt < 1e-100){
                         std::cout << m.cons(IDN, kk, jj, ii) << '\t' << m.prim(IPN, kk, jj, ii) << '\t' <<  m.hydro_gamma << '\t' << cs << '\t' << m.prim(IV1, kk, jj, ii) << std::endl << std::flush;
                         std::cout << kk << '\t' << jj << '\t' << ii << '\t' << dx2_sig << '\t' << vmx2 << '\t' << dx1_sig << '\t' << vmx1 << std::endl << std::flush;
                         throw 1;

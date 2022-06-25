@@ -36,6 +36,6 @@ public:
     double l_sun; // = cgs_l_sun / (mass_scale * pow(length_scale, 2) / pow(time_scale, 3));  // 1 solar luminosity
     double a; //     = 4. * sigma / c;
 
-    void setup_physical_constants(input_file &finput);
+    void setup_physical_constants(double lscale, double tscale, double mscale);
 };
 #endif

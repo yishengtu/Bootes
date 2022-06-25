@@ -23,7 +23,7 @@ void setup(mesh &m, input_file &finput){
                 double rm = m.x1f(ii);
                 double rp = m.x1f(ii + 1);
                 double invrsq = 3 * (rp - rm) / (rp * rp * rp - rm * rm * rm);
-                double sintheta = sin(m.x2v(jj));
+                double sintheta = - (cos(m.x2f(jj + 1)) - cos(m.x2f(jj))) / (m.x2f(jj + 1) - m.x2f(jj));
                 double rho = d_coef * invrsq;
                 double vphi = omega * r * sintheta;
                 m.cons(IDN, kk, jj, ii) = rho;
@@ -37,6 +37,7 @@ void setup(mesh &m, input_file &finput){
         }
     }
 
+    #ifdef ENABLE_GRAVITY
     /** gravity **/
     double point_mass = d_coef * 4 * M_PI * m.x1f(m.x1s);
 
@@ -50,13 +51,16 @@ void setup(mesh &m, input_file &finput){
     m.grav->boundary_grav(m);
     m.grav->calc_surface_vals(m);
     // Right now, gravity is defined in main.cpp and time_integration.cpp.
+    #endif // ENABLE_GRAVITY
     /** protection **/
     m.minTemp = kT_mu;
+    m.minDensity = 1e-4;
 }
 
 
 void work_after_loop(mesh &m, double &dt){
     // calculate accretion rate
+    ;
     double dmdt = 0;
     for (int jj = m.x2s; jj < m.x2l; jj++){
         dmdt -= m.cons(IDN, 0, jj, m.x1s) * std::min(m.prim(IV1, 0, jj, m.x1s), (double) 0) * m.f1a(0, jj, m.x1s);
@@ -68,18 +72,8 @@ void work_after_loop(mesh &m, double &dt){
     m.grav->add_self_grav(m);
     m.grav->boundary_grav(m);
     m.grav->calc_surface_vals(m);
-    /*
-    cout << m.UserScalers(0) << endl << flush;
-    for (int kk = m.x3s; kk < m.x3l; kk++){
-        for (int jj = m.x2s; jj < m.x2l; jj++){
-            for (int ii = m.x1s; ii < m.x1l; ii++){
-                m.cons(IEN, kk, jj, ii) += 0.001 * m.pconst.G * m.UserScalers(0) * dmdt / (m.x1v(ii) * m.x1v(ii)) * dt / (4 * M_PI * m.x1v(ii) * m.x1v(ii) * m.dx1p(ii));
-            }
-        }
-    }
-    */
-    // std::cout << dmdt << '\t' << m.UserScalers(0) << std::endl << std::flush;
 }
+
 
 void setup_dust(mesh &m, input_file &finput){
     double smin    = finput.getDouble("smin");
@@ -96,4 +90,21 @@ void setup_dust(mesh &m, input_file &finput){
         double s1 = m.GrainEdgeList(specIND);
         m.GrainSizeList(specIND) = pow((pow(s2, 4) - pow(s1, 4)) / (4 * (s2 - s1)), 1./3.);
     }
+}
+
+void calculate_nu_vis(mesh &m){
+    ;
+    /*
+    m.nu_vis.NewBootesArray(m.x3v.shape()[0], m.x2v.shape()[0], m.x1v.shape()[0]);
+    // Uniform viscosity for now
+    // m.nu_vis.set_uniform(0.00000000001);
+
+    for (int kk = 0; kk < m.x3v.shape()[0]; kk++){
+        for (int jj = 0; jj < m.x2v.shape()[0]; jj++){
+            for (int ii = 0; ii < m.x1v.shape()[0]; ii++){
+                m.nu_vis(kk, jj, ii) = 0.001 * sqrt(m.pconst.G * m.UserScalers(0) / pow(m.x1v(ii), 3)) * pow(m.x1v(ii), 2);
+            }
+        }
+    }
+    */
 }

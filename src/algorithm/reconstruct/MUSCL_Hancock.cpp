@@ -1,4 +1,4 @@
-#include "minmod.hpp"
+#include "MUSCL_Hancock.hpp"
 
 #include "../BootesArray.hpp"
 #include "../eos/momentum.hpp"
@@ -7,48 +7,21 @@
 #include "../index_def.hpp"
 #include "../mesh/mesh.hpp"
 
-void minmod(double &quanp1, double &quan, double &quanm1, double &dx_axis, double &dt, double &Vui, double &acs, double &BquanL, double &BquanR){
+void MHM(double &quanp1, double &quan, double &quanm1, double &dx_axis, double &dt, double &Vui, double &acs, double &BquanL, double &BquanR){
     double w = 0.0;
     double Dim = quan - quanm1; // Toro 13.28
     double Dip = quanp1 - quan;
-    double Di = 0.5 * (1. + w) * Dim + 0.5 * (1. - w) * Dip;                   // Toro 13.27, 14.37
-    double Dib; // 14.44
-    double beta = 1.;
-    if (Dip > 0.){
-        Dib = std::max(std::max((double) 0., std::min(beta * Dim, Dip)), std::min(Dim, beta * Dip));
-    }
-    else{
-        Dib = std::min(std::min((double) 0., std::max(beta * Dim, Dip)), std::max(Dim, beta * Dip));
-    }
-    double c = acs * dt / dx_axis;
-    if (Vui > 0)     { ; }
-    else if (Vui < 0){ c = -c; }
-    else             { c = 0; }           // Vui = 0;
-    BquanL = quan - 0.5 * (1 + c) * Dib;                // Toro 13.33
-    BquanR = quan + 0.5 * (1 - c) * Dib;                // Toro 13.33
+    double Di = 0.5 * (1. + w) * Dim + 0.5 * (1. - w) * Dip;
+    double uL = quan - 0.5 * Di;
+    double uR = quan + 0.5 * Di;
+    double fuiL = acs * (quan - 0.5 * Di);
+    double fuiR = acs * (quan + 0.5 * Di);
+    BquanL = uL + 0.5 * dt / dx_axis * (fuiL - fuiR);                // Toro 13.33
+    BquanR = uR + 0.5 * dt / dx_axis * (fuiL - fuiR);                // Toro 13.33
 }
 
 
-void minmodc0(double &quanp1, double &quan, double &quanm1, double &dx_axis, double &dt, double &Vui, double &acs, double &BquanL, double &BquanR){
-    double w = 0.0;
-    double Dim = quan - quanm1; // Toro 13.28
-    double Dip = quanp1 - quan;
-    double Di = 0.5 * (1. + w) * Dim + 0.5 * (1. - w) * Dip;                   // Toro 13.27, 14.37
-    double Dib; // 14.44
-    double beta = 1.;
-    if (Dip > 0.){
-        Dib = std::max(std::max((double) 0., std::min(beta * Dim, Dip)), std::min(Dim, beta * Dip));
-    }
-    else{
-        Dib = std::min(std::min((double) 0., std::max(beta * Dim, Dip)), std::max(Dim, beta * Dip));
-    }
-    double c = 0;        // Vui = 0;
-    BquanL = quan - 0.5 * (1 + c) * Dib;                // Toro 13.33
-    BquanR = quan + 0.5 * (1 - c) * Dib;                // Toro 13.33
-}
-
-
-void reconstruct_minmod(mesh &m,
+void reconstruct_MHM(mesh &m,
                    BootesArray<double> &valsL,
                    BootesArray<double> &valsR,
                    int &x1excess, int &x2excess, int &x3excess,
@@ -91,7 +64,7 @@ void reconstruct_minmod(mesh &m,
                                   );
                 /** conservatives **/
                 double BrhoL, BrhoR;
-                minmod(m.cons(IDN, m.x3s + kk + x3excess, m.x2s + jj + x2excess, m.x1s + ii + x1excess),
+                MHM(m.cons(IDN, m.x3s + kk + x3excess, m.x2s + jj + x2excess, m.x1s + ii + x1excess),
                        m.cons(IDN, m.x3s + kk,            m.x2s + jj,            m.x1s + ii),
                        m.cons(IDN, m.x3s + kk - x3excess, m.x2s + jj - x2excess, m.x1s + ii - x1excess),
                        dx_axis, dt,
@@ -99,7 +72,7 @@ void reconstruct_minmod(mesh &m,
                        BrhoL,
                        BrhoR);
                 double Bm1L, Bm1R;
-                minmod(m.cons(IM1, m.x3s + kk + x3excess, m.x2s + jj + x2excess, m.x1s + ii + x1excess),
+                MHM(m.cons(IM1, m.x3s + kk + x3excess, m.x2s + jj + x2excess, m.x1s + ii + x1excess),
                        m.cons(IM1, m.x3s + kk,            m.x2s + jj,            m.x1s + ii),
                        m.cons(IM1, m.x3s + kk - x3excess, m.x2s + jj - x2excess, m.x1s + ii - x1excess),
                        dx_axis, dt,
@@ -107,7 +80,7 @@ void reconstruct_minmod(mesh &m,
                        Bm1L,
                        Bm1R);
                 double Bm2L, Bm2R;
-                minmod(m.cons(IM2, m.x3s + kk + x3excess, m.x2s + jj + x2excess, m.x1s + ii + x1excess),
+                MHM(m.cons(IM2, m.x3s + kk + x3excess, m.x2s + jj + x2excess, m.x1s + ii + x1excess),
                        m.cons(IM2, m.x3s + kk,            m.x2s + jj,            m.x1s + ii),
                        m.cons(IM2, m.x3s + kk - x3excess, m.x2s + jj - x2excess, m.x1s + ii - x1excess),
                        dx_axis, dt,
@@ -115,7 +88,7 @@ void reconstruct_minmod(mesh &m,
                        Bm2L,
                        Bm2R);
                 double Bm3L, Bm3R;
-                minmod(m.cons(IM3, m.x3s + kk + x3excess, m.x2s + jj + x2excess, m.x1s + ii + x1excess),
+                MHM(m.cons(IM3, m.x3s + kk + x3excess, m.x2s + jj + x2excess, m.x1s + ii + x1excess),
                        m.cons(IM3, m.x3s + kk, m.x2s + jj, m.x1s + ii),
                        m.cons(IM3, m.x3s + kk - x3excess, m.x2s + jj - x2excess, m.x1s + ii - x1excess),
                        dx_axis, dt,
@@ -123,7 +96,7 @@ void reconstruct_minmod(mesh &m,
                        Bm3L,
                        Bm3R);
                 double BeneL, BeneR;
-                minmod(m.cons(IEN, m.x3s + kk + x3excess, m.x2s + jj + x2excess, m.x1s + ii + x1excess),
+                MHM(m.cons(IEN, m.x3s + kk + x3excess, m.x2s + jj + x2excess, m.x1s + ii + x1excess),
                        m.cons(IEN, m.x3s + kk, m.x2s + jj, m.x1s + ii),
                        m.cons(IEN, m.x3s + kk - x3excess, m.x2s + jj - x2excess, m.x1s + ii - x1excess),
                        dx_axis, dt,

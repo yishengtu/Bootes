@@ -35,6 +35,7 @@ void gravity::zero_gravity(mesh &m){
 
 
 void gravity::add_pointsource_grav(mesh &m, double &m_source, double &x1_s, double &x2_s, double &x3_s){
+    // std::cout << m.x1s << '\t' << m.x1l << '\t' << m.x2s << '\t' << m.x2l << '\t' << m.x3s << '\t' << m.x3l << '\t' << m_source << '\t' << m.pconst.G << std::endl << std::flush;
     #pragma omp parallel for collapse (3)
     for (int kk = m.x3s; kk < m.x3l; kk ++){
         for (int jj = m.x2s; jj < m.x2l; jj ++){
@@ -67,7 +68,6 @@ void gravity::add_self_grav(mesh &m){
         }
         mass_in_shell(ii) = mass_in_last_shell;
     }
-    std::cout << std::endl << std::flush;
     #pragma omp parallel for
     for (int ii = m.x1s; ii < m.x1l; ii ++){
         double x1_h = m.x1v(ii);

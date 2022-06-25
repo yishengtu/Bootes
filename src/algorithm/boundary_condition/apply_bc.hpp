@@ -5,6 +5,7 @@
 #include "periodic_bc.hpp"
 #include "reflective_bc.hpp"
 #include "spherical_polar_pole.hpp"
+#include "outflow_bc.hpp"
 
 
 class mesh;

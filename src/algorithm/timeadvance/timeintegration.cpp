@@ -1,7 +1,8 @@
 #include "timeintegration.hpp"
 #include "adv_hydro.hpp"
 #include "../mesh/mesh.hpp"
-#include "../reconstruct/minmod.hpp"
+//#include "../reconstruct/minmod.hpp"
+//#include "../reconstruct/MUSCL_Hancock.hpp"
 //#include "reconstruct/const_recon.hpp"
 #include "../time_step/time_step.hpp"
 #include "../BootesArray.hpp"
@@ -10,6 +11,10 @@
 #include "../index_def.hpp"
 #include "../eos/eos.hpp"
 #include "../hydro/srcterm/hydrograv.hpp"
+
+#ifdef ENABLE_VISCOSITY
+    #include "../hydro/srcterm/hydroviscosity.hpp"
+#endif // ENABLE_VISCOSITY
 
 #ifdef ENABLE_DUSTFLUID
     #include "adv_dust.hpp"
@@ -29,8 +34,11 @@ void first_order(mesh &m, double &dt){
     BootesArray<double> fcons;      // flux of conservative variables
     valsL.NewBootesArray(3, NUMCONS, m.nx3 + 1, m.nx2 + 1, m.nx1 + 1);
     valsR.NewBootesArray(3, NUMCONS, m.nx3 + 1, m.nx2 + 1, m.nx1 + 1);
-    fcons.NewBootesArray(NUMCONS, 3, m.cons.shape()[1] + 1, m.cons.shape()[2] + 1, m.cons.shape()[3] + 1);
+    fcons.NewBootesArray(NUMCONS, 3, m.nx3 + 1, m.nx2 + 1, m.nx1 + 1);
     calc_flux(m, dt, fcons, valsL, valsR);
+    #ifdef ENABLE_VISCOSITY
+        apply_viscous_flux(m, dt, fcons, m.nu_vis);
+    #endif // ENABLE_VISCOSITY
     #if defined(ENABLE_DUSTFLUID)
     // TODO: the nan values probably comes from the fact that v_dust >> v_gas,
     // so the CFL is not satisfied for dust. Periahps the way to get around this is to invoke
@@ -40,7 +48,7 @@ void first_order(mesh &m, double &dt){
     BootesArray<double> fdcons;      // flux of dconservative variables
     dvalsL.NewBootesArray(m.NUMSPECIES, 3, NUMCONS - 1, m.nx3 + 1, m.nx2 + 1, m.nx1 + 1);
     dvalsR.NewBootesArray(m.NUMSPECIES, 3, NUMCONS - 1, m.nx3 + 1, m.nx2 + 1, m.nx1 + 1);
-    fdcons.NewBootesArray(m.NUMSPECIES, NUMCONS - 1, 3, m.dcons.shape()[2] + 1, m.dcons.shape()[3] + 1, m.dcons.shape()[4] + 1);
+    fdcons.NewBootesArray(m.NUMSPECIES, NUMCONS - 1, 3, m.nx3 + 1, m.nx2 + 1, m.nx1 + 1); // m.dcons.shape()[2] + 1, m.dcons.shape()[3] + 1, m.dcons.shape()[4] + 1);
     calc_flux_dust(m, dt, m.NUMSPECIES, fdcons, dvalsL, dvalsR);
     #endif
 
@@ -68,7 +76,7 @@ void first_order(mesh &m, double &dt){
 
     /** step 4: protections **/
     #if defined (DENSITY_PROTECTION)
-        protection(m);
+        protection(m, m.minDensity);
     #endif // defined(DENSITY_PROTECTION)
     #ifdef ENABLE_TEMPERATURE_PROTECTION
         temperature_protection(m, m.minTemp);

@@ -9,6 +9,13 @@ void mesh::SetupCartesian(int dimension,
                           double x1min, double x1max, int numx1, int ngh1,
                           double x2min, double x2max, int numx2, int ngh2,
                           double x3min, double x3max, int numx3, int ngh3){
+    minx1 = x1min;
+    maxx1 = x1max;
+    minx2 = x2min;
+    maxx2 = x2max;
+    minx3 = x3min;
+    maxx3 = x3max;
+
     dim = dimension;
     ng1 = ngh1;  ng2 = ngh2;  ng3 = ngh3;
     nx1 = numx1; nx2 = numx2; nx3 = numx3;
@@ -66,6 +73,13 @@ void mesh::SetupSphericalPolar(int dimension,
                                double x1min, double x1max, int numx1, double ratio1, int ngh1,
                                double x2min, double x2max, int numx2,                int ngh2,
                                double x3min, double x3max, int numx3,                int ngh3){
+    minx1 = x1min;
+    maxx1 = x1max;
+    minx2 = x2min;
+    maxx2 = x2max;
+    minx3 = x3min;
+    maxx3 = x3max;
+    ratio_dim1 = ratio1;
     // 1 - r; 2 - theta; 3 - phi
     dim = dimension;
     ng1 = ngh1;  ng2 = ngh2;  ng3 = ngh3;
@@ -185,7 +199,7 @@ void mesh::SetupSphericalPolar(int dimension,
         double cp = std::cos(x2f(jj+1));
         geo_sm(jj) = sm;
         geo_sp(jj) = sp;
-        geo_cot(jj) = (sp - sm) / (cm - cp);
+        geo_cot(jj) = (sp - sm) / std::abs(cm - cp);
     }
 
 

@@ -1,0 +1,136 @@
+
+
+void calcgradV(mesh &m, BootesArray<double> &gradV){
+    gradV.set_uniform(0);
+    // Step 1: calculate speeds on the boundaries
+    BootesArray<double> v1bound1; v1bound1.NewBootesArray(gradV.shape()[0], gradV.shape()[1], gradV.shape()[2] + 1);
+    //BootesArray<double> v2bound1; v2bound1.NewBootesArray(gradV.shape()[0], gradV.shape()[1], gradV.shape()[2] + 1);
+    //BootesArray<double> v3bound1; v3bound1.NewBootesArray(gradV.shape()[0], gradV.shape()[1], gradV.shape()[2] + 1);
+    //BootesArray<double> v1bound2; v1bound2.NewBootesArray(gradV.shape()[0], gradV.shape()[1] + 1, gradV.shape()[2]);
+    BootesArray<double> v2bound2; v2bound2.NewBootesArray(gradV.shape()[0], gradV.shape()[1] + 1, gradV.shape()[2]);
+    //BootesArray<double> v3bound2; v3bound2.NewBootesArray(gradV.shape()[0], gradV.shape()[1] + 1, gradV.shape()[2]);
+    //BootesArray<double> v1bound3; v1bound3.NewBootesArray(gradV.shape()[0] + 1, gradV.shape()[1], gradV.shape()[2]);
+    //BootesArray<double> v2bound3; v2bound3.NewBootesArray(gradV.shape()[0] + 1, gradV.shape()[1], gradV.shape()[2]);
+    BootesArray<double> v3bound3; v3bound3.NewBootesArray(gradV.shape()[0] + 1, gradV.shape()[1], gradV.shape()[2]);
+
+    // x1-boundaries
+    for (int kk = m.x3s; kk < m.x3l; kk++){
+        for (int jj = m.x2s; jj < m.x2l; jj++){
+            for (int ii = m.x1s; ii < m.x1l + 1; ii++){
+                double fit_k1 = (m.prim(IV1, kk, jj, ii) - m.prim(IV1, kk, jj, ii - 1)) / (m.x1v(ii) - m.x1v(ii - 1));
+                double fit_b1 = m.prim(IV1, kk, jj, ii) - fit_k1 * m.x1v(ii);
+                v1bound1(kk, jj, ii) = fit_k1 * m.x1f(ii) + fit_b1;
+            }
+        }
+    }
+
+    // x2-boundaries
+    if (m.dim > 1){
+        for (int kk = m.x3s; kk < m.x3l; kk++){
+            for (int jj = m.x2s; jj < m.x2l + 1; jj++){
+                for (int ii = m.x1s; ii < m.x1l; ii++){
+                    double fit_k2 = (m.prim(IV2, kk, jj, ii) - m.prim(IV2, kk, jj - 1, ii)) / (m.x2v(jj) - m.x2v(jj - 1));
+                    double fit_b2 = m.prim(IV2, kk, jj, ii) - fit_k2 * m.x2v(ii);
+                    v2bound2(kk, jj, ii) = fit_k2 * m.x2f(ii) + fit_b2;
+                }
+            }
+        }
+    }
+    else{
+        v2bound2.set_uniform(0);
+    }
+
+    // x3-boundaries
+    if (m.dim > 2){
+        for (int kk = m.x3s; kk < m.x3l + 1; kk++){
+            for (int jj = m.x2s; jj < m.x2l; jj++){
+                for (int ii = m.x1s; ii < m.x1l; ii++){
+                    double fit_k3 = (m.prim(IV3, kk, jj, ii) - m.prim(IV3, kk - 1, jj, ii)) / (m.x3v(kk) - m.x3v(kk - 1));
+                    double fit_b3 = m.prim(IV3, kk, jj, ii) - fit_k3 * m.x3v(ii);
+                    v3bound3(kk, jj, ii) = fit_k3 * m.x3f(ii) + fit_b3;
+                }
+            }
+        }
+    }
+    else{
+        v3bound3.set_uniform(0);
+    }
+
+    // Step 2: Use the boundary values to calculate gradient in active domain
+    for (int kk = m.x3s; kk < m.x3l; kk++){
+        for (int jj = m.x2s; jj < m.x2l; jj++){
+            for (int ii = m.x1s; ii < m.x1l; ii++){
+                #ifdef CARTESIAN_COORD
+                gradV(kk, jj, ii) =  (v1bound1(kk, jj, ii) - v1bound1(kk, jj, ii - 1)) / m.dx1p(kk, jj, ii)
+                                      + (v2bound2(kk, jj, ii) - v2bound2(kk, jj - 1, ii)) / m.dx2p(kk, jj, ii)
+                                      + (v3bound3(kk, jj, ii) - v3bound3(kk - 1, jj, ii)) / m.dx3p(kk, jj, ii);
+                #elifdef SPHERICAL_POLAR_COORD
+                gradV(kk, jj, ii) =  (m.rsq(ii) * v1bound1(kk, jj, ii) - m.rsq(ii - 1) * v1bound1(kk, jj, ii - 1)) / (m.x1v(ii) * m.x1v(ii) * m.dx1(ii))
+                                      + (m.geo_sm(jj) * v2bound2(kk, jj, ii) - m.geo_sm(jj - 1) * v2bound2(kk, jj - 1, ii)) / (m.x1v(ii) * std::sin(m.x2v(jj)) * m.dx2(jj))
+                                      + (v3bound3(kk, jj, ii) - v3bound3(kk - 1, jj, ii)) / (m.x1v(ii) * std::sin(m.x2v(jj)) * m.dx3(kk));
+                #endif // COORD
+                /*
+                gradV(0, kk, jj, ii) = (v1bound1(kk, jj, ii) - v1bound1(kk, jj, ii - 1)) / m.dx1p(kk, jj, ii)
+                                     + (v2bound1(kk, jj, ii) - v2bound1(kk, jj, ii - 1)) / m.dx2p(kk, jj, ii)
+                                     + (v3bound1(kk, jj, ii) - v3bound1(kk, jj, ii - 1)) / m.dx3p(kk, jj, ii);
+                gradV(1, kk, jj, ii) = (v1bound2(kk, jj, ii) - v1bound2(kk, jj - 1, ii)) / m.dx1p(kk, jj, ii)
+                                     + (v2bound2(kk, jj, ii) - v2bound2(kk, jj - 1, ii)) / m.dx2p(kk, jj, ii)
+                                     + (v3bound2(kk, jj, ii) - v3bound2(kk, jj - 1, ii)) / m.dx3p(kk, jj, ii);
+                gradV(2, kk, jj, ii) = (v1bound3(kk, jj, ii) - v1bound3(kk - 1, jj, ii)) / m.dx1p(kk, jj, ii)
+                                     + (v2bound3(kk, jj, ii) - v2bound3(kk - 1, jj, ii)) / m.dx2p(kk, jj, ii)
+                                     + (v3bound3(kk, jj, ii) - v3bound3(kk - 1, jj, ii)) / m.dx3p(kk, jj, ii);
+                */
+            }
+        }
+    }
+    // step 3: Copy the boundary of the active domain into the first ghost zone
+        for (int kk = m.x3s; kk < m.x3l; kk++){
+            for (int jj = m.x2s; jj < m.x2l; jj++){
+                gradV(kk, jj, m.x1s - 1) = gradV(kk, jj, m.x1s);
+            }
+        }
+    if (m.dim > 1){
+        for (int kk = m.x3s; kk < m.x3l; kk++){
+            for (int ii = m.x1s; ii < m.x1l; ii++){
+                gradV(kk, m.x2s - 1, ii) = gradV(kk, m.x2s, ii);
+            }
+        }
+    }
+    if (m.dim > 2){
+        for (int jj = m.x2s; jj < m.x2l; jj++){
+            for (int ii = m.x1s; ii < m.x1l; ii++){
+                gradV(m.x3s - 1, jj, ii) = gradV(m.x3s, jj, ii);
+            }
+        }
+    }
+}
+
+
+
+void CalcVisTGeoTerms(mesh &m, BootesArray<double> &VisT11, BootesArray<double> &VisT12, BootesArray<double> &VisT13
+                             , BootesArray<double> &VisT21, BootesArray<double> &VisT22, BootesArray<double> &VisT23
+                             , BootesArray<double> &VisT31, BootesArray<double> &VisT32, BootesArray<double> &VisT33){
+    #ifdef SPHERICAL_POLAR_COORD
+    for (int kk = m.x3s; kk < m.x3l; kk++){
+        for (int jj = m.x2s; jj < m.x2l; jj++){
+            for (int ii = m.x1s; ii < m.x1l; ii++){
+                double fit_k1 = (m.prim(IV1, kk, jj, ii) - m.prim(IV1, kk, jj, ii - 1)) / (m.x1v(ii) - m.x1v(ii - 1));
+                double fit_b1 = m.prim(IV1, kk, jj, ii) - fit_k1 * m.x1v(ii);
+                double v1atbound = fit_k1 * m.x1f(ii) + fit_b1;
+                double fit_k2 = (m.prim(IV2, kk, jj, ii) - m.prim(IV2, kk, jj - 1, ii)) / (m.x2v(jj) - m.x2v(jj - 1));
+                double fit_b2 = m.prim(IV2, kk, jj, ii) - fit_k2 * m.x2v(jj);
+                double v2atbound = fit_k2 * m.x2f(jj) + fit_b2;
+                double fit_k3 = (m.prim(IV3, kk, jj, ii) - m.prim(IV3, kk - 1, jj, ii)) / (m.x3v(kk) - m.x3v(kk - 1));
+                double fit_b3 = m.prim(IV3, kk, jj, ii) - fit_k3 * m.x3v(kk);
+                double v3atbound = fit_k3 * m.x3f(kk) + fit_b3;
+
+                double term22 = 2 * v1atbound / m.x1f(ii);
+                double term33 = term22 + v2atbound / m.x1f(ii) * cot(m.x2f(jj));
+                double term12 = v2atbound / m.x1f(ii);
+                double term13 = - v3atbound / m.x1f(ii);
+                double term23 = - v3atbound / m.x1f(ii) * cot(m.x2f(jj));
+            }
+        }
+    }
+    #endif // SPHERICAL_POLAR_COORD
+}

@@ -3,10 +3,10 @@
 #include <cmath>
 
 
-void PhysicalConst::setup_physical_constants(input_file &finput){
-    length_scale = finput.getDouble("length_scale");
-    time_scale   = finput.getDouble("time_scale");
-    mass_scale   = finput.getDouble("mass_scale");
+void PhysicalConst::setup_physical_constants(double lscale, double tscale, double mscale){
+    length_scale = lscale;
+    time_scale = tscale;
+    mass_scale = mscale;
 
     kb    = cgs_kb / (length_scale * length_scale * mass_scale / (time_scale * time_scale));
     mH    = cgs_mH / mass_scale;
