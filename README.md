@@ -10,6 +10,6 @@ Step 5: "make" under root directory <br>
 Step 6: "cd bin" <br>
 Step 7: change input.txt to desired inputs or use a restart file <br>
 Step 8: run the code with <br>
-&emsp Step 8.1: "./bootes.out -i \<input file name\>" if using input file <br>
-&emsp Step 8.2: "./bootes.out -r \<restart file name\>" if using a restart file <br>
+&emsp; Step 8.1: "./bootes.out -i \<input file name\>" if using input file <br>
+&emsp; Step 8.2: "./bootes.out -r \<restart file name\>" if using a restart file <br>
 
