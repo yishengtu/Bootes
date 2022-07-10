@@ -69,11 +69,11 @@ void calcgradV(mesh &m, BootesArray<double> &gradV){
     for (int kk = m.x3s; kk < m.x3l; kk++){
         for (int jj = m.x2s; jj < m.x2l; jj++){
             for (int ii = m.x1s; ii < m.x1l; ii++){
-                #ifdef CARTESIAN_COORD
+                #if defined(CARTESIAN_COORD)
                 gradV(kk, jj, ii) =  (v1bound1(kk, jj, ii) - v1bound1(kk, jj, ii - 1)) / m.dx1p(kk, jj, ii)
                                       + (v2bound2(kk, jj, ii) - v2bound2(kk, jj - 1, ii)) / m.dx2p(kk, jj, ii)
                                       + (v3bound3(kk, jj, ii) - v3bound3(kk - 1, jj, ii)) / m.dx3p(kk, jj, ii);
-                #elifdef SPHERICAL_POLAR_COORD
+                #elif defined(SPHERICAL_POLAR_COORD)
                 gradV(kk, jj, ii) =  (m.rsq(ii) * v1bound1(kk, jj, ii) - m.rsq(ii - 1) * v1bound1(kk, jj, ii - 1)) / (m.x1v(ii) * m.x1v(ii) * m.dx1(ii))
                                       + (m.geo_sm(jj) * v2bound2(kk, jj, ii) - m.geo_sm(jj - 1) * v2bound2(kk, jj - 1, ii)) / (m.x1v(ii) * std::sin(m.x2v(jj)) * m.dx2(jj))
                                       + (v3bound3(kk, jj, ii) - v3bound3(kk - 1, jj, ii)) / (m.x1v(ii) * std::sin(m.x2v(jj)) * m.dx3(kk));

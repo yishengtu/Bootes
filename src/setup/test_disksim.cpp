@@ -8,6 +8,25 @@
 #include "../algorithm/gravity/gravity.hpp"
 #include "../algorithm/index_def.hpp"
 
+
+void setup_dust(mesh &m, input_file &finput){
+    double smin    = finput.getDouble("smin");
+    double smax    = finput.getDouble("smax");
+    double rhodm   = finput.getDouble("srho");
+    int ns         = finput.getInt("num_species");
+    m.NUMSPECIES = ns;
+    m.rhodm = rhodm;
+
+    m.GrainEdgeList = logspace(log10(smin), log10(smax), ns + 1, true);
+    m.GrainSizeList.NewBootesArray(ns);
+    for (int specIND = 0; specIND < m.NUMSPECIES; specIND ++){
+        double s2 = m.GrainEdgeList(specIND + 1);
+        double s1 = m.GrainEdgeList(specIND);
+        m.GrainSizeList(specIND) = pow((pow(s2, 4) - pow(s1, 4)) / (4 * (s2 - s1)), 1./3.);
+    }
+}
+
+
 void setup(mesh &m, input_file &finput){
     double kT_mu = finput.getDouble("kT_mu");
     double A = finput.getDouble("A");
@@ -55,6 +74,54 @@ void setup(mesh &m, input_file &finput){
     /** protection **/
     m.minTemp = kT_mu;
     m.minDensity = 1e-4;
+
+    #ifdef ENABLE_DUSTFLUID
+    double amin = finput.getDouble("ainimin");      // m.GrainEdgeList(0);
+    double amax = finput.getDouble("ainimax");      // m.GrainEdgeList(m.NUMSPECIES);
+    m.dminDensity = finput.getDouble("dminDensity");
+
+    double Adust = 3. / (100. * 8 * M_PI * m.rhodm * (sqrt(amax) - sqrt(amin)));
+
+    for (int ss = 0; ss < m.NUMSPECIES; ss++){
+        if (m.GrainEdgeList(ss + 1) < amin || m.GrainEdgeList(ss) > amax){
+            for (int kk = m.x3s; kk < m.x3l; kk++){
+                for (int jj = m.x2s; jj < m.x2l; jj++){
+                    for (int ii = m.x1s; ii < m.x1l; ii++){
+                        m.dcons(ss, IDN, kk, jj, ii) = m.dminDensity;
+                        m.dcons(ss, IM1, kk, jj, ii) = m.dminDensity * m.cons(IM1, kk, jj, ii) / m.cons(IDN, kk, jj, ii);
+                        m.dcons(ss, IM2, kk, jj, ii) = m.dminDensity * m.cons(IM2, kk, jj, ii) / m.cons(IDN, kk, jj, ii);
+                        m.dcons(ss, IM3, kk, jj, ii) = m.dminDensity * m.cons(IM3, kk, jj, ii) / m.cons(IDN, kk, jj, ii);
+                    }
+                }
+            }
+        }
+        else{
+            for (int kk = m.x3s; kk < m.x3l; kk++){
+                for (int jj = m.x2s; jj < m.x2l; jj++){
+                    for (int ii = m.x1s; ii < m.x1l; ii++){
+                        double upperlim = min(amax, m.GrainEdgeList(ss + 1));
+                        double lowerlim = max(amin, m.GrainEdgeList(ss));
+                        double rho = Adust * m.cons(IDN, kk, jj, ii) * (sqrt(upperlim) - sqrt(lowerlim)) / (0.5 * pow(m.GrainSizeList(ss), 3)) * m.GrainMassList(ss);
+                        m.dcons(ss, IDN, kk, jj, ii) = rho;
+                        m.dcons(ss, IM1, kk, jj, ii) = rho * m.cons(IM1, kk, jj, ii) / m.cons(IDN, kk, jj, ii);
+                        m.dcons(ss, IM2, kk, jj, ii) = rho * m.cons(IM2, kk, jj, ii) / m.cons(IDN, kk, jj, ii);
+                        m.dcons(ss, IM3, kk, jj, ii) = rho * m.cons(IM3, kk, jj, ii) / m.cons(IDN, kk, jj, ii);
+                    }
+                }
+            }
+        }
+    }
+
+    for (int kk = m.x3s; kk < m.x3l; kk++){
+        for (int jj = m.x2s; jj < m.x2l; jj++){
+            for (int ii = m.x1s; ii < m.x1l; ii++){
+                cout << m.dcons(0, IDN, kk, jj, ii) << '\t';
+            }
+        }
+        cout << endl << flush;
+    }
+
+    #endif // ENABLE_DUSTFLUID
 }
 
 
@@ -72,24 +139,6 @@ void work_after_loop(mesh &m, double &dt){
     m.grav->add_self_grav(m);
     m.grav->boundary_grav(m);
     m.grav->calc_surface_vals(m);
-}
-
-
-void setup_dust(mesh &m, input_file &finput){
-    double smin    = finput.getDouble("smin");
-    double smax    = finput.getDouble("smax");
-    double rhodm   = finput.getDouble("srho");
-    int ns         = finput.getInt("num_species");
-    m.NUMSPECIES = ns;
-    m.rhodm = rhodm;
-
-    m.GrainEdgeList = logspace(log10(smin), log10(smax), ns + 1, true);
-    m.GrainSizeList.NewBootesArray(ns);
-    for (int specIND = 0; specIND < m.NUMSPECIES; specIND ++){
-        double s2 = m.GrainEdgeList(specIND + 1);
-        double s1 = m.GrainEdgeList(specIND);
-        m.GrainSizeList(specIND) = pow((pow(s2, 4) - pow(s1, 4)) / (4 * (s2 - s1)), 1./3.);
-    }
 }
 
 void calculate_nu_vis(mesh &m){

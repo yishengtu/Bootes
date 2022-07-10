@@ -27,7 +27,7 @@
     #include "algorithm/util/checkok.hpp"
 #endif // DEBUG
 
-#include "setup/test_disksim.cpp"
+#include "setup/KH.dust.cpp"
 
 void doloop(double &ot, double &next_exit_loop_time, mesh &m, double &CFL){
     int loop_cycle = 0;
@@ -382,6 +382,9 @@ int main(int argc, char *argv[]){
             output.write3Ddataset(m.grav->Phi_grav_x3surface, "Phi_x3s", H5::PredType::NATIVE_DOUBLE);
             #endif
             #if defined(ENABLE_DUSTFLUID)
+            output.write1Ddataset(m.GrainSizeList, "grain_size_list", H5::PredType::NATIVE_DOUBLE);
+            output.write1Ddataset(m.GrainEdgeList, "grain_edge_list", H5::PredType::NATIVE_DOUBLE);
+            output.write1Ddataset(m.GrainMassList, "grain_mass_list", H5::PredType::NATIVE_DOUBLE);
             output.write5Ddataset(m.dcons, "dcons", H5::PredType::NATIVE_DOUBLE);
             output.write5Ddataset(m.dprim, "dprim", H5::PredType::NATIVE_DOUBLE);
             #endif

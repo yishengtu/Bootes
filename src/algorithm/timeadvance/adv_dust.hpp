@@ -18,10 +18,6 @@ void advect_cons_dust(mesh &m, double &dt, int &NUMSPECIES, BootesArray<double> 
 void apply_grav_source_terms_dust(mesh &m, double &dt);
 #endif // ENABLE_GRAVITY
 
-#ifdef DUST_PROTECTION
-void protection_dust(mesh &m);
-#endif // DUST_PROTECTION
-
 void first_order_dust(mesh &m, double &dt);
 
 #endif // ADV_DUST_HPP_

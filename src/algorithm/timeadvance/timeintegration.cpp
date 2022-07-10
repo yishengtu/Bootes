@@ -22,6 +22,9 @@
     #include "../eos/eos_dust.hpp"
     // #include "../dust/srcterm/dustsrc_term.hpp"
     #include "../boundary_condition/dust/apply_bc_dust.hpp"
+    #ifdef ENABLE_DUST_GRAINGROWTH
+        #include "../dust/graingrowth/coagulation.hpp"
+    #endif // ENABLE_DUST_GRAINGROWTH
 #endif // ENABLE_DUSTFLUID
 
 
@@ -72,6 +75,9 @@ void first_order(mesh &m, double &dt){
            because if ts too small the values are directly replaced with terminal velocity approximation.
         */
         // apply_source_terms_dust(m, dt, stoppingtime_mesh);
+        #ifdef ENABLE_DUST_GRAINGROWTH
+            grain_growth(m, stoppingtime_mesh, dt);
+        #endif // ENABLE_DUST_GRAINGROWTH
     #endif // ENABLE_DUSTFLUID
 
     /** step 4: protections **/
@@ -81,9 +87,6 @@ void first_order(mesh &m, double &dt){
     #ifdef ENABLE_TEMPERATURE_PROTECTION
         temperature_protection(m, m.minTemp);
     #endif // ENABLE_TEMPERATURE_PROTECTION
-    #ifdef DUST_PROTECTION
-        protection_dust(m);
-    #endif // DUST_PROTECTION
 }
 
 

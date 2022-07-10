@@ -50,6 +50,7 @@ class mesh{
         #ifdef DENSITY_PROTECTION
         double minDensity;
         #endif
+        double dminDensity = 0;     // dust min density, default set to 0
 
         /** cons **/
         BootesArray<double> cons;           // 4D (5, z, y, x)
