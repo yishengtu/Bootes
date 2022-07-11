@@ -1,0 +1,45 @@
+CFL        = 0.3
+t_tot      = 50 # 40
+output_dt  = 1e-1
+
+foutput_root = ./out/
+foutput_pre  = SPjet
+foutput_aft  = boot
+
+gamma_hydro = 1.666666666666666666
+
+dimension  = 2
+
+x1min      = 1e-2
+x1max      = 1
+nx1        = 128
+
+x2min      = 0                      # 1.0471975512  
+x2max      = 3.14159265358979323846 # 2.09439510239  
+nx2        = 64
+
+x3min      = 0
+x3max      = 6.28318530718 
+nx3        = 1
+
+# dust inputs
+num_species = 45
+srho = 5.049882256410256e18   # 3 g/cc
+smin = 6.684491978609625e-23  # 1e-5 cm
+smax = 6.684491978609625e-18  # 1e0 cm
+
+ainimin = 6.684491978609625e-23
+ainimax = 6.684491978609625e-18
+dminDensity = 1e-48
+
+# scales
+length_scale = 1.496e17
+time_scale = 31553241000000
+mass_scale = 1.989e33
+
+# problem
+# iso_sound_speed = 3.5637121293650651e+00
+
+kT_mu = 1.2700044140983685e+01
+A = 3.1085260087500899
+omega = 3.7521099720763260e+00

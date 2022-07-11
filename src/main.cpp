@@ -13,6 +13,7 @@
 #include "defs.hpp"
 #include <chrono>
 #include <omp.h>
+#include <stdexcept>
 
 #if defined(ENABLE_GRAVITY)
     #include "algorithm/gravity/gravity.hpp"
@@ -27,13 +28,17 @@
     #include "algorithm/util/checkok.hpp"
 #endif // DEBUG
 
-#include "setup/KH.dust.cpp"
+#include "setup/sphericalCoordjet.dust.cpp"
 
 void doloop(double &ot, double &next_exit_loop_time, mesh &m, double &CFL){
     int loop_cycle = 0;
     while (ot < next_exit_loop_time){
         double dt = timestep(m, CFL);
         dt = min(dt, next_exit_loop_time - ot);
+        if (dt < 0){
+            cout << "dt < 0!" << endl << flush;
+            throw std::invalid_argument("dt < 0");
+        }
         cout << "\t integrate cycle: " << loop_cycle << "\t time: " << ot << "\t dt: " << dt << endl << flush;
         // step before 1: calculate variables necessary for hydro
         #ifdef ENABLE_VISCOSITY

@@ -1,7 +1,7 @@
 
 /** COODINATE **/
-//#define SPHERICAL_POLAR_COORD
-#define CARTESIAN_COORD
+//#define CARTESIAN_COORD
+#define SPHERICAL_POLAR_COORD
 
 /** PROTECTION **/
 #define DENSITY_PROTECTION
@@ -15,7 +15,7 @@
 //#define ENABLE_DUST_GRAINGROWTH
 
 /** DEBUG **/
-#define DEBUG
+//#define DEBUG
 
 /** VISCOSITY **/
 //#define ENABLE_VISCOSITY

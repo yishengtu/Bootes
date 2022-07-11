@@ -107,9 +107,11 @@ void advect_cons_dust_sphericalpolar(mesh &m, double &dt, int &NUMSPECIES, Boote
                                                               m.dcons(specIND, IDN, kk, jj, ii), stoppingtimemesh(specIND, kk, jj, ii), m.x1v(ii), m.geo_cot(jj),
                                                               m.dcons(specIND, IM1, kk, jj, ii), m.dcons(specIND, IM2, kk, jj, ii), m.dcons(specIND, IM3, kk, jj, ii)
                                                               );
+                        #ifdef DEBUG
                         if (denl0){
                             std::cout << m.dcons(specIND, IM1, kk, jj, ii) << '\t' << m.dcons(specIND, IM2, kk, jj, ii) << '\t' << m.dcons(specIND, IM3, kk, jj, ii) << std::endl << flush;
                         }
+                        #endif // DEBUG
                     }
                     else{
                         // if density is fine, then calculate everything self-consistantly.
@@ -206,9 +208,11 @@ void advect_cons_dust_cartesian(mesh &m, double &dt, int &NUMSPECIES, BootesArra
                                                               m.dcons(specIND, IDN, kk, jj, ii), stoppingtimemesh(specIND, kk, jj, ii),
                                                               m.dcons(specIND, IM1, kk, jj, ii), m.dcons(specIND, IM2, kk, jj, ii), m.dcons(specIND, IM3, kk, jj, ii)
                                                               );
+                        #ifdef DEBUG
                         if (denl0){
                             std::cout << m.dcons(specIND, IM1, kk, jj, ii) << '\t' << m.dcons(specIND, IM2, kk, jj, ii) << '\t' << m.dcons(specIND, IM3, kk, jj, ii) << std::endl << flush;
                         }
+                        #endif // DEBUG
                     }
                     else{
                         // if density is fine, then calculate everything self-consistantly.

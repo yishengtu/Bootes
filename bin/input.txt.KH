@@ -1,0 +1,40 @@
+CFL        = 0.3
+t_tot      = 200.0
+output_dt  = 1
+foutput_root = ./out/
+foutput_pre  = SteadySphere
+foutput_aft  = boot
+
+gamma_hydro = 1.4
+
+dimension  = 2
+
+x1min      = -6
+x1max      = 6
+nx1        = 600
+
+x2min      = -4
+x2max      = 4
+nx2        = 500
+
+x3min      = -1
+x3max      = 1
+nx3        = 1 # 128
+
+length_scale = 1
+time_scale = 1
+mass_scale = 1
+
+#density protection
+mindensity = 1e-8
+
+# dust inputs
+num_species = 5
+srho = 3e15   # 3 g/cc
+smin = 6.684491978609625e-19  # 1e-5 cm
+smax = 6.684491978609625e-14  # 1e0 cm
+
+ainimin = 6.684491978609625e-19
+ainimax = 6.684491978609625e-14
+dminDensity = 1e-48
+

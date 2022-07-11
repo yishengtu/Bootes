@@ -6,8 +6,8 @@
 #include "../time_step/time_step.hpp"
 #include "../BootesArray.hpp"
 #include "../util/util.hpp"
-#include "../hydro/hll.hpp"
-//#include "../hydro/hlle.hpp"
+//#include "../hydro/hll.hpp"
+#include "../hydro/hlle.hpp"
 //#include "../hydro/hllc.hpp"
 #include "../boundary_condition/apply_bc.hpp"
 #include "../index_def.hpp"
@@ -45,7 +45,7 @@ void calc_flux(mesh &m, double &dt, BootesArray<double> &fcons, BootesArray<doub
                     valL[IEN] = energy_from_temperature_protection(valL[IDN], valL[IEN], valL[IM1], valL[IM2], valL[IM3], m.minTemp, m.hydro_gamma);
                     valR[IEN] = energy_from_temperature_protection(valR[IDN], valR[IEN], valR[IM1], valR[IM2], valR[IM3], m.minTemp, m.hydro_gamma);
                     #endif // ENABLE_TEMPERATURE_PROTECTION
-                    hll(valL, valR, fxs,
+                    hlle(valL, valR, fxs,
                          IMP,                   // the momentum term to add pressure; shift by one index (since first index is density)
                          m.hydro_gamma
                          );
