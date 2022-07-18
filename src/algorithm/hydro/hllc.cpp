@@ -2,7 +2,7 @@
 #include "../index_def.hpp"
 #include "hllc.hpp"
 #include <cmath>
-
+#include <algorithm>
 
 void hllc( double *valsL,
           double *valsR,
