@@ -2,7 +2,7 @@
 #include "../index_def.hpp"
 #include "hlle.hpp"
 #include <cmath>
-
+#include <algorithm>
 
 void hlle(double *valsL,
           double *valsR,
