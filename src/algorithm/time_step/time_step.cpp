@@ -32,7 +32,7 @@ double timestep(mesh &m, double &CFL){
                         min_dt = std::min(mindt_cell, min_dt);
                         #ifdef DEBUG
                         if (mindt_cell < 0){
-                            std::cout << kk << '\t' << jj << '\t' << ii << '\t' << dx1_sig << '\t' << dx2_sig << '\t' << vmx1 << '\t' << vmx2 << std::endl << std::flush;
+                            std::cout << kk << '\t' << jj << '\t' << ii << '\t' << dx1_sig << '\t' << vmx1 << '\t' << std::endl << std::flush;
                         }
                         #endif // DEBUG
                     }
@@ -100,7 +100,13 @@ double timestep(mesh &m, double &CFL){
                     double dx1_sig = std::min(std::min(m.dx1p(kk, jj, ii - 1), m.dx1p(kk, jj, ii)), m.dx1p(kk, jj, ii + 1));
                     double dx2_sig = std::min(std::min(m.dx2p(kk, jj - 1, ii), m.dx2p(kk, jj, ii)), m.dx2p(kk, jj + 1, ii));
                     double dx3_sig = std::min(std::min(m.dx3p(kk - 1, jj, ii), m.dx3p(kk, jj, ii)), m.dx3p(kk + 1, jj, ii));
-                    min_dt = std::min(std::min(std::min(dx2_sig / vmx2, dx3_sig / vmx3), dx1_sig / vmx1), min_dt);
+                    double mindt_cell = std::min(dx3_sig / vmx3, std::min(dx2_sig / vmx2, dx1_sig / vmx1));
+                    min_dt = std::min(mindt_cell, min_dt);
+                    #ifdef DEBUG
+                    if (mindt_cell < 0){
+                        std::cout << kk << '\t' << jj << '\t' << ii << '\t' << dx1_sig << '\t' << dx2_sig << '\t' << vmx1 << '\t' << vmx2 << std::endl << std::flush;
+                    }
+                    #endif // DEBUG
                 }
             }
         }

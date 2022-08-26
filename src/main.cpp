@@ -28,7 +28,7 @@
     #include "algorithm/util/checkok.hpp"
 #endif // DEBUG
 
-#include "setup/sphericalCoordjet.dust.cpp"
+#include "setup/shearboxdisk.cpp"
 
 void doloop(double &ot, double &next_exit_loop_time, mesh &m, double &CFL){
     int loop_cycle = 0;
@@ -71,10 +71,9 @@ void doloop(double &ot, double &next_exit_loop_time, mesh &m, double &CFL){
 
         #ifdef DEBUG
             /** check the values are fine in program **/
-            #ifdef DEBUG
             int stat = check_ok(m);
-            #endif // DEBUG
             if (stat == 1){
+                cout << "Not all values are OK" << endl << flush;
                 throw 1;
             }
         #endif // DEBUG

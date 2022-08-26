@@ -49,7 +49,7 @@ void gravity::add_pointsource_grav(mesh &m, double &m_source, double &x1_s, doub
                 #elif defined(SPHERICAL_POLAR_COORD)
                     r = sqrt(pow(x1_h, 2) + pow(x1_s, 2) - 2 * x1_h * x1_s * (sin(x2_h) * sin(x2_s) * cos(x3_h - x3_s) + cos(x2_h) * cos(x2_s)));
                 #endif // defined
-                Phi_grav(kk, jj, ii) += m.pconst.G * m_source / r;
+                Phi_grav(kk, jj, ii) -= m.pconst.G * m_source / r;
             }
         }
     }
