@@ -95,18 +95,6 @@ void reconstruct_const(mesh &m,
                            Vui, a,
                            BeneL,
                            BeneR);
-               /*
-                #if defined(ENABLE_GRAVITY)
-                double BphiL, BphiR;
-                minmod(m.Phi_grav(m.x3s + kk + x3excess, m.x2s + jj + x2excess, m.x1s + ii + x1excess),
-                       m.Phi_grav(m.x3s + kk, m.x2s + jj, m.x1s + ii),
-                       m.Phi_grav(m.x3s + kk - x3excess, m.x2s + jj - x2excess, m.x1s + ii - x1excess),
-                       dx_axis, dt,
-                       Vui, a,
-                       BphiL,
-                       BphiR);
-                #endif
-                */
 
                 // Left of a cell is the right of an edge.
                 if (kk == -1 || jj == -1 || ii == -1){
@@ -118,11 +106,6 @@ void reconstruct_const(mesh &m,
                     valsR(axis, IM2, kk, jj, ii) = Bm2L;
                     valsR(axis, IM3, kk, jj, ii) = Bm3L;
                     valsR(axis, IEN, kk, jj, ii) = BeneL;
-                    /*
-                    #if defined(ENABLE_GRAVITY)
-                    valsR(axis, IGN, kk, jj, ii) = BphiL;
-                    #endif
-                    */
                 }
 
                 if (kk == m.nx3 || jj == m.nx2 || ii == m.nx1){
@@ -134,11 +117,6 @@ void reconstruct_const(mesh &m,
                     valsL(axis, IM2, kk + x3excess, jj + x2excess, ii + x1excess) = Bm2R;
                     valsL(axis, IM3, kk + x3excess, jj + x2excess, ii + x1excess) = Bm3R;
                     valsL(axis, IEN, kk + x3excess, jj + x2excess, ii + x1excess) = BeneR;
-                    /*
-                    #if defined(ENABLE_GRAVITY)
-                    valsL(axis, IGN, kk + x3excess, jj + x2excess, ii + x1excess) = BphiR;
-                    #endif
-                    */
                 }
             }
         }

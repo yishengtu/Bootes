@@ -19,7 +19,6 @@ void doner_cell_dust( double *valsL,
     for (int val_ind = 0; val_ind < 4; val_ind ++){
         double flux_L = valsL[val_ind] * uL;
         double flux_R = valsR[val_ind] * uR;
-        //cout << "flux: " << flux_L << '\t' << flux_R << endl;
         if      (uL >= 0 && uR >= 0){ fluxs[val_ind] = flux_L; }
         else if (uR <= 0 && uL <= 0){ fluxs[val_ind] = flux_R; }
         else if (uR >= 0 && uL <= 0){ fluxs[val_ind] = 0; }

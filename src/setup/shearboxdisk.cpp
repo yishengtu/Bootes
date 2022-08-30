@@ -37,9 +37,9 @@ void setup(mesh &m, input_file &finput){
             for (int ii = m.x1s; ii < m.x1l; ii++){
                 double rho = 1.6832940854700853e-4;
                 m.cons(IDN, kk, jj, ii) = rho;
-                m.cons(IM1, kk, jj, ii) = 0.0; // 0.5 * sin(m.x2v(jj)) * m.cons(IDN, kk, jj, ii);
-                m.cons(IM2, kk, jj, ii) = 0.0; // 0.5 * cos(m.x2v(jj)) * m.cons(IDN, kk, jj, ii);
-                m.cons(IM3, kk, jj, ii) = 0.0; // sqrt(G * 10 / pow(100, 3)) * m.x1v(ii);
+                m.cons(IM1, kk, jj, ii) = 0.0;    // 0.5 * sin(m.x2v(jj)) * m.cons(IDN, kk, jj, ii);
+                m.cons(IM2, kk, jj, ii) = 0.0;    // 0.5 * cos(m.x2v(jj)) * m.cons(IDN, kk, jj, ii);
+                m.cons(IM3, kk, jj, ii) = 0.0;    // sqrt(G * 10 / pow(100, 3)) * m.x1v(ii);
                 m.cons(IEN, kk, jj, ii) = rho * kT_mu / (m.hydro_gamma - 1.);
             }
         }

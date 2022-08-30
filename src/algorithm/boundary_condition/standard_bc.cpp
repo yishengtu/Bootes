@@ -7,6 +7,7 @@ void standard_boundary_condition_x1i(BootesArray<double> &quan, int &x1s, int &x
                                                             int &x2s, int &x2l, int &ng2,
                                                             int &x3s, int &x3l, int &ng3){
     // standard inflow/outflow boundary, simply copy the values from active zone to ghost zone.
+    #pragma omp parallel for collapse(4)
     for (int valIND = 0; valIND < quan.shape()[0]; valIND ++){
         for (int gind1 = 0; gind1 < ng1; gind1 ++){
             for (int kk = x3s; kk < x3l; kk++){

@@ -31,4 +31,4 @@ void donercell(double &rhoL, double &pL, double &uL,
 }
 
 
-#endif // HLL_HPP_
+#endif // DONERCELL_HPP_

@@ -51,7 +51,7 @@ void first_order(mesh &m, double &dt){
     BootesArray<double> fdcons;      // flux of dconservative variables
     dvalsL.NewBootesArray(m.NUMSPECIES, 3, NUMCONS - 1, m.nx3 + 1, m.nx2 + 1, m.nx1 + 1);
     dvalsR.NewBootesArray(m.NUMSPECIES, 3, NUMCONS - 1, m.nx3 + 1, m.nx2 + 1, m.nx1 + 1);
-    fdcons.NewBootesArray(m.NUMSPECIES, NUMCONS - 1, 3, m.nx3 + 1, m.nx2 + 1, m.nx1 + 1); // m.dcons.shape()[2] + 1, m.dcons.shape()[3] + 1, m.dcons.shape()[4] + 1);
+    fdcons.NewBootesArray(m.NUMSPECIES, NUMCONS - 1, 3, m.nx3 + 1, m.nx2 + 1, m.nx1 + 1);
     calc_flux_dust(m, dt, m.NUMSPECIES, fdcons, dvalsL, dvalsR);
     #endif
 
@@ -67,14 +67,9 @@ void first_order(mesh &m, double &dt){
     #ifdef ENABLE_DUSTFLUID
         BootesArray<double> stoppingtime_mesh;
         stoppingtime_mesh.NewBootesArray(m.NUMSPECIES, m.x3v.shape()[0], m.x2v.shape()[0], m.x1v.shape()[0]);
-        double min_stoptime = calc_stoppingtimemesh(m, stoppingtime_mesh);
+        calc_stoppingtimemesh(m, stoppingtime_mesh);
 
         advect_cons_dust(m, dt, m.NUMSPECIES, fdcons, dvalsL, dvalsR, stoppingtime_mesh);
-        /** step 3.2: dust source **/
-        /* all source terms are taken care in one function,
-           because if ts too small the values are directly replaced with terminal velocity approximation.
-        */
-        // apply_source_terms_dust(m, dt, stoppingtime_mesh);
         #ifdef ENABLE_DUST_GRAINGROWTH
             grain_growth(m, stoppingtime_mesh, dt);
         #endif // ENABLE_DUST_GRAINGROWTH

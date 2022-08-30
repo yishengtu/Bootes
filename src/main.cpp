@@ -368,12 +368,12 @@ int main(int argc, char *argv[]){
             output.writeStringdataset(foutput_aft, "foutput_aft");
             //output.writeattribute<string>(&foutput_pre, "foutput_pre", H5::PredType::NATIVE_SCHAR, 1);
             //output.writeattribute<string>(&foutput_aft, "foutput_aft", H5::PredType::NATIVE_SCHAR, 1);
-            output.write1Ddataset(m.x1v, "x1v", H5::PredType::NATIVE_DOUBLE);
-            output.write1Ddataset(m.x2v, "x2v", H5::PredType::NATIVE_DOUBLE);
-            output.write1Ddataset(m.x3v, "x3v", H5::PredType::NATIVE_DOUBLE);
-            output.write1Ddataset(m.x1f, "x1f", H5::PredType::NATIVE_DOUBLE);
-            output.write1Ddataset(m.x2f, "x2f", H5::PredType::NATIVE_DOUBLE);
-            output.write1Ddataset(m.x3f, "x3f", H5::PredType::NATIVE_DOUBLE);
+            output.write1Ddataset(m.x1v,  "x1v",  H5::PredType::NATIVE_DOUBLE);
+            output.write1Ddataset(m.x2v,  "x2v",  H5::PredType::NATIVE_DOUBLE);
+            output.write1Ddataset(m.x3v,  "x3v",  H5::PredType::NATIVE_DOUBLE);
+            output.write1Ddataset(m.x1f,  "x1f",  H5::PredType::NATIVE_DOUBLE);
+            output.write1Ddataset(m.x2f,  "x2f",  H5::PredType::NATIVE_DOUBLE);
+            output.write1Ddataset(m.x3f,  "x3f",  H5::PredType::NATIVE_DOUBLE);
             output.write3Ddataset(m.dx1p, "dx1p", H5::PredType::NATIVE_DOUBLE);
             output.write3Ddataset(m.dx2p, "dx2p", H5::PredType::NATIVE_DOUBLE);
             output.write3Ddataset(m.dx3p, "dx3p", H5::PredType::NATIVE_DOUBLE);

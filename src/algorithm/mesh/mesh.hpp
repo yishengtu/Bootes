@@ -25,13 +25,13 @@ class mesh{
         BootesArray<double> dx3p;
 
         // for spherical polar coordinate, since dxi is not sufficient.
-        BootesArray<double> vol;          // volume of each cell
-        BootesArray<double> f1a;          // face size in x1 (3D array), size (Nx3, Nx2, Nx1 + 1), Nxi = nxi + 2 * ngi
-        BootesArray<double> f2a;          //
-        BootesArray<double> f3a;          //
-        BootesArray<double> one_orgeo;    // = 0.5 * (rp^2 - rm^2) / (1/3 * rp^3 - rm^3) used in geometry terms
-        BootesArray<double> rV;           // = (rm + rp) * 1/3 * (rp^3 - rm^3)
-        BootesArray<double> geo_cot;         // = (sin(tp) - sin(tm)) / abs(cos(tp) - cos(tm))
+        BootesArray<double> vol;            // volume of each cell
+        BootesArray<double> f1a;            // face size in x1 (3D array), size (Nx3, Nx2, Nx1 + 1), Nxi = nxi + 2 * ngi
+        BootesArray<double> f2a;            //
+        BootesArray<double> f3a;            //
+        BootesArray<double> one_orgeo;      // = 0.5 * (rp^2 - rm^2) / (1/3 * rp^3 - rm^3) used in geometry terms
+        BootesArray<double> rV;             // = (rm + rp) * 1/3 * (rp^3 - rm^3)
+        BootesArray<double> geo_cot;        // = (sin(tp) - sin(tm)) / abs(cos(tp) - cos(tm))
         BootesArray<double> geo_sm;         // sin(tm)
         BootesArray<double> geo_sp;         // sin(tp)
         BootesArray<double> rsq;            // r^2
@@ -50,17 +50,17 @@ class mesh{
         #ifdef DENSITY_PROTECTION
         double minDensity;
         #endif
-        double dminDensity = 0;     // dust min density, default set to 0
+        double dminDensity = 0;              // dust min density, default set to 0
 
         /** cons **/
-        BootesArray<double> cons;           // 4D (5, z, y, x)
+        BootesArray<double> cons;            // 4D (5, z, y, x)
 
         /** prim **/
-        BootesArray<double> prim;            // 4D (4, z, y, x)
+        BootesArray<double> prim;            // 4D (5, z, y, x)
 
         /** multi-fluid for dust **/
         int NUMSPECIES;
-        double rhodm;           // material density of dust grain. (1D array)
+        double rhodm;                                   // material density of dust grain. (1D array)
         BootesArray<double> GrainEdgeList;              // edge of dust grains. (1D array, size NUMSPECIES + 1)
         BootesArray<double> GrainSizeList;              // size of dust grains. (1D array)
         BootesArray<double> GrainMassList;              // mass of dust grains. (1D array)

@@ -29,11 +29,6 @@ void reconstruct_dust_const(mesh &m,
                         valsR(specIND, axis, IM1, kk, jj, ii) = m.dcons(specIND, IM1, m.x3s + kk, m.x2s + jj, m.x1s + ii);
                         valsR(specIND, axis, IM2, kk, jj, ii) = m.dcons(specIND, IM2, m.x3s + kk, m.x2s + jj, m.x1s + ii);
                         valsR(specIND, axis, IM3, kk, jj, ii) = m.dcons(specIND, IM3, m.x3s + kk, m.x2s + jj, m.x1s + ii);
-                        /*
-                        #if defined(ENABLE_GRAVITY)
-                        valsR(axis, IGN, kk, jj, ii) = BphiL;
-                        #endif
-                        */
                     }
 
                     if (kk == m.nx3 || jj == m.nx2 || ii == m.nx1){
@@ -44,11 +39,6 @@ void reconstruct_dust_const(mesh &m,
                         valsL(specIND, axis, IM1, kk + x3excess, jj + x2excess, ii + x1excess) = m.dcons(specIND, IM1, m.x3s + kk, m.x2s + jj, m.x1s + ii);
                         valsL(specIND, axis, IM2, kk + x3excess, jj + x2excess, ii + x1excess) = m.dcons(specIND, IM2, m.x3s + kk, m.x2s + jj, m.x1s + ii);
                         valsL(specIND, axis, IM3, kk + x3excess, jj + x2excess, ii + x1excess) = m.dcons(specIND, IM3, m.x3s + kk, m.x2s + jj, m.x1s + ii);
-                        /*
-                        #if defined(ENABLE_GRAVITY)
-                        valsL(axis, IGN, kk + x3excess, jj + x2excess, ii + x1excess) = BphiR;
-                        #endif
-                        */
                     }
                 }
             }

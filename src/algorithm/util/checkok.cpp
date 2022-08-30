@@ -41,7 +41,7 @@ int check_ok(mesh &m){
                         if (printvals){
                             std::cout << "hydro cons: " << m.cons(0, kk, jj, ii) << ", " << m.cons(1, kk, jj, ii) << ", " << m.cons(2, kk, jj, ii)
                                                         << ", " << m.cons(3, kk, jj, ii) << ", " << m.cons(4, kk, jj, ii) << std::endl;
-                            std::cout << "hydro cons: " << m.prim(0, kk, jj, ii) << ", " << m.prim(1, kk, jj, ii) << ", " << m.prim(2, kk, jj, ii)
+                            std::cout << "hydro prim: " << m.prim(0, kk, jj, ii) << ", " << m.prim(1, kk, jj, ii) << ", " << m.prim(2, kk, jj, ii)
                                                         << ", " << m.prim(3, kk, jj, ii) << ", " << m.prim(4, kk, jj, ii) << std::endl;
                             std::cout << "dust dcons: " << m.dprim(specIND, 0, kk, jj, ii) << ", " << m.dprim(specIND, 1, kk, jj, ii) << ", " << m.dprim(specIND, 2, kk, jj, ii)
                                                         << ", " << m.dprim(specIND, 3, kk, jj, ii) << ", " << m.dprim(specIND, 4, kk, jj, ii) << std::endl;

@@ -14,7 +14,7 @@
 
 void calc_flux_dust(mesh &m, double &dt, int &NUMSPECIES, BootesArray<double> &fdcons, BootesArray<double> &valsL, BootesArray<double> &valsR){
     // store the redconstructed value
-        // index: (specIadvecting direction, quantity, kk, jj, ii)
+    // index: (specIadvecting direction, quantity, kk, jj, ii)
     for (int axis = 0; axis < m.dim; axis ++){
         // step 1.1: redconstruct left/right values
         int x1excess, x2excess, x3excess;

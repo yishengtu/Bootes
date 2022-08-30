@@ -8,7 +8,10 @@ class mesh;
 double stoppingtime(double &rhodmsize, double &rho, double &pres, double &vth_coeff);
 
 
-double calc_stoppingtimemesh(mesh &m, BootesArray<double> &stoppingtimemesh);
+void calc_stoppingtimemesh(mesh &m, BootesArray<double> &stoppingtimemesh);
+
+
+double find_smallest_stoppingtime(mesh &m, BootesArray<double> &stoppingtimemesh);
 
 
 #endif // GAS_DRAG_ON_DUST_HPP_

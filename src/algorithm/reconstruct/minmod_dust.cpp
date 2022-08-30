@@ -66,7 +66,7 @@ void reconstruct_dust(mesh &m,
                     #else
                         # error need coordinate defined
                     #endif
-                    //if (dx_axis == 0){ cout << axis << '\t' << kk << '\t' << jj << '\t' << ii << '\t' << dx_axis << endl << flush; }
+
                     /** speeds **/
                     double Vui   = vel(m.dcons(specIND, IMP, m.x3s + kk, m.x2s + jj, m.x1s),
                                        m.dcons(specIND, IDN, m.x3s + kk, m.x2s + jj, m.x1s)
@@ -114,11 +114,6 @@ void reconstruct_dust(mesh &m,
                         valsR(specIND, axis, IM1, kk, jj, ii) = Bm1L;
                         valsR(specIND, axis, IM2, kk, jj, ii) = Bm2L;
                         valsR(specIND, axis, IM3, kk, jj, ii) = Bm3L;
-                        /*
-                        #if defined(ENABLE_GRAVITY)
-                        valsR(axis, IGN, kk, jj, ii) = BphiL;
-                        #endif
-                        */
                     }
 
                     if (kk == m.nx3 || jj == m.nx2 || ii == m.nx1){
@@ -129,11 +124,6 @@ void reconstruct_dust(mesh &m,
                         valsL(specIND, axis, IM1, kk + x3excess, jj + x2excess, ii + x1excess) = Bm1R;
                         valsL(specIND, axis, IM2, kk + x3excess, jj + x2excess, ii + x1excess) = Bm2R;
                         valsL(specIND, axis, IM3, kk + x3excess, jj + x2excess, ii + x1excess) = Bm3R;
-                        /*
-                        #if defined(ENABLE_GRAVITY)
-                        valsL(axis, IGN, kk + x3excess, jj + x2excess, ii + x1excess) = BphiR;
-                        #endif
-                        */
                     }
                 }
             }

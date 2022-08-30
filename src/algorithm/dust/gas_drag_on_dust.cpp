@@ -11,7 +11,7 @@ double stoppingtime(double &rhodmsize, double &rho, double &pres, double &vth_co
 }
 
 
-double calc_stoppingtimemesh(mesh &m, BootesArray<double> &stoppingtimemesh){
+void calc_stoppingtimemesh(mesh &m, BootesArray<double> &stoppingtimemesh){
     #pragma omp parallel for collapse (4)
     for (int specIND = 0; specIND < m.NUMSPECIES; specIND ++){
         for (int kk = m.x3s; kk < m.x3l; kk ++){
@@ -22,6 +22,10 @@ double calc_stoppingtimemesh(mesh &m, BootesArray<double> &stoppingtimemesh){
             }
         }
     }
+}
+
+
+double find_smallest_stoppingtime(mesh &m, BootesArray<double> &stoppingtimemesh){
     double minstoppingtime = std::numeric_limits<double>::max();
     #pragma omp parallel for reduction (min : minstoppingtime)
     for (int specIND = 0; specIND < m.NUMSPECIES; specIND ++){
@@ -35,6 +39,3 @@ double calc_stoppingtimemesh(mesh &m, BootesArray<double> &stoppingtimemesh){
     }
     return minstoppingtime;
 }
-
-
-

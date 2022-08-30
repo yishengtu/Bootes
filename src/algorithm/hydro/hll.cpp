@@ -32,7 +32,6 @@ void hll( double *valsL,
             flux_L += pL * uL;
             flux_R += pR * uR;
         }
-        //cout << "flux: " << flux_L << '\t' << flux_R << endl;
         if      (0 <= sL){ fluxs[val_ind] = flux_L; }
         else if (0 >= sR ){ fluxs[val_ind] = flux_R; }
         else{
@@ -76,7 +75,6 @@ void hll_grav( double *valsL,
             flux_L += p_a_grhoL * uL;
             flux_R += p_a_grhoR * uR;
         }
-        //cout << "flux: " << flux_L << '\t' << flux_R << endl;
         if      (0 <= sL){ fluxs[val_ind] = flux_L; }
         else if (0 >= sR ){ fluxs[val_ind] = flux_R; }
         else{
