@@ -93,9 +93,9 @@ double timestep(mesh &m, double &CFL){
             for (int jj = m.x2s; jj < m.x2l; jj++){
                 for (int ii = m.x1s; ii < m.x1l; ii++){
                     double cs = soundspeed(m.cons(IDN, kk, jj, ii), m.prim(IPN, kk, jj, ii), m.hydro_gamma);
-                    double vmx1 = abs(std::max(cs + m.prim(IV1, kk, jj, ii), cs - m.prim(IV1, kk, jj, ii)));
-                    double vmx2 = abs(std::max(cs + m.prim(IV2, kk, jj, ii), cs - m.prim(IV2, kk, jj, ii)));
-                    double vmx3 = abs(std::max(cs + m.prim(IV3, kk, jj, ii), cs - m.prim(IV3, kk, jj, ii)));
+                    double vmx1 = std::abs(std::max(cs + m.prim(IV1, kk, jj, ii), cs - m.prim(IV1, kk, jj, ii)));
+                    double vmx2 = std::abs(std::max(cs + m.prim(IV2, kk, jj, ii), cs - m.prim(IV2, kk, jj, ii)));
+                    double vmx3 = std::abs(std::max(cs + m.prim(IV3, kk, jj, ii), cs - m.prim(IV3, kk, jj, ii)));
 
                     double dx1_sig = std::min(std::min(m.dx1p(kk, jj, ii - 1), m.dx1p(kk, jj, ii)), m.dx1p(kk, jj, ii + 1));
                     double dx2_sig = std::min(std::min(m.dx2p(kk, jj - 1, ii), m.dx2p(kk, jj, ii)), m.dx2p(kk, jj + 1, ii));
@@ -104,7 +104,9 @@ double timestep(mesh &m, double &CFL){
                     min_dt = std::min(mindt_cell, min_dt);
                     #ifdef DEBUG
                     if (mindt_cell < 0){
-                        std::cout << kk << '\t' << jj << '\t' << ii << '\t' << dx1_sig << '\t' << dx2_sig << '\t' << vmx1 << '\t' << vmx2 << std::endl << std::flush;
+                        std::cout << "(" << kk << '\t' << jj << '\t' << ii << ")" << '\t';
+                        std::cout << dx1_sig << '\t' << dx2_sig << '\t' << vmx1 << '\t' << vmx2 << '\t' << vmx3 << std::flush;
+                        std::cout << m.prim(IV1, kk, jj, ii) << '\t' << m.dprim(IV2, kk, jj, ii) << '\t' << m.dprim(IV3, kk, jj, ii) << std::endl << std::flush;
                     }
                     #endif // DEBUG
                 }
@@ -127,7 +129,8 @@ double timestep(mesh &m, double &CFL){
                         min_dt = std::min(mindt_cell, min_dt);
                         #ifdef DEBUG
                         if (mindt_cell < 0){
-                            std::cout << kk << '\t' << jj << '\t' << ii << '\t' << dx1_sig << '\t' << dx2_sig << '\t' << vmx1 << '\t' << vmx2 << std::endl << std::flush;
+                            std::cout << kk << '\t' << jj << '\t' << ii << '\t' << dx1_sig << '\t' << dx2_sig<< '\t' << vmx1 << '\t' << vmx2 << '\t' << std::flush;
+                            std::cout << m.dprim(specIND, IV1, kk, jj, ii) << '\t' << m.dprim(specIND, IV1, kk, jj, ii) << std::endl << std::flush;
                         }
                         #endif // DEBUG
                     }

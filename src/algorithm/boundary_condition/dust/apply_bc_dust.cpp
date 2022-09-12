@@ -35,10 +35,10 @@ void apply_boundary_condition_dust(mesh &m){
                                         m.x2s, m.x2l, m.ng2,
                                         m.x3s, m.x3l, m.ng3);
 
-    dust_standard_boundary_condition_x3i(m.dcons, m.x1s, m.x1l, m.ng1,
+    dust_reflective_boundary_condition_x3i(m.dcons, m.x1s, m.x1l, m.ng1,
                                            m.x2s, m.x2l, m.ng2,
                                            m.x3s, m.x3l, m.ng3);
-    dust_standard_boundary_condition_x3i(m.dprim, m.x1s, m.x1l, m.ng1,
+    dust_reflective_boundary_condition_x3i(m.dprim, m.x1s, m.x1l, m.ng1,
                                            m.x2s, m.x2l, m.ng2,
                                            m.x3s, m.x3l, m.ng3);
 

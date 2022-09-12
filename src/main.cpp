@@ -54,20 +54,22 @@ void doloop(double &ot, double &next_exit_loop_time, mesh &m, double &CFL){
         //    m.grav->calc_surface_vals(m);
         //#endif // defined (ENABLE_GRAVITY)
 
-        // step 3: work after loop
+        /** step 5: work after loop **/
         work_after_loop(m, dt);
 
-        /** step 5: use E.O.S. and relations to get primitive variables. **/
+        /** step 3: use E.O.S. and relations to get primitive variables. **/
         cons_to_prim(m);
         #ifdef ENABLE_DUSTFLUID
         cons_to_prim_dust(m);
         #endif // ENABLE_DUSTFLUID
 
-        /** step 6: apply boundary conditions **/
+        /** step 4: apply boundary conditions **/
         apply_boundary_condition(m);
         #ifdef ENABLE_DUSTFLUID
         apply_boundary_condition_dust(m);
         #endif
+        apply_user_extra_boundary_condition(m);
+
 
         #ifdef DEBUG
             /** check the values are fine in program **/
@@ -273,7 +275,12 @@ int main(int argc, char *argv[]){
         unsigned int Uscaler_h5start[1] = {0};
         unsigned int Uscaler_h5select[1] = {1};
         m.UserScalers.NewBootesArray(1);
-        frestart.get1Ddata<double>("UserScalers", Uscaler_h5start, Uscaler_h5select, Uscaler_h5select, m.UserScalers);
+        try {
+            frestart.get1Ddata<double>("UserScalers", Uscaler_h5start, Uscaler_h5select, Uscaler_h5select, m.UserScalers);
+        }
+        catch (H5::FileIException) {
+            ;
+        }
         double ZERO = 0.0;
         work_after_loop(m, ZERO);
         cout << m.grav->Phi_grav(0, 20, 20) << endl << flush;
@@ -384,6 +391,9 @@ int main(int argc, char *argv[]){
             output.write3Ddataset(m.grav->Phi_grav_x1surface, "Phi_x1s", H5::PredType::NATIVE_DOUBLE);
             output.write3Ddataset(m.grav->Phi_grav_x2surface, "Phi_x2s", H5::PredType::NATIVE_DOUBLE);
             output.write3Ddataset(m.grav->Phi_grav_x3surface, "Phi_x3s", H5::PredType::NATIVE_DOUBLE);
+            output.write3Ddataset(m.grav->grav_x1, "grav_x1", H5::PredType::NATIVE_DOUBLE);
+            output.write3Ddataset(m.grav->grav_x2, "grav_x2", H5::PredType::NATIVE_DOUBLE);
+            output.write3Ddataset(m.grav->grav_x3, "grav_x3", H5::PredType::NATIVE_DOUBLE);
             #endif
             #if defined(ENABLE_DUSTFLUID)
             output.write1Ddataset(m.GrainSizeList, "grain_size_list", H5::PredType::NATIVE_DOUBLE);

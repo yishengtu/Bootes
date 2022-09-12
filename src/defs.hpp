@@ -11,11 +11,11 @@
 #define ENABLE_GRAVITY
 
 /** DUST **/
-//#define ENABLE_DUSTFLUID
-//#define ENABLE_DUST_GRAINGROWTH
+#define ENABLE_DUSTFLUID
+#define ENABLE_DUST_GRAINGROWTH
 
 /** DEBUG **/
-#define DEBUG
+//#define DEBUG
 
 /** VISCOSITY **/
 //#define ENABLE_VISCOSITY
