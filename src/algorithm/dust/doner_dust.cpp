@@ -1,5 +1,6 @@
 #include "../eos/eos.hpp"
 #include "../index_def.hpp"
+#include "doner_dust.hpp"
 #include <cmath>
 
 

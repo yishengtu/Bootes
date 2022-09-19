@@ -7,6 +7,8 @@
 #include "../index_def.hpp"
 #include "../mesh/mesh.hpp"
 
+
+#pragma acc routine seq
 void minmod(double &quanp1, double &quan, double &quanm1, double &dx_axis, double &dt, double &Vui, double &acs, double &BquanL, double &BquanR){
     double w = 0.0;
     double Dim = quan - quanm1; // Toro 13.28
@@ -51,14 +53,16 @@ void minmodc0(double &quanp1, double &quan, double &quanm1, double &dx_axis, dou
 void reconstruct_minmod(mesh &m,
                    BootesArray<double> &valsL,
                    BootesArray<double> &valsR,
-                   int &x1excess, int &x2excess, int &x3excess,
-                   int &axis,
-                   int &IMP,
-                   double &dt
+                   int x1excess, int x2excess, int x3excess,
+                   int axis,
+                   int IMP,
+                   double dt
                    ){
     // Computation starts in first ghost zone, for first active cell left boundary flux
     double zero = 0;
-    #pragma omp parallel for collapse (3) schedule (static)
+    // #pragma omp parallel for collapse (3) schedule (static)
+    //#pragma acc loop collapse (3) vector
+    #pragma acc parallel loop collapse (3) default(present) // firstprivate(dt)
     for (int kk = -x3excess; kk < m.nx3 + x3excess; kk++){
         for (int jj = -x2excess; jj < m.nx2 + x2excess; jj++){
             for (int ii = -x1excess; ii < m.nx1 + x1excess; ii++){
@@ -87,8 +91,8 @@ void reconstruct_minmod(mesh &m,
 
                 /** speeds **/
                 double Vui   = vel(m.cons(IMP, m.x3s + kk, m.x2s + jj, m.x1s + ii),
-                                  m.cons(IDN, m.x3s + kk, m.x2s + jj, m.x1s + ii)
-                                  );
+                                   m.cons(IDN, m.x3s + kk, m.x2s + jj, m.x1s + ii)
+                                   );
                 /** conservatives **/
                 double BrhoL, BrhoR;
                 minmod(m.cons(IDN, m.x3s + kk + x3excess, m.x2s + jj + x2excess, m.x1s + ii + x1excess),

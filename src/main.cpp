@@ -123,6 +123,7 @@ int main(int argc, char *argv[]){
     }
 
     mesh m;
+
     /** initialize simulation parameters **/
     double CFL;
     double t_tot;
@@ -301,6 +302,9 @@ int main(int argc, char *argv[]){
     bool det_output = false;
     bool det_doloop = false;
 
+    // copy into device mesh m.
+    #pragma acc enter data copyin(m)
+
     std::cout << "setup complete" << std::endl << flush;
     /** main loop **/
     while (ot < t_tot){
@@ -320,6 +324,7 @@ int main(int argc, char *argv[]){
             doloop(ot, next_exit_loop_time, m, CFL);
         }
         if (det_output){
+            /*
             Output output(foutput_root + foutput_pre + "." + choosenumber(frame) + "." + foutput_aft, 'w');
             output.writeattribute<double>(&m.pconst.mass_scale,   "mass_scale", H5::PredType::NATIVE_DOUBLE, 1);
             output.writeattribute<double>(&m.pconst.length_scale, "length_scale", H5::PredType::NATIVE_DOUBLE, 1);
@@ -408,6 +413,7 @@ int main(int argc, char *argv[]){
             output.close();
             double elasped = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start).count() / 1000.;
             std::cout << "Output frame " << frame << '\t' << "Elapsed real time =" << elasped << " seconds" << std::endl;
+            */
             frame += 1;
             next_output_time += output_dt;
         }

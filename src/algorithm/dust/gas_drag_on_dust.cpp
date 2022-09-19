@@ -12,7 +12,8 @@ double stoppingtime(double &rhodmsize, double &rho, double &pres, double &vth_co
 
 
 void calc_stoppingtimemesh(mesh &m, BootesArray<double> &stoppingtimemesh){
-    #pragma omp parallel for collapse (4)
+    //#pragma omp parallel for collapse (4)
+    #pragma acc parallel loop collapse (4) default (present)
     for (int specIND = 0; specIND < m.NUMSPECIES; specIND ++){
         for (int kk = m.x3s; kk < m.x3l; kk ++){
             for (int jj = m.x2s; jj < m.x2l; jj ++){

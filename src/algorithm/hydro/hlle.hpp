@@ -1,7 +1,7 @@
 #ifndef HLLE_HPP_
 #define HLLE_HPP_
 
-#pragma acc routine worker
+#pragma acc routine seq
 void hlle( double *valsL,
           double *valsR,
           double *fluxs,

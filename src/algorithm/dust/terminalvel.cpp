@@ -1,5 +1,6 @@
 #include "../../defs.hpp"
 #include "../mesh/mesh.hpp"
+#include "terminalvel.hpp"
 
 
 #ifdef CARTESIAN_COORD

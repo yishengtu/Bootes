@@ -18,6 +18,7 @@
 void calc_flux(mesh &m, double &dt, BootesArray<double> &fcons, BootesArray<double> &valsL, BootesArray<double> &valsR){
     // store the reconstructed value
     // index: (advecting direction, quantity, kk, jj, ii)
+    // #pragma acc parallel loop gang default (present) firstprivate(dt)
     for (int axis = 0; axis < m.dim; axis ++){
         // step 1.1: reconstruct left/right values
         int x1excess, x2excess, x3excess;
@@ -25,14 +26,20 @@ void calc_flux(mesh &m, double &dt, BootesArray<double> &fcons, BootesArray<doub
         if      (axis == 0){ x1excess = 1; x2excess = 0; x3excess = 0; IMP = IM1;}
         else if (axis == 1){ x1excess = 0; x2excess = 1; x3excess = 0; IMP = IM2;}
         else if (axis == 2){ x1excess = 0; x2excess = 0; x3excess = 1; IMP = IM3;}
-        else { cout << "axis > 3!!!" << endl << flush; throw 1; }
+        else { ; }
 
         reconstruct_minmod(m, valsL, valsR, x1excess, x2excess, x3excess, axis, IMP, dt);
+        // update to device
+        valsL.updatedev();
+        valsR.updatedev();
         // step 1.2: solve the Riemann problem. Use HLL for now, update conservative vars
         //#pragma omp parallel for collapse (3) schedule (static)
-        #pragma acc parallel loop collapse (3)
+        // present: if it's already there, don't do anything.
+        // #pragma acc loop collapse (3) vector // default (present)
+        #pragma acc parallel loop collapse (3) default (present)
         for (int kk = 0; kk < m.nx3 + x3excess; kk ++){
             for (int jj = 0; jj < m.nx2 + x2excess; jj ++){
+                // #pragma acc loop vector private (valL, valR, fxs)   // parallel nx1 on the x-dimension of the cuda block
                 for (int ii = 0; ii < m.nx1 + x1excess; ii ++){
                     double valL[5];
                     double valR[5];
@@ -62,7 +69,7 @@ void calc_flux(mesh &m, double &dt, BootesArray<double> &fcons, BootesArray<doub
     // Need to set unused values in the fdcons to zeros.
     // To do so the axis goes from "number of active axis" to 3
     // #pragma omp parallel for collapse (4) schedule (static)
-    #pragma acc parallel loop collapse (4)
+    #pragma acc parallel loop collapse (4) default (present)
     for (int axis = m.dim; axis < 3; axis ++){
         for (int kk = 0; kk < fcons.shape()[2]; kk ++){
             for (int jj = 0; jj < fcons.shape()[3]; jj ++){
@@ -76,12 +83,15 @@ void calc_flux(mesh &m, double &dt, BootesArray<double> &fcons, BootesArray<doub
             }
         }
     }
+    // copy fcons back to host
+    fcons.updatehost();
 }
 
 
 void advect_cons(mesh &m, double &dt, BootesArray<double> &fcons, BootesArray<double> &valsL, BootesArray<double> &valsR){
     #if defined(CARTESIAN_COORD)
-        #pragma omp parallel for collapse (3) schedule (static)
+        //#pragma omp parallel for collapse (3) schedule (static)
+        #pragma acc parallel loop collapse (3) default(present) firstprivate(dt)
         for (int kk = m.x3s; kk < m.x3l; kk ++){
             for (int jj = m.x2s; jj < m.x2l; jj ++){
                 for (int ii = m.x1s; ii < m.x1l; ii ++){
@@ -97,7 +107,8 @@ void advect_cons(mesh &m, double &dt, BootesArray<double> &fcons, BootesArray<do
             }
         }
     #elif defined(SPHERICAL_POLAR_COORD)
-        #pragma omp parallel for collapse (3) schedule (static)
+        // #pragma omp parallel for collapse (3) schedule (static)
+        #pragma acc parallel loop collapse (3) default(present)
         for (int kk = m.x3s; kk < m.x3l; kk ++){
             for (int jj = m.x2s; jj < m.x2l; jj ++){
                 for (int ii = m.x1s; ii < m.x1l; ii ++){
@@ -141,7 +152,8 @@ void advect_cons(mesh &m, double &dt, BootesArray<double> &fcons, BootesArray<do
 
 #ifdef DENSITY_PROTECTION
 void protection(mesh &m, double &minDensity){
-    #pragma omp parallel for collapse (3)
+    //#pragma omp parallel for collapse (3)
+    #pragma acc parallel loop collapse (3) default(present) firstprivate(minDensity)
     for (int kk = m.x3s; kk < m.x3l; kk ++){
         for (int jj = m.x2s; jj < m.x2l; jj ++){
             for (int ii = m.x1s; ii < m.x1l; ii ++){
@@ -168,6 +180,8 @@ void protection(mesh &m, double &minDensity){
 
 #ifdef ENABLE_TEMPERATURE_PROTECTION
 void temperature_protection(mesh &m, double &minTemp){
+    //#pragma omp parallel for collapse (3)
+    #pragma acc parallel loop collapse (3) default(present) firstprivate(minTemp)
     for (int kk = m.x3s; kk < m.x3l; kk ++){
         for (int jj = m.x2s; jj < m.x2l; jj ++){
             for (int ii = m.x1s; ii < m.x1l; ii ++){

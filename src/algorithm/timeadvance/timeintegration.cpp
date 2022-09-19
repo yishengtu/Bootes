@@ -38,6 +38,7 @@ void first_order(mesh &m, double &dt){
     valsL.NewBootesArray(3, NUMCONS, m.nx3 + 1, m.nx2 + 1, m.nx1 + 1);
     valsR.NewBootesArray(3, NUMCONS, m.nx3 + 1, m.nx2 + 1, m.nx1 + 1);
     fcons.NewBootesArray(NUMCONS, 3, m.nx3 + 1, m.nx2 + 1, m.nx1 + 1);
+    # pragma acc enter data copyin(valsL, valsR, fcons)
     calc_flux(m, dt, fcons, valsL, valsR);
     #ifdef ENABLE_VISCOSITY
         apply_viscous_flux(m, dt, fcons, m.nu_vis);
@@ -52,6 +53,8 @@ void first_order(mesh &m, double &dt){
     dvalsL.NewBootesArray(m.NUMSPECIES, 3, NUMCONS - 1, m.nx3 + 1, m.nx2 + 1, m.nx1 + 1);
     dvalsR.NewBootesArray(m.NUMSPECIES, 3, NUMCONS - 1, m.nx3 + 1, m.nx2 + 1, m.nx1 + 1);
     fdcons.NewBootesArray(m.NUMSPECIES, NUMCONS - 1, 3, m.nx3 + 1, m.nx2 + 1, m.nx1 + 1);
+    // TODO
+    # pragma acc enter data copyin(dvalsL, dvalsR, fdcons)
     calc_flux_dust(m, dt, m.NUMSPECIES, fdcons, dvalsL, dvalsR);
     #endif
 
@@ -67,6 +70,7 @@ void first_order(mesh &m, double &dt){
     #ifdef ENABLE_DUSTFLUID
         BootesArray<double> stoppingtime_mesh;
         stoppingtime_mesh.NewBootesArray(m.NUMSPECIES, m.x3v.shape()[0], m.x2v.shape()[0], m.x1v.shape()[0]);
+        # pragma acc enter data copyin(stoppingtime_mesh)
         calc_stoppingtimemesh(m, stoppingtime_mesh);
 
         advect_cons_dust(m, dt, m.NUMSPECIES, fdcons, dvalsL, dvalsR, stoppingtime_mesh);

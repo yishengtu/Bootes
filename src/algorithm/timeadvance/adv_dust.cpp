@@ -26,7 +26,8 @@ void calc_flux_dust(mesh &m, double &dt, int &NUMSPECIES, BootesArray<double> &f
 
         reconstruct_dust_const(m, valsL, valsR, x1excess, x2excess, x3excess, axis, IMP, dt);
         // step 1.2: solve the Riemann problem. Use HLL for now, update dconservative vars
-        #pragma omp parallel for collapse (3) schedule (static)
+        // #pragma omp parallel for collapse (3) schedule (static)
+        #pragma acc parallel loop collapse (4) default (present)
         for (int specIND = 0; specIND < NUMSPECIES; specIND++){
             for (int kk = 0; kk < m.nx3 + x3excess; kk ++){
                 for (int jj = 0; jj < m.nx2 + x2excess; jj ++){
@@ -53,7 +54,8 @@ void calc_flux_dust(mesh &m, double &dt, int &NUMSPECIES, BootesArray<double> &f
     }
     // Need to set unused values in the fdcons to zeros.
     // To do so the axis goes from "number of active axis" to 3
-    #pragma omp parallel for collapse (5) schedule (static)
+    // #pragma omp parallel for collapse (5) schedule (static)
+    #pragma acc parallel loop collapse (5) default (present)
     for (int axis = m.dim; axis < 3; axis ++){
         for (int specIND = 0; specIND < NUMSPECIES; specIND++){
             for (int kk = 0; kk < fdcons.shape()[3]; kk ++){
@@ -72,7 +74,8 @@ void calc_flux_dust(mesh &m, double &dt, int &NUMSPECIES, BootesArray<double> &f
 
 #if defined(SPHERICAL_POLAR_COORD)
 void advect_cons_dust_sphericalpolar(mesh &m, double &dt, int &NUMSPECIES, BootesArray<double> &fdcons, BootesArray<double> &valsL, BootesArray<double> &valsR, BootesArray<double> &stoppingtimemesh){
-    #pragma omp parallel for collapse (3) schedule (static)
+    // #pragma omp parallel for collapse (4) schedule (static)
+    #pragma acc parallel loop collapse (4) default(present) firstprivate(dt)
     for (int specIND  = 0; specIND < m.NUMSPECIES; specIND++){
         for (int kk = m.x3s; kk < m.x3l; kk ++){
             for (int jj = m.x2s; jj < m.x2l; jj ++){
@@ -173,7 +176,8 @@ void advect_cons_dust_sphericalpolar(mesh &m, double &dt, int &NUMSPECIES, Boote
 #if defined(CARTESIAN_COORD)
 void advect_cons_dust_cartesian(mesh &m, double &dt, int &NUMSPECIES, BootesArray<double> &fdcons, BootesArray<double> &valsL, BootesArray<double> &valsR, BootesArray<double> &stoppingtimemesh){
     // TODO: may need update
-    #pragma omp parallel for collapse (4) schedule (static)
+    // #pragma omp parallel for collapse (4) schedule (static)
+    #pragma acc parallel loop collapse (4) default(present) firstprivate(dt)
     for (int specIND  = 0; specIND < m.NUMSPECIES; specIND++){
         for (int kk = m.x3s; kk < m.x3l; kk ++){
             for (int jj = m.x2s; jj < m.x2l; jj ++){

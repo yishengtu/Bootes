@@ -4,6 +4,7 @@
 #include "../../physical_constants.hpp"
 
 
+#pragma acc routine seq
 void grain_growth_model_stick(double &s1, double &s2, double &dv, double res[2]);
 
 
