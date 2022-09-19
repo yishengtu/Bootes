@@ -29,7 +29,8 @@ void calc_flux(mesh &m, double &dt, BootesArray<double> &fcons, BootesArray<doub
 
         reconstruct_minmod(m, valsL, valsR, x1excess, x2excess, x3excess, axis, IMP, dt);
         // step 1.2: solve the Riemann problem. Use HLL for now, update conservative vars
-        #pragma omp parallel for collapse (3) schedule (static)
+        //#pragma omp parallel for collapse (3) schedule (static)
+        #pragma acc parallel loop collapse (3)
         for (int kk = 0; kk < m.nx3 + x3excess; kk ++){
             for (int jj = 0; jj < m.nx2 + x2excess; jj ++){
                 for (int ii = 0; ii < m.nx1 + x1excess; ii ++){
@@ -60,7 +61,8 @@ void calc_flux(mesh &m, double &dt, BootesArray<double> &fcons, BootesArray<doub
     }
     // Need to set unused values in the fdcons to zeros.
     // To do so the axis goes from "number of active axis" to 3
-    #pragma omp parallel for collapse (4) schedule (static)
+    // #pragma omp parallel for collapse (4) schedule (static)
+    #pragma acc parallel loop collapse (4)
     for (int axis = m.dim; axis < 3; axis ++){
         for (int kk = 0; kk < fcons.shape()[2]; kk ++){
             for (int jj = 0; jj < fcons.shape()[3]; jj ++){

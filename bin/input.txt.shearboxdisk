@@ -1,0 +1,44 @@
+CFL        = 0.3
+t_tot      = 1.0
+output_dt  = 1e-6
+foutput_root = ./out/
+foutput_pre  = shearboxdisk
+foutput_aft  = boot
+
+gamma_hydro = 1.666666666666666
+
+dimension  = 3
+
+x1min      = 0.1
+x1max      = 1
+nx1        = 100
+
+x2min      = -1
+x2max      = 1
+nx2        = 1
+
+x3min      = 0
+x3max      = 0.1
+nx3        = 50 # 128
+
+
+length_scale = 1.497e14
+time_scale = 3.1536e13
+mass_scale = 1.989e33
+
+kT_mu_low = 377672026.96
+kT_mu_up = 1133016080.8
+
+#density protection
+mindensity = 1e-8
+
+# dust inputs
+num_species = 45
+srho = 5049882256.410255   # 3 g/cc
+smin = 6.684491978609625e-20  # 1e-5 cm
+smax = 6.684491978609625e-15  # 1e0 cm
+
+ainimin = 6.684491978609625e-20
+ainimax = 6.684491978609625e-19
+dminDensity = 1e-48
+

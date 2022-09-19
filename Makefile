@@ -1,5 +1,5 @@
-CC := g++
-CFLAGS := -lhdf5 -lhdf5_cpp -O3 -fopenmp
+CC := nvc++
+CFLAGS := -lhdf5 -lhdf5_cpp -O3 -acc -Minfo
 EXE_DIR := bin/
 EXECUTABLE := $(EXE_DIR)bootes.out
 
@@ -15,7 +15,7 @@ SRC_FILES := $(wildcard src/algorithm/*.cpp) \
 	     $(wildcard src/algorithm/reconstruct/*.cpp) \
 	     $(wildcard src/algorithm/time_step/*.cpp) \
 	     $(wildcard src/algorithm/dust/*.cpp) \
-	     $(wildcard src/algorithm/dust/srcterm/*.cpp) \
+	     $(wildcard src/algorithm/dust/graingrowth/*.cpp) \
 	     $(wildcard src/algorithm/boundary_condition/dust/*.cpp) \
 	     $(wildcard src/main.cpp)
 

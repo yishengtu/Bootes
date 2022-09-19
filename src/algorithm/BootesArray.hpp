@@ -3,16 +3,31 @@
 #include <string>
 #include <memory>
 #include <iostream>
+#include <openacc.h>
+#include <cuda_runtime.h>
 
+#ifdef __CUDACC__
+    #define CUDA_CALLABLE_MEMBER __host__ __device__
+#else
+   #define CUDA_CALLABLE_MEMBER__host__ __device__
+#endif
 
 template<typename T>
 class BootesArray {
 
     public:
-    BootesArray(){
+    __host__ __device__ BootesArray(){
         arr_ = nullptr;
         shape_ = nullptr;
         allocated_ = false;
+    }
+    void updatehost(){ // update host copy of data
+        #pragma acc update self( arr_[0:arrsize_])
+        #pragma acc update self( shape_[0:dimension_] )
+    }
+    void updatedev(){ // update device copy of data
+        #pragma acc update device( arr_[0:arrsize_])
+        #pragma acc update device( shape_[0:dimension_])
     }
     __attribute__((nothrow)) void NewBootesArray(int size1){
             if (allocated_){ clean(); }
@@ -27,6 +42,7 @@ class BootesArray {
             shape_[0] = size1;
             dimension_ = 1;
             allocated_ = true;
+            #pragma acc enter data copyin(this[0:1]) create(arr_[0:arrsize_]) create(shape_[0:dimension_])     // this[0, 1] is the class itself.
             }
     __attribute__((nothrow)) void NewBootesArray(int size2, int size1){
             if (allocated_){ clean(); }
@@ -42,6 +58,7 @@ class BootesArray {
             shape_[0] = size2;
             dimension_ = 2;
             allocated_ = true;
+            #pragma acc enter data copyin(this[0:1]) create(arr_[0:arrsize_]) create(shape_[0:dimension_])
             }
     __attribute__((nothrow)) void NewBootesArray(int size3, int size2, int size1){
             if (allocated_){ clean(); }
@@ -58,6 +75,7 @@ class BootesArray {
             shape_[0] = size3;
             dimension_ = 3;
             allocated_ = true;
+            #pragma acc enter data copyin(this[0:1]) create(arr_[0:arrsize_]) create(shape_[0:dimension_])
             }
     __attribute__((nothrow)) void NewBootesArray(int size4, int size3, int size2, int size1){
             if (allocated_){ clean(); }
@@ -75,6 +93,7 @@ class BootesArray {
             shape_[0] = size4;
             dimension_ = 4;
             allocated_ = true;
+            #pragma acc enter data copyin(this[0:1]) create(arr_[0:arrsize_]) create(shape_[0:dimension_])
             }
     __attribute__((nothrow)) void NewBootesArray(int size5, int size4, int size3, int size2, int size1){
             if (allocated_){ clean(); }
@@ -93,6 +112,7 @@ class BootesArray {
             shape_[0] = size5;
             dimension_ = 5;
             allocated_ = true;
+            #pragma acc enter data copyin(this[0:1]) create(arr_[0:arrsize_]) create(shape_[0:dimension_])
             }
     __attribute__((nothrow)) void NewBootesArray(int size6, int size5, int size4, int size3, int size2, int size1){
             if (allocated_){ clean(); }
@@ -112,6 +132,7 @@ class BootesArray {
             shape_[0] = size6;
             dimension_ = 6;
             allocated_ = true;
+            #pragma acc enter data copyin(this[0:1]) create(arr_[0:arrsize_]) create(shape_[0:dimension_])
             }
     // destructor
     void clean(){
@@ -125,37 +146,37 @@ class BootesArray {
         clean();
     }
 
-    T &operator() (const int x1) {
+    __host__ __device__ inline T &operator() (const int x1) {
         #ifdef DEBUG
             CHECKOK(x1);
         #endif
         return arr_[x1];
     }
-    T &operator() (const int x2, const int x1) {
+    __host__ __device__ inline T &operator() (const int x2, const int x1) {
         #ifdef DEBUG
             CHECKOK(x1 + size1_*x2);
         #endif
         return arr_[x1 + size1_*x2];
     }
-    T &operator() (const int x3, const int x2, const int x1) {
+    __host__ __device__ inline T &operator() (const int x3, const int x2, const int x1) {
         #ifdef DEBUG
             CHECKOK(x1 + size1_*(x2 + size2_*x3));
         #endif
         return arr_[x1 + size1_*(x2 + size2_*x3)];
     }
-    T &operator() (const int x4, const int x3, const int x2, const int x1) {
+    __host__ __device__ inline T &operator() (const int x4, const int x3, const int x2, const int x1) {
         #ifdef DEBUG
             CHECKOK(x1 + size1_*(x2 + size2_*(x3 + size3_ * x4)));
         #endif
         return arr_[x1 + size1_*(x2 + size2_*(x3 + size3_ * x4))];
     }
-    T &operator() (const int x5, const int x4, const int x3, const int x2, const int x1) {
+    __host__ __device__ inline T &operator() (const int x5, const int x4, const int x3, const int x2, const int x1) {
         #ifdef DEBUG
             CHECKOK(x1 + size1_*(x2 + size2_*(x3 + size3_ * (x4 + size4_ * x5))));
         #endif
         return arr_[x1 + size1_*(x2 + size2_*(x3 + size3_ * (x4 + size4_ * x5)))];
     }
-    T &operator() (const int x6, const int x5, const int x4, const int x3, const int x2, const int x1) {
+    __host__ __device__ inline T &operator() (const int x6, const int x5, const int x4, const int x3, const int x2, const int x1) {
         #ifdef DEBUG
             CHECKOK(x1 + size1_*(x2 + size2_*(x3 + size3_ * (x4 + size4_ * (x5 + size5_ * x6)))));
         #endif
@@ -184,15 +205,15 @@ class BootesArray {
         return *this;
     }
 
-    int *shape(){
+    inline int *shape(){
         return shape_;
     }
 
-    int dimension(){
+    inline int dimension(){
         return dimension_;
     }
 
-    int arrsize(){
+    inline int arrsize(){
         return arrsize_;
     }
 
@@ -200,21 +221,21 @@ class BootesArray {
         return arr_;
     }
 
-    bool checkallocated(){
+    inline bool checkallocated(){
         return allocated_;
     }
 
-    void set_uniform(int x){
+    inline void set_uniform(int x){
         for (int ii = 0; ii < arrsize_; ii ++){
             arr_[ii] = (double) x;
         }
     }
-    void set_uniform(float x){
+    inline void set_uniform(float x){
         for (int ii = 0; ii < arrsize_; ii ++){
             arr_[ii] = (double) x;
         }
     }
-    void set_uniform(double x){
+    inline void set_uniform(double x){
         for (int ii = 0; ii < arrsize_; ii ++){
             arr_[ii] = (double) x;
         }
