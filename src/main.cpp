@@ -28,7 +28,7 @@
     #include "algorithm/util/checkok.hpp"
 #endif // DEBUG
 
-#include "setup/shearboxdisk.cpp"
+#include "setup/keplerian_cylindrical.cpp"
 
 void doloop(double &ot, double &next_exit_loop_time, mesh &m, double &CFL){
     int loop_cycle = 0;
@@ -178,6 +178,12 @@ int main(int argc, char *argv[]){
                               x2min, x2max, nx2,         ng2,                       // ax2
                               x3min, x3max, nx3,         ng3                        // ax3
                               );
+        #elif defined(CYLINDRICAL_COORD)
+        m.SetupCylindrical(dim,
+                              x1min, x1max, nx1, ratio1, ng1,                       // ax1
+                              x2min, x2max, nx2,         ng2,                       // ax2
+                              x3min, x3max, nx3,         ng3                        // ax3
+                              );
         #endif // defined (COORDINATE)
         m.hydro_gamma = gamma_hydro;
         m.vth_coeff = 8.0 / M_PI * gamma_hydro;         // for calculating gas thermal speed
@@ -257,6 +263,13 @@ int main(int argc, char *argv[]){
                           x3min, x3max, nx3, ng3                        // ax3
                           );
         #elif defined(SPHERICAL_POLAR_COORD)
+        double ratio1 = frestart.getAttribute<double>("ratio1");
+        m.SetupSphericalPolar(dim,
+                              x1min, x1max, nx1, ratio1, ng1,                       // ax1
+                              x2min, x2max, nx2,         ng2,                       // ax2
+                              x3min, x3max, nx3,         ng3                        // ax3
+                              );
+        #elif defined(CYLINDRICAL_COORD)
         double ratio1 = frestart.getAttribute<double>("ratio1");
         m.SetupSphericalPolar(dim,
                               x1min, x1max, nx1, ratio1, ng1,                       // ax1

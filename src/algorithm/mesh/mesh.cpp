@@ -139,7 +139,6 @@ void mesh::SetupSphericalPolar(int dimension,
             }
         }
     }
-
     // step 4: setup volume size of each cell
     vol.NewBootesArray(x3v.shape()[0], x2v.shape()[0], x1v.shape()[0]);
     for (int kk = 0; kk < x3v.shape()[0]; kk ++){
@@ -173,7 +172,7 @@ void mesh::SetupSphericalPolar(int dimension,
         }
     }
 
-
+    // YISHENG, check your 1/r
     // step 6: setup other geometric terms
     // step 6.1: radial direction
     one_orgeo.NewBootesArray(x1v.shape()[0]);
@@ -210,6 +209,128 @@ void mesh::SetupSphericalPolar(int dimension,
     #if defined (ENABLE_GRAVITY)
         grav->setup_Phimesh(x3v.shape()[0], x2v.shape()[0], x1v.shape()[0]);
     #endif // defined
+}
+
+void mesh::SetupCylindrical(int dimension,
+                               double x1min, double x1max, int numx1, double ratio1, int ngh1,
+                               double x2min, double x2max, int numx2,                int ngh2,
+                               double x3min, double x3max, int numx3,                int ngh3){
+    minx1 = x1min;
+    maxx1 = x1max;
+    minx2 = x2min;
+    maxx2 = x2max;
+    minx3 = x3min;
+    maxx3 = x3max;
+    ratio_dim1 = ratio1;
+    // 1 - r; 2 - phi; 3 - z
+    dim = dimension;
+    ng1 = ngh1;  ng2 = ngh2;  ng3 = ngh3;
+    nx1 = numx1; nx2 = numx2; nx3 = numx3;
+    x1s = ng1; x1l = numx1 + ng1;
+    x2s = ng2; x2l = numx2 + ng2;
+    x3s = ng3; x3l = numx3 + ng3;
+    double dx2_num = (x2max - x2min) / numx2;
+    double dx3_num = (x3max - x3min) / numx3;
+    double mx1 = (x1max - x1min) * (1 - ratio1) / (1 - pow(ratio1, numx1 + 1));
+
+    // step 1: setup boundary locations
+    x1f.NewBootesArray(nx1 + 2 * ng1 + 1);
+    x1f(ng1) = x1min;
+    for (int ng_ii = 1; ng_ii < ng1 + 1; ng_ii ++){
+        x1f(ng1 - ng_ii) = x1f(ng1 - (ng_ii - 1)) - mx1 * pow(ratio1, ng_ii);
+    }
+    for (int ii = ng1 + 1; ii < x1f.shape()[0]; ii++){
+        x1f(ii) = x1f(ii - 1) + mx1 * pow(ratio1, ii - ng1);
+    }
+    x2f = linspace(x2min - ng2 * dx2_num, x2max + ng2 * dx2_num, numx2 + 2 * ng2 + 1, true);
+    x3f = linspace(x3min - ng3 * dx3_num, x3max + ng3 * dx3_num, numx3 + 2 * ng3 + 1, true);
+
+    // step 2: setup cell center locations
+    x1v.NewBootesArray(x1f.shape()[0] - 1);
+    x2v.NewBootesArray(x2f.shape()[0] - 1);
+    x3v.NewBootesArray(x3f.shape()[0] - 1);
+
+    for (int ii = 0; ii < x1v.shape()[0]; ii ++) {
+        x1v(ii) = 2.0 / 3.0 * (pow(x1f(ii + 1), 3) - pow(x1f(ii), 3)) / (pow(x1f(ii + 1), 2) - pow(x1f(ii), 2));
+    }
+    for (int jj = 0; jj < x2v.shape()[0]; jj ++) {
+        x2v(jj) = 1.0 / 2.0 * (x2f(jj+1) + x2f(jj));
+    }
+    for (int kk = 0; kk < x3v.shape()[0]; kk ++) {
+        x3v(kk) = 1.0 / 2.0 * (x3f(kk+1) + x3f(kk));
+    }
+
+
+    // step 3: setup face sizes
+    f1a.NewBootesArray(x3v.shape()[0], x2v.shape()[0], x1f.shape()[0]);
+    f2a.NewBootesArray(x3v.shape()[0], x2f.shape()[0], x1v.shape()[0]);
+    f3a.NewBootesArray(x3f.shape()[0], x2v.shape()[0], x1v.shape()[0]);
+    #pragma omp parallel for collapse (3)
+    for (int kk = 0; kk < x3f.shape()[0]; kk ++){
+        for (int jj = 0; jj < x2f.shape()[0]; jj ++){
+            for (int ii = 0; ii < x1f.shape()[0]; ii ++){
+                if (jj != x2f.shape()[0] - 1 && kk != x3f.shape()[0] - 1){
+                    f1a(kk, jj, ii) = x1f(ii)   * (x2f(jj+1) - x2f(jj))               * (x3f(kk+1) - x3f(kk));
+                }
+                if (ii != x1f.shape()[0] - 1 && kk != x3f.shape()[0] - 1){
+                    f2a(kk, jj, ii) = 1.0 / 2.0 * (pow(x1f(ii+1),2) - pow(x1f(ii),2)) * (x2f(jj+1) - x2f(jj)) ;
+                    
+                }
+                if (ii != x1f.shape()[0] - 1 && jj != x2f.shape()[0] - 1){
+                    f3a(kk, jj, ii) =             (x1f(ii+1) - x1f(ii))               * (x2f(jj+1) - x2f(jj));
+                }
+            }
+        }
+    }
+
+    // step 4: setup volume size of each cell
+    vol.NewBootesArray(x3v.shape()[0], x2v.shape()[0], x1v.shape()[0]);
+    for (int kk = 0; kk < x3v.shape()[0]; kk ++){
+        for (int jj = 0; jj < x2v.shape()[0]; jj ++){
+            for (int ii = 0; ii < x1v.shape()[0]; ii ++){
+                vol(kk, jj, ii) = 1.0 / 2.0 * (pow(x1f(ii+1),2) - pow(x1f(ii),2)) * (x2f(jj+1) - x2f(jj)) * (x2f(jj+1) - x2f(jj)) * (x1f(ii+1) - x1f(ii)) ;
+            }
+        }
+    }
+
+    // step 5: setup cell size values
+    // step 5.1: setup cell size value in coordinate units
+    dx1.NewBootesArray(x1f.shape()[0] - 1);
+    dx2.NewBootesArray(x2f.shape()[0] - 1);
+    dx3.NewBootesArray(x3f.shape()[0] - 1);
+    for (int ii = 0; ii < dx1.shape()[0]; ii ++) { dx1(ii) = x1f(ii + 1) - x1f(ii); }
+    for (int ii = 0; ii < dx2.shape()[0]; ii ++) { dx2(ii) = x2f(ii + 1) - x2f(ii); }
+    for (int ii = 0; ii < dx3.shape()[0]; ii ++) { dx3(ii) = x3f(ii + 1) - x3f(ii); }
+    dx1p.NewBootesArray(x3v.shape()[0], x2v.shape()[0], x1v.shape()[0]);
+    dx2p.NewBootesArray(x3v.shape()[0], x2v.shape()[0], x1v.shape()[0]);
+    dx3p.NewBootesArray(x3v.shape()[0], x2v.shape()[0], x1v.shape()[0]);
+    // step 5.2: setup cell size value in physical units
+    // TODO: use higher order terms
+    for (int kk = 0; kk < x3v.shape()[0]; kk ++){
+        for (int jj = 0; jj < x2v.shape()[0]; jj ++){
+            for (int ii = 0; ii < x1v.shape()[0]; ii ++){
+                dx1p(kk, jj, ii) = dx1(ii);
+                dx2p(kk, jj, ii) = dx2(jj) * x1v(ii);
+                dx3p(kk, jj, ii) = dx3(kk);
+            }
+        }
+    }
+
+   // step 6: setup other geometric terms
+    one_orgeo.NewBootesArray(x1v.shape()[0]);
+    for (int ii = 0; ii < x1v.shape()[0]; ii ++ ){
+        double rp = x1f(ii + 1);
+        double rm = x1f(ii);
+        one_orgeo(ii) = 0.5 * (rp * rp - rm * rm) / (1./3. * (rp * rp * rp - rm * rm * rm)); 
+    }
+    // step 7: allocate memory for hydro quantities
+    cons.NewBootesArray(NUMCONS, x3v.shape()[0], x2v.shape()[0], x1v.shape()[0]);
+    prim.NewBootesArray(NUMPRIM, x3v.shape()[0], x2v.shape()[0], x1v.shape()[0]);
+    // allocate memory for other necessary fields
+    #if defined (ENABLE_GRAVITY)
+        grav->setup_Phimesh(x3v.shape()[0], x2v.shape()[0], x1v.shape()[0]);
+    #endif // defined
+
 }
 
 

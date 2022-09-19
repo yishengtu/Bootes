@@ -131,6 +131,33 @@ void advect_cons(mesh &m, double &dt, BootesArray<double> &fcons, BootesArray<do
                 }
             }
         }
+    #elif defined(CYLINDRICAL_COORD)
+        #pragma omp parallel for collapse (3) schedule (static)
+        for (int kk = m.x3s; kk < m.x3l; kk ++){
+            for (int jj = m.x2s; jj < m.x2l; jj ++){
+                for (int ii = m.x1s; ii < m.x1l; ii ++){
+                    int kkf = kk - m.x3s;
+                    int jjf = jj - m.x2s;
+                    int iif = ii - m.x1s;
+                    // first take care of the divergent terms
+                    for (int consIND = 0; consIND < NUMCONS; consIND++){
+                        m.cons(consIND, kk, jj, ii) -= (dt / m.vol(kk, jj, ii) * (fcons(consIND, 0, kkf, jjf, iif + 1) * m.f1a(kk, jj, ii + 1) - fcons(consIND, 0, kkf, jjf, iif) * m.f1a(kk, jj, ii))
+                                                      + dt / m.vol(kk, jj, ii) * (fcons(consIND, 1, kkf, jjf + 1, iif) * m.f2a(kk, jj + 1, ii) - fcons(consIND, 1, kkf, jjf, iif) * m.f2a(kk, jj, ii))
+                                                      + dt / m.vol(kk, jj, ii) * (fcons(consIND, 2, kkf + 1, jjf, iif) * m.f3a(kk + 1, jj, ii) - fcons(consIND, 2, kkf, jjf, iif) * m.f3a(kk, jj, ii)));
+                    }
+                    // geometry term
+                    m.cons(IM1, kk, jj, ii) += dt * m.one_orgeo(ii) * \
+                                (m.prim(IDN, kk, jj, ii) * (pow(m.prim(IV1, kk, jj, ii),2) - pow(m.prim(IV2, kk, jj, ii), 2)));
+                    m.cons(IM2, kk, jj, ii) += dt * m.one_orgeo(ii) * \
+                                (m.prim(IDN, kk, jj, ii) * (2 * m.prim(IV1, kk, jj, ii) * m.prim(IV2, kk, jj, ii)));
+                    m.cons(IM3, kk, jj, ii) += dt * m.one_orgeo(ii) * \
+                                (m.prim(IDN, kk, jj, ii) * (    m.prim(IV1, kk, jj, ii) * m.prim(IV3, kk, jj, ii)));
+                    //m.cons(IEN, kk, jj, ii) += dt * m.one_orgeo(ii) * \
+                    //            (m.prim(IDN, kk, jj, ii) * \
+                    //            (pow(m.prim(IV3, kk, jj, ii),3) + m.prim(IV1, kk, jj, ii) * pow(m.prim(IV3, kk, jj, ii),2)));
+                }
+            }
+        }
     #else
         # error need coordinate defined
     #endif

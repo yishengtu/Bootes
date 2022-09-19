@@ -1,0 +1,35 @@
+CFL        = 0.3
+t_tot      = 10 #3.15576e20
+output_dt  = 0.001  #1.0e5
+
+foutput_root = ./out/
+foutput_pre  = keplerian_rotation
+foutput_aft  = boot
+
+gamma_hydro = 1.4
+
+dimension  = 3
+
+x1min      = 1 #1.496e14 
+x1max      = 10 # 1.496e15
+nx1        = 256
+
+x2min      = 0                      # 1.0471975512  
+x2max      = 6.28 # 2.09439510239  
+nx2        = 1
+
+x3min      = 0
+x3max      = 1 # 1.496e14
+nx3        = 28
+
+ratio1 = 1.0
+# dust inputsin cgs units
+num_species = 5
+srho = 3
+smin = 1e-5
+smax = 1e0
+
+# scales
+length_scale = 1.496e14
+time_scale = 3.15576e13
+mass_scale = 1.989e33

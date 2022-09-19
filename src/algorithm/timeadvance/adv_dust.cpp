@@ -263,11 +263,117 @@ void advect_cons_dust_cartesian(mesh &m, double &dt, int &NUMSPECIES, BootesArra
 }
 #endif
 
+#if defined(CYLINDRICAL_COORD)
+void advect_cons_dust_cylindrical(mesh &m, double &dt, int &NUMSPECIES, BootesArray<double> &fdcons, BootesArray<double> &valsL, BootesArray<double> &valsR, BootesArray<double> &stoppingtimemesh){
+    // TODO: may need update
+    #pragma omp parallel for collapse (4) schedule (static)
+    for (int specIND  = 0; specIND < m.NUMSPECIES; specIND++){
+        for (int kk = m.x3s; kk < m.x3l; kk ++){
+            for (int jj = m.x2s; jj < m.x2l; jj ++){
+                for (int ii = m.x1s; ii < m.x1l; ii ++){
+                    int kkf = kk - m.x3s;
+                    int jjf = jj - m.x2s;
+                    int iif = ii - m.x1s;
+                    m.dcons(specIND, IDN, kk, jj, ii)
+                                -= (dt / m.dx1(ii) * (fdcons(specIND, IDN, 0, kkf, jjf, iif + 1) - fdcons(specIND, IDN, 0, kkf, jjf, iif))
+                                  + dt / m.dx2(jj) * (fdcons(specIND, IDN, 1, kkf, jjf + 1, iif) - fdcons(specIND, IDN, 1, kkf, jjf, iif))
+                                  + dt / m.dx3(kk) * (fdcons(specIND, IDN, 2, kkf + 1, jjf, iif) - fdcons(specIND, IDN, 2, kkf, jjf, iif)));
+                    bool denl0 = m.dcons(specIND, IDN, kk, jj, ii) < m.dminDensity;
+                    bool stldt = stoppingtimemesh(specIND, kk, jj, ii) < dt;
+                    if (denl0 || stldt){
+                        if (denl0){
+                            m.dcons(specIND, IDN, kk, jj, ii) = m.dminDensity;
+                        }
+                        double rhogradphix1;
+                        double rhogradphix2;
+                        double rhogradphix3;
+                        #ifdef ENABLE_GRAVITY
+                        rhogradphix1 = m.dcons(specIND, IDN, kk, jj, ii) * (m.grav->Phi_grav_x1surface(kk, jj, ii + 1) - m.grav->Phi_grav_x1surface(kk, jj, ii)) / m.dx1p(kk, jj, ii);
+                        rhogradphix2 = m.dcons(specIND, IDN, kk, jj, ii) * (m.grav->Phi_grav_x2surface(kk, jj + 1, ii) - m.grav->Phi_grav_x2surface(kk, jj, ii)) / m.dx2p(kk, jj, ii);
+                        rhogradphix3 = m.dcons(specIND, IDN, kk, jj, ii) * (m.grav->Phi_grav_x3surface(kk + 1, jj, ii) - m.grav->Phi_grav_x3surface(kk, jj, ii)) / m.dx3p(kk, jj, ii);
+                        #else   // set gravity to zero
+                        rhogradphix1 = 0;
+                        rhogradphix2 = 0;
+                        rhogradphix3 = 0;
+                        #endif // ENABLE_GRAVITY
+                        //dust_terminalvelocityapprixmation_rpz(m.prim(IV1, kk, jj, ii), m.prim(IV2, kk, jj, ii), m.prim(IV3, kk, jj, ii),
+                        //                                      rhogradphix1, rhogradphix2, rhogradphix3,
+                        //                                      m.dcons(specIND, IDN, kk, jj, ii), stoppingtimemesh(specIND, kk, jj, ii), m.x1v(ii), m.one_orgeo(jj),
+                        //                                      m.dcons(specIND, IM1, kk, jj, ii), m.dcons(specIND, IM2, kk, jj, ii), m.dcons(specIND, IM3, kk, jj, ii)
+                        //                                      );
+                        m.dcons(specIND, IM1, kk, jj, ii) = m.dcons(specIND, IDN, kk, jj, ii)*m.dprim(specIND,IV1, kk, jj, ii);
+                        m.dcons(specIND, IM2, kk, jj, ii) = m.dcons(specIND, IDN, kk, jj, ii)*m.dprim(specIND,IV2, kk, jj, ii);
+                        m.dcons(specIND, IM3, kk, jj, ii) = m.dcons(specIND, IDN, kk, jj, ii)*m.dprim(specIND,IV3, kk, jj, ii);
+
+
+                        #ifdef DEBUG
+                        if (denl0){
+                            std::cout << m.dcons(specIND, IM1, kk, jj, ii) << '\t' << m.dcons(specIND, IM2, kk, jj, ii) << '\t' << m.dcons(specIND, IM3, kk, jj, ii) << std::endl << flush;
+                        }
+                        #endif // DEBUG
+                    }
+                    else{
+                        // if density is fine, then calculate everything self-consistantly.
+                        for (int dconsIND = 1; dconsIND < NUMCONS - 1; dconsIND++){
+                            m.dcons(specIND, dconsIND, kk, jj, ii) -= (dt / m.dx1(ii) * (fdcons(specIND, dconsIND, 0, kkf, jjf, iif + 1) - fdcons(specIND, dconsIND, 0, kkf, jjf, iif))
+                                                                     + dt / m.dx2(jj) * (fdcons(specIND, dconsIND, 1, kkf, jjf + 1, iif) - fdcons(specIND, dconsIND, 1, kkf, jjf, iif))
+                                                                     + dt / m.dx3(kk) * (fdcons(specIND, dconsIND, 2, kkf + 1, jjf, iif) - fdcons(specIND, dconsIND, 2, kkf, jjf, iif)));
+                        }
+                        // geometry term
+                        m.dcons(specIND, IM1, kk, jj, ii) += dt * m.one_orgeo(ii) * \
+                                (m.dprim(specIND, IDN, kk, jj, ii)*(pow(m.dprim(specIND, IV1,kk,jj,ii),2) - pow(m.dprim(specIND, IV2,kk,jj,ii),2)));
+                        m.dcons(specIND, IM2, kk, jj, ii) += dt * m.one_orgeo(ii) * \
+                                (m.dprim(specIND, IDN, kk, jj, ii)*(2 * m.dprim(specIND, IV1, kk, jj, ii) * m.dprim(specIND, IV2, kk, jj, ii)));
+                        m.dcons(specIND, IM3, kk, jj, ii) += dt * m.one_orgeo(ii) * \
+                                (m.dprim(specIND, IDN, kk, jj, ii)*(    m.dprim(specIND, IV1, kk, jj, ii) * m.dprim(specIND, IV3, kk, jj, ii)));
+                        
+                        // source terms
+                        double rhogradphix1;
+                        double rhogradphix2;
+                        double rhogradphix3;
+                        #ifdef ENABLE_GRAVITY
+                        rhogradphix1 = m.dprim(specIND, IDN, kk, jj, ii) * (m.grav->Phi_grav_x1surface(kk, jj, ii + 1) - m.grav->Phi_grav_x1surface(kk, jj, ii)) / m.dx1p(kk, jj, ii);
+                        rhogradphix2 = m.dprim(specIND, IDN, kk, jj, ii) * (m.grav->Phi_grav_x2surface(kk, jj + 1, ii) - m.grav->Phi_grav_x2surface(kk, jj, ii)) / m.dx2p(kk, jj, ii);
+                        rhogradphix3 = m.dprim(specIND, IDN, kk, jj, ii) * (m.grav->Phi_grav_x3surface(kk + 1, jj, ii) - m.grav->Phi_grav_x3surface(kk, jj, ii)) / m.dx3p(kk, jj, ii);
+                        #else   // set gravity to zero
+                        rhogradphix1 = 0;
+                        rhogradphix2 = 0;
+                        rhogradphix3 = 0;
+                        #endif // ENABLE_GRAVITY
+
+                        // apply gravity
+                        m.dcons(specIND, IM1, kk, jj, ii) += rhogradphix1 * dt;
+                        m.dcons(specIND, IM2, kk, jj, ii) += rhogradphix2 * dt;
+                        m.dcons(specIND, IM3, kk, jj, ii) += rhogradphix3 * dt;
+                        // gas drag
+                        double vdust1 = m.dcons(specIND, IV1, kk, jj, ii) / m.dcons(specIND, IDN, kk, jj, ii);
+                        double vgas1  = m.prim(IV1, kk, jj, ii);
+                        double vdust2 = m.dcons(specIND, IV2, kk, jj, ii) / m.dcons(specIND, IDN, kk, jj, ii);
+                        double vgas2  = m.prim(IV2, kk, jj, ii);
+                        double vdust3 = m.dcons(specIND, IV3, kk, jj, ii) / m.dcons(specIND, IDN, kk, jj, ii);
+                        double vgas3  = m.prim(IV3, kk, jj, ii);
+                        double rhodt_stime = m.dcons(specIND, IDN, kk, jj, ii) * dt / stoppingtimemesh(specIND, kk, jj, ii);
+                        double dragMOM1 = rhodt_stime * (vgas1 - vdust1);
+                        double dragMOM2 = rhodt_stime * (vgas2 - vdust2);
+                        double dragMOM3 = rhodt_stime * (vgas3 - vdust3);
+                        m.dcons(specIND, IM1, kk, jj, ii) += dragMOM1;
+                        m.dcons(specIND, IM2, kk, jj, ii) += dragMOM2;
+                        m.dcons(specIND, IM3, kk, jj, ii) += dragMOM3;
+                    }
+                }
+            }
+        }
+    }
+}
+#endif
+
 void advect_cons_dust(mesh &m, double &dt, int &NUMSPECIES, BootesArray<double> &fdcons, BootesArray<double> &valsL, BootesArray<double> &valsR, BootesArray<double> &stoppingtimemesh){
     #if defined(CARTESIAN_COORD)
     advect_cons_dust_cartesian(m, dt, NUMSPECIES, fdcons, valsL, valsR, stoppingtimemesh);
     #elif defined(SPHERICAL_POLAR_COORD)
     advect_cons_dust_sphericalpolar(m, dt, NUMSPECIES, fdcons, valsL, valsR, stoppingtimemesh);
+    #elif defined(CYLINDRICAL_COORD)
+    advect_cons_dust_cylindrical(m, dt, NUMSPECIES, fdcons, valsL, valsR, stoppingtimemesh);
     #else
         # error need coordinate defined
     #endif

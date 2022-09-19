@@ -81,6 +81,20 @@ void reconstruct_minmod(mesh &m,
                         dx_axis = m.dx3p(kk + x3excess, jj + x2excess, ii+x1excess);
                         a = std::max(cs + m.prim(IV3, m.x3s + kk, m.x2s + jj, m.x1s + ii), cs - m.prim(IV3, m.x3s + kk, m.x2s + jj, m.x1s + ii));
                     }
+                #elif defined(CYLINDRICAL_COORD)
+                // still needs converted to cyl coords
+                    if      (axis == 0) {
+                        dx_axis = m.dx1p(kk + x3excess, jj + x2excess, ii+x1excess);
+                        a = std::max(cs + m.prim(IV1, m.x3s + kk, m.x2s + jj, m.x1s + ii), cs - m.prim(IV1, m.x3s + kk, m.x2s + jj, m.x1s + ii));
+                    }
+                    else if (axis == 1) {
+                        dx_axis = m.dx2p(kk + x3excess, jj + x2excess, ii+x1excess);
+                        a = std::max(cs + m.prim(IV2, m.x3s + kk, m.x2s + jj, m.x1s + ii), cs - m.prim(IV2, m.x3s + kk, m.x2s + jj, m.x1s + ii));
+                    }
+                    else                {
+                        dx_axis = m.dx3p(kk + x3excess, jj + x2excess, ii+x1excess);
+                        a = std::max(cs + m.prim(IV3, m.x3s + kk, m.x2s + jj, m.x1s + ii), cs - m.prim(IV3, m.x3s + kk, m.x2s + jj, m.x1s + ii));
+                    }
                 #else
                     # error need coordinate defined
                 #endif
