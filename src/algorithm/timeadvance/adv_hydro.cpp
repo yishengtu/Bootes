@@ -147,11 +147,10 @@ void advect_cons(mesh &m, double &dt, BootesArray<double> &fcons, BootesArray<do
                     }
                     // geometry term
                     m.cons(IM1, kk, jj, ii) += dt * m.one_orgeo(ii) * \
-                                (m.prim(IDN, kk, jj, ii) * (pow(m.prim(IV1, kk, jj, ii),2) - pow(m.prim(IV2, kk, jj, ii), 2)));
-                    m.cons(IM2, kk, jj, ii) += dt * m.one_orgeo(ii) * \
-                                (m.prim(IDN, kk, jj, ii) * (2 * m.prim(IV1, kk, jj, ii) * m.prim(IV2, kk, jj, ii)));
-                    m.cons(IM3, kk, jj, ii) += dt * m.one_orgeo(ii) * \
-                                (m.prim(IDN, kk, jj, ii) * (    m.prim(IV1, kk, jj, ii) * m.prim(IV3, kk, jj, ii)));
+                                ((m.prim(IDN, kk, jj, ii) * pow(m.prim(IV2, kk, jj, ii), 2)) + m.prim(IPN, kk, jj, ii));
+                    m.cons(IM2, kk, jj, ii) -= dt * m.one_orgeo(ii) * \
+                                (m.prim(IDN, kk, jj, ii) * (m.prim(IV1, kk, jj, ii) * m.prim(IV2, kk, jj, ii)));
+                    m.cons(IM3, kk, jj, ii) -= 0.0;
                     //m.cons(IEN, kk, jj, ii) += dt * m.one_orgeo(ii) * \
                     //            (m.prim(IDN, kk, jj, ii) * \
                     //            (pow(m.prim(IV3, kk, jj, ii),3) + m.prim(IV1, kk, jj, ii) * pow(m.prim(IV3, kk, jj, ii),2)));

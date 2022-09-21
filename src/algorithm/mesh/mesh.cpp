@@ -229,12 +229,14 @@ void mesh::SetupCylindrical(int dimension,
     x1s = ng1; x1l = numx1 + ng1;
     x2s = ng2; x2l = numx2 + ng2;
     x3s = ng3; x3l = numx3 + ng3;
+    double dx1_num = (x1max - x1min) / numx1;
     double dx2_num = (x2max - x2min) / numx2;
     double dx3_num = (x3max - x3min) / numx3;
     double mx1 = (x1max - x1min) * (1 - ratio1) / (1 - pow(ratio1, numx1 + 1));
 
     // step 1: setup boundary locations
     x1f.NewBootesArray(nx1 + 2 * ng1 + 1);
+    /*
     x1f(ng1) = x1min;
     for (int ng_ii = 1; ng_ii < ng1 + 1; ng_ii ++){
         x1f(ng1 - ng_ii) = x1f(ng1 - (ng_ii - 1)) - mx1 * pow(ratio1, ng_ii);
@@ -244,7 +246,10 @@ void mesh::SetupCylindrical(int dimension,
     }
     x2f = linspace(x2min - ng2 * dx2_num, x2max + ng2 * dx2_num, numx2 + 2 * ng2 + 1, true);
     x3f = linspace(x3min - ng3 * dx3_num, x3max + ng3 * dx3_num, numx3 + 2 * ng3 + 1, true);
-
+    */
+    x1f = linspace(x1min - ng1 * dx1_num, x1max + ng1 * dx1_num, numx1 + 2 * ng1 + 1, true);
+    x2f = linspace(x2min - ng2 * dx2_num, x2max + ng2 * dx2_num, numx2 + 2 * ng2 + 1, true);
+    x3f = linspace(x3min - ng3 * dx3_num, x3max + ng3 * dx3_num, numx3 + 2 * ng3 + 1, true);
     // step 2: setup cell center locations
     x1v.NewBootesArray(x1f.shape()[0] - 1);
     x2v.NewBootesArray(x2f.shape()[0] - 1);
@@ -277,7 +282,7 @@ void mesh::SetupCylindrical(int dimension,
                     
                 }
                 if (ii != x1f.shape()[0] - 1 && jj != x2f.shape()[0] - 1){
-                    f3a(kk, jj, ii) =             (x1f(ii+1) - x1f(ii))               * (x2f(jj+1) - x2f(jj));
+                    f3a(kk, jj, ii) =             (x1f(ii+1) - x1f(ii))               * (x3f(kk+1) - x3f(kk));
                 }
             }
         }
@@ -288,7 +293,7 @@ void mesh::SetupCylindrical(int dimension,
     for (int kk = 0; kk < x3v.shape()[0]; kk ++){
         for (int jj = 0; jj < x2v.shape()[0]; jj ++){
             for (int ii = 0; ii < x1v.shape()[0]; ii ++){
-                vol(kk, jj, ii) = 1.0 / 2.0 * (pow(x1f(ii+1),2) - pow(x1f(ii),2)) * (x2f(jj+1) - x2f(jj)) * (x2f(jj+1) - x2f(jj)) * (x1f(ii+1) - x1f(ii)) ;
+                vol(kk, jj, ii) = 1.0 / 2.0 * (pow(x1f(ii+1),2) - pow(x1f(ii),2)) * (x2f(jj+1) - x2f(jj)) * (x2f(jj+1) - x2f(jj)) * (x3f(kk+1) - x3f(kk)) ;
             }
         }
     }

@@ -19,7 +19,7 @@ namespace {
     void setup(mesh &m, input_file &finput){
         init_unifdensity = 1.68322e-5; // 1e-14;         // uniform density initially
         central_point_mass = 1; // 1.989e33;      // Similar to the uniform case, this can be read from the input file.
-        Eint = 1.0;
+        Eint = 1e8;
         //double temp_slope = (kT_mu_up - kT_mu_low) / (m.x1l - m.x1s);
         //double temp_const = kT_mu_low - m.x3s * temp_slope;
         for (int kk = m.x3s; kk < m.x3l; kk++){
@@ -27,7 +27,8 @@ namespace {
                 for (int ii = m.x1s; ii < m.x1l; ii++){
                     double rho = init_unifdensity;
                     double r = m.x1v(ii);
-                    double OmegaK = sqrt((m.pconst.G * central_point_mass) / pow(r, 3));
+                    double z = m.x3v(kk);
+                    double OmegaK = sqrt((m.pconst.G * central_point_mass) / pow(r*r + z*z, 1.5));
                     m.cons(IDN, kk, jj, ii) = rho;
                     m.cons(IM1, kk, jj, ii) = 0.0;                     // radial
                     m.cons(IM2, kk, jj, ii) = rho * OmegaK * r;        // azimuthal
@@ -56,6 +57,7 @@ namespace {
            
 
         /** gravity **/
+        #ifdef ENABLE_GRAVITY
         double zero = 0.;
         m.grav->zero_gravity(m); // first initialize the values in this array
         // Then put in gravity
@@ -66,13 +68,14 @@ namespace {
             for (int jj = m.x2s; jj < m.x2l; jj ++){
                 for (int ii = m.x1s; ii < m.x1l; ii ++){
                     double r = m.x1v(ii);
-                    double z = m.x2v(ii);
+                    double z = m.x3v(kk);
                     m.grav->grav_x1(kk, jj, ii) = - m.pconst.G * central_point_mass * r / pow(r * r + z * z, 1.5);
                     m.grav->grav_x2(kk, jj, ii) = 0;
                     m.grav->grav_x3(kk, jj, ii) = - m.pconst.G * central_point_mass * z / pow(r * r + z * z, 1.5);
                 }
             }
         }
+        #endif
 
     }
 
@@ -96,7 +99,7 @@ namespace {
     }
     void work_after_loop(mesh &m, double &dt){
         /** gravity **/
-
+        #ifdef ENABLE_GRAVITY
         // put back in gravity (may not necessary but is safe)
         double zero = 0.;
         m.grav->zero_gravity(m); // first initialize the values in this array
@@ -105,12 +108,14 @@ namespace {
             for (int jj = m.x2s; jj < m.x2l; jj ++){
                 for (int ii = m.x1s; ii < m.x1l; ii ++){
                     double r = m.x1v(ii);
-                    m.grav->grav_x1(kk, jj, ii) = - m.pconst.G * central_point_mass / (r * r);
+                    double z = m.x3v(kk);
+                    m.grav->grav_x1(kk, jj, ii) = - m.pconst.G * central_point_mass * r / pow(r * r + z * z, 1.5);
                     m.grav->grav_x2(kk, jj, ii) = 0;
-                    m.grav->grav_x3(kk, jj, ii) = 0;
+                    m.grav->grav_x3(kk, jj, ii) = - m.pconst.G * central_point_mass * z / pow(r * r + z * z, 1.5);
                 }
             }
         }
+        #endif
     }
 
     void apply_user_extra_boundary_condition(mesh &m){

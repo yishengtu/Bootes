@@ -12,7 +12,6 @@
 
 /** DUST **/
 #define ENABLE_DUSTFLUID
-
 #define ENABLE_DUST_GRAINGROWTH
 /** DEBUG **/
 //#define DEBUG
