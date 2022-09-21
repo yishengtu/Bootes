@@ -284,7 +284,6 @@ int main(int argc, char *argv[]){
         }
         double ZERO = 0.0;
         work_after_loop(m, ZERO);
-        cout << m.grav->Phi_grav(0, 20, 20) << endl << flush;
         #endif // defined
 
         /** protections **/

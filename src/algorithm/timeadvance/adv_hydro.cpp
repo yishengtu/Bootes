@@ -108,7 +108,7 @@ void advect_cons(mesh &m, double &dt, BootesArray<double> &fcons, BootesArray<do
         }
     #elif defined(SPHERICAL_POLAR_COORD)
         // #pragma omp parallel for collapse (3) schedule (static)
-        #pragma acc parallel loop collapse (3) default(present)
+        #pragma acc parallel loop collapse (3) default(present) firstprivate(dt)
         for (int kk = m.x3s; kk < m.x3l; kk ++){
             for (int jj = m.x2s; jj < m.x2l; jj ++){
                 for (int ii = m.x1s; ii < m.x1l; ii ++){
