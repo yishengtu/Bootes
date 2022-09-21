@@ -1,5 +1,5 @@
 CC := nvc++
-CFLAGS := -lhdf5 -lhdf5_cpp -O3 -acc -Minfo
+CFLAGS := -g -lhdf5 -lhdf5_cpp -acc -Minfo=accel -gpu=managed
 EXE_DIR := bin/
 EXECUTABLE := $(EXE_DIR)bootes.out
 
