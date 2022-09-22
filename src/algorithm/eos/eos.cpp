@@ -26,7 +26,8 @@ double ene(double &rho, double &pres, double &v1, double &v2, double &v3, double
 
 
 void cons_to_prim(mesh &m){
-    #pragma omp parallel for collapse (3) schedule (static)
+    //#pragma omp parallel for collapse (3) schedule (static)
+    #pragma acc parallel loop collapse (3)
     for (int kk = m.x3s; kk < m.x3l ; kk++){
         for (int jj = m.x2s; jj < m.x2l; jj++){
             for (int ii = m.x1s; ii < m.x1l; ii++){

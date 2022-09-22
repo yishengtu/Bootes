@@ -88,7 +88,8 @@ double timestep(mesh &m, double &CFL){
         #endif // ENABLE_DUSTFLUID
     }
     else{
-        #pragma omp parallel for collapse(3) reduction (min : min_dt)
+        //#pragma omp parallel for collapse(3) reduction(min : min_dt)
+        //#pragma acc parallel loop collapse (3) reduction(min : min_dt) copy(min_dt)
         for (int kk = m.x3s; kk < m.x3l ; kk++){
             for (int jj = m.x2s; jj < m.x2l; jj++){
                 for (int ii = m.x1s; ii < m.x1l; ii++){
@@ -101,7 +102,7 @@ double timestep(mesh &m, double &CFL){
                     double dx2_sig = std::min(std::min(m.dx2p(kk, jj - 1, ii), m.dx2p(kk, jj, ii)), m.dx2p(kk, jj + 1, ii));
                     double dx3_sig = std::min(std::min(m.dx3p(kk - 1, jj, ii), m.dx3p(kk, jj, ii)), m.dx3p(kk + 1, jj, ii));
                     double mindt_cell = std::min(dx3_sig / vmx3, std::min(dx2_sig / vmx2, dx1_sig / vmx1));
-                    min_dt = std::min(mindt_cell, min_dt);
+                    min_dt = std::min(min_dt, mindt_cell);
                     #ifdef DEBUG
                     if (mindt_cell < 0){
                         std::cout << "(" << kk << '\t' << jj << '\t' << ii << ")" << '\t';
@@ -112,8 +113,10 @@ double timestep(mesh &m, double &CFL){
                 }
             }
         }
+        # pragma acc wait
         #ifdef ENABLE_DUSTFLUID
-        #pragma omp parallel for collapse(4) reduction (min: min_dt)
+        //#pragma omp parallel for collapse(4) reduction (min: min_dt)
+        //#pragma acc parallel loop collapse (4) reduction(min : min_dt) copy(min_dt)
         for (int specIND = 0; specIND < m.NUMSPECIES; specIND ++){
             for (int kk = m.x3s; kk < m.x3l ; kk++){
                 for (int jj = m.x2s; jj < m.x2l; jj++){
@@ -126,7 +129,7 @@ double timestep(mesh &m, double &CFL){
                         double dx2_sig = std::min(std::min(m.dx2p(kk, jj - 1, ii), m.dx2p(kk, jj, ii)), m.dx2p(kk, jj + 1, ii));
                         double dx3_sig = std::min(std::min(m.dx3p(kk - 1, jj, ii), m.dx3p(kk, jj, ii)), m.dx3p(kk + 1, jj, ii));
                         double mindt_cell = std::min(dx3_sig / vmx3, std::min(dx2_sig / vmx2, dx1_sig / vmx1));
-                        min_dt = std::min(mindt_cell, min_dt);
+                        min_dt = std::min(min_dt, mindt_cell);
                         #ifdef DEBUG
                         if (mindt_cell < 0){
                             std::cout << kk << '\t' << jj << '\t' << ii << '\t' << dx1_sig << '\t' << dx2_sig<< '\t' << vmx1 << '\t' << vmx2 << '\t' << std::flush;
@@ -137,9 +140,11 @@ double timestep(mesh &m, double &CFL){
                 }
             }
         }
+        # pragma acc wait
         #endif // ENABLE_DUSTFLUID
     }
-
+    //std::cout << "numeric_limit = " << '\t' << std::numeric_limits<double>::max() << std::endl << std::flush;
+    //std::cout << "dt in time_step.cpp" << '\t' << min_dt << std::endl << std::flush;
     return CFL * min_dt;
 }
 

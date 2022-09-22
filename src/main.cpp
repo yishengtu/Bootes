@@ -34,6 +34,7 @@ void doloop(double &ot, double &next_exit_loop_time, mesh &m, double &CFL){
     int loop_cycle = 0;
     while (ot < next_exit_loop_time){
         double dt = timestep(m, CFL);
+        //cout << "dt (CFL) = " << dt << endl << flush;
         dt = min(dt, next_exit_loop_time - ot);
         if (dt < 0){
             cout << "dt < 0!" << endl << flush;
@@ -186,9 +187,9 @@ int main(int argc, char *argv[]){
         #ifdef ENABLE_DUSTFLUID
             setup_dust(m, finput);          // fill in m.GrainEdgeList, m.GrainSizeList and m.NUMSPECIES
             m.setupDustFluidMesh(m.NUMSPECIES);
-            for (int ii = 0; ii < m.NUMSPECIES; ii ++){
-                cout << m.GrainSizeList(ii) << endl << flush;
-            }
+            //for (int ii = 0; ii < m.NUMSPECIES; ii ++){
+            //    cout << m.GrainSizeList(ii) << endl << flush;
+            //}
             m.GrainSizeTimesGrainDensity.NewBootesArray(m.NUMSPECIES);
             m.GrainMassList.NewBootesArray(m.NUMSPECIES);
             for (int specIND = 0; specIND < m.NUMSPECIES; specIND ++){
@@ -199,12 +200,6 @@ int main(int argc, char *argv[]){
         /** setup initial condition **/
         setup(m, finput);   // setup according to the input file
 
-        cons_to_prim(m);
-        apply_boundary_condition(m);
-        #ifdef ENABLE_DUSTFLUID
-        cons_to_prim_dust(m);
-        apply_boundary_condition_dust(m);
-        #endif
         /** initialize simulation parameters **/
         t_tot = finput.getDouble("t_tot");
         output_dt = finput.getDouble("output_dt");
@@ -303,6 +298,13 @@ int main(int argc, char *argv[]){
 
     // copy into device mesh m.
     #pragma acc enter data copyin(m)
+
+    cons_to_prim(m);
+    apply_boundary_condition(m);
+    #ifdef ENABLE_DUSTFLUID
+    cons_to_prim_dust(m);
+    apply_boundary_condition_dust(m);
+    #endif
 
     std::cout << "setup complete" << std::endl << flush;
     /** main loop **/
