@@ -1,5 +1,5 @@
 CFL        = 0.3
-t_tot      = 1.0
+t_tot      = 1e-5
 output_dt  = 1e-6
 foutput_root = ./out/
 foutput_pre  = shearboxdisk
@@ -15,7 +15,7 @@ nx1        = 100
 
 x2min      = -1
 x2max      = 1
-nx2        = 1
+nx2        = 2
 
 x3min      = 0
 x3max      = 0.1
