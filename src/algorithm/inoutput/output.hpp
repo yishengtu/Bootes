@@ -41,9 +41,9 @@ class Output{
         hsize_t fdim_att[] = {FSPACE_ATT}; // dim sizes of ds (on disk)
         DataSpace fspace_att( FSPACE_ATT_RANK, fdim_att );
 
-        Attribute* att = new Attribute(file_->createAttribute(name, hdf5_type, fspace_att));
-        att->write( hdf5_type, attr);
-        delete att;
+        Attribute att(file_->createAttribute(name, hdf5_type, fspace_att));
+        att.write( hdf5_type, attr);
+        //delete att;
     }
 
     template<typename T>
@@ -58,7 +58,7 @@ class Output{
         hsize_t fdim[] = {FSPACE_DIM1}; // dim sizes of ds (on disk)
         DataSpace fspace( FSPACE_RANK, fdim );
 
-        DataSet* dataset = new DataSet(file_->createDataSet(name, hdf5_type, fspace));
+        DataSet dataset(file_->createDataSet(name, hdf5_type, fspace));
         /*
          * Select hyperslab for the dataset in the file, using 3x2 blocks,
          * (4,3) stride and (2,4) count starting at the position (0,1).
@@ -81,8 +81,8 @@ class Output{
         DataSpace mspace( (unsigned int) datain.dimension(), mdim );
         mspace.selectHyperslab( H5S_SELECT_SET, count, start, stride, block);
 
-        dataset->write( datain.get_arr(), hdf5_type, mspace, fspace );
-        delete dataset;
+        dataset.write( datain.get_arr(), hdf5_type, mspace, fspace );
+        //delete dataset;
     }
 
     void writeStringdataset(string &str, string dsetname){
@@ -105,10 +105,10 @@ class Output{
         mspace.selectHyperslab( H5S_SELECT_SET, count, start, stride, block);
 
         H5::StrType datatype(H5::PredType::C_S1, FSPACE_DIM1);
-        H5::DataSet *str_dataset = new DataSet(file_->createDataSet(dsetname, datatype, dataspace));
+        H5::DataSet str_dataset(file_->createDataSet(dsetname, datatype, dataspace));
 
-        str_dataset->write(str, datatype, fspace, mspace);
-        delete str_dataset;
+        str_dataset.write(str, datatype, fspace, mspace);
+        //delete str_dataset;
     }
 
     template<typename T>
@@ -124,7 +124,7 @@ class Output{
         hsize_t fdim[] = {FSPACE_DIM1, FSPACE_DIM2}; // dim sizes of ds (on disk)
         DataSpace fspace( FSPACE_RANK, fdim );
 
-        DataSet* dataset = new DataSet(file_->createDataSet(name, hdf5_type, fspace));
+        DataSet dataset(file_->createDataSet(name, hdf5_type, fspace));
         /*
          * Select hyperslab for the dataset in the file, using 3x2 blocks,
          * (4,3) stride and (2,4) count starting at the position (0,1).
@@ -152,8 +152,8 @@ class Output{
         block[0]  = FSPACE_DIM1; block[1]  = 1;
         mspace.selectHyperslab( H5S_SELECT_SET, count, start, stride, block);
 
-        dataset->write( datain.get_arr(), hdf5_type, mspace, fspace );
-        delete dataset;
+        dataset.write( datain.get_arr(), hdf5_type, mspace, fspace );
+        //delete dataset;
     }
 
     template<typename T>
@@ -170,7 +170,7 @@ class Output{
         hsize_t fdim[] = {FSPACE_DIM1, FSPACE_DIM2, FSPACE_DIM3}; // dim sizes of ds (on disk)
         DataSpace fspace( FSPACE_RANK, fdim );
 
-        DataSet* dataset = new DataSet(file_->createDataSet(name, hdf5_type, fspace));
+        DataSet dataset(file_->createDataSet(name, hdf5_type, fspace));
         /*
          * Select hyperslab for the dataset in the file, using 3x2 blocks,
          * (4,3) stride and (2,4) count starting at the position (0,1).
@@ -198,8 +198,8 @@ class Output{
         block[0]  = FSPACE_DIM1; block[1]  = 1;           block[2]  = 1;
         mspace.selectHyperslab( H5S_SELECT_SET, count, start, stride, block);
 
-        dataset->write( datain.get_arr(), hdf5_type, mspace, fspace );
-        delete dataset;
+        dataset.write( datain.get_arr(), hdf5_type, mspace, fspace );
+        //delete dataset;
     }
 
     template<typename T>
@@ -217,7 +217,7 @@ class Output{
         hsize_t fdim[] = {FSPACE_DIM1, FSPACE_DIM2, FSPACE_DIM3, FSPACE_DIM4}; // dim sizes of ds (on disk)
         DataSpace fspace( FSPACE_RANK, fdim );
 
-        DataSet* dataset = new DataSet(file_->createDataSet(name, hdf5_type, fspace));
+        DataSet dataset(file_->createDataSet(name, hdf5_type, fspace));
         /*
          * Select hyperslab for the dataset in the file, using 3x2 blocks,
          * (4,3) stride and (2,4) count starting at the position (0,1).
@@ -245,8 +245,8 @@ class Output{
         block[0]  = FSPACE_DIM1; block[1]  = 1;           block[2]  = 1;           block[3]  = 1;
         mspace.selectHyperslab( H5S_SELECT_SET, count, start, stride, block);
 
-        dataset->write( datain.get_arr(), hdf5_type, mspace, fspace );
-        delete dataset;
+        dataset.write( datain.get_arr(), hdf5_type, mspace, fspace );
+        //delete dataset;
     }
 
     template<typename T>
@@ -265,7 +265,7 @@ class Output{
         hsize_t fdim[] = {FSPACE_DIM1, FSPACE_DIM2, FSPACE_DIM3, FSPACE_DIM4, FSPACE_DIM5}; // dim sizes of ds (on disk)
         DataSpace fspace( FSPACE_RANK, fdim );
 
-        DataSet* dataset = new DataSet(file_->createDataSet(name, hdf5_type, fspace));
+        DataSet dataset(file_->createDataSet(name, hdf5_type, fspace));
         /*
          * Select hyperslab for the dataset in the file, using 3x2 blocks,
          * (4,3) stride and (2,4) count starting at the position (0,1).
@@ -293,8 +293,8 @@ class Output{
         block[0]  = FSPACE_DIM1; block[1]  = 1;           block[2]  = 1;           block[3]  = 1;           block[4]  = 1;
         mspace.selectHyperslab( H5S_SELECT_SET, count, start, stride, block);
 
-        dataset->write( datain.get_arr(), hdf5_type, mspace, fspace );
-        delete dataset;
+        dataset.write( datain.get_arr(), hdf5_type, mspace, fspace );
+        //delete dataset;
     }
 
     void close(){
@@ -303,7 +303,8 @@ class Output{
 
     // destructor
     ~Output(){
-        delete file_;
+        std::cout << "output.hpp: POSSIBLE MEMORY LEAK HERE!!!!" << std::endl << std::flush;
+        //delete file_;
     }
     private:
         string fn_;
