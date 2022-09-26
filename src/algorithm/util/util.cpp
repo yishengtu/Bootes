@@ -87,10 +87,10 @@ int searchsorted(double x, BootesArray<double> &xlist){
         else if(xlist(mid_ind) == x){
             return mid_ind;
         }*/
-        if (min_ind + 1 >= max_ind){
-            cout << ("searchsorted failed") << endl << flush;
-            throw ;
-        }
+        //if (min_ind + 1 >= max_ind){
+        //    cout << ("searchsorted failed") << endl << flush;
+        //    throw ;
+        //}
     }
     return -1;
 }

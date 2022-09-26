@@ -15,7 +15,8 @@ void reconstruct_dust_const(mesh &m,
                             double &dt
                             ){
     // Computation starts in first ghost zone, for first active cell left boundary flux
-    #pragma omp parallel for collapse (3) schedule (static) firstprivate(dt)
+    // #pragma omp parallel for collapse (3) schedule (static) firstprivate(dt)
+    #pragma acc parallel loop collapse (4) default(present) firstprivate(x1excess, x2excess, x3excess, axis)
     for (int specIND = 0; specIND < m.NUMSPECIES; specIND++){
         for (int kk = -x3excess; kk < m.nx3 + x3excess; kk++){
             for (int jj = -x2excess; jj < m.nx2 + x2excess; jj++){

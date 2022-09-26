@@ -89,7 +89,7 @@ double timestep(mesh &m, double &CFL){
     }
     else{
         //#pragma omp parallel for collapse(3) reduction(min : min_dt)
-        //#pragma acc parallel loop collapse (3) reduction(min : min_dt) copy(min_dt) default(present) present(m)
+        //#pragma acc parallel loop collapse (3) reduction(min : min_dt) copy(min_dt) present(m)
         for (int kk = m.x3s; kk < m.x3l ; kk++){
             for (int jj = m.x2s; jj < m.x2l; jj++){
                 for (int ii = m.x1s; ii < m.x1l; ii++){
@@ -116,7 +116,7 @@ double timestep(mesh &m, double &CFL){
         # pragma acc wait
         #ifdef ENABLE_DUSTFLUID
         //#pragma omp parallel for collapse(4) reduction (min: min_dt)
-        //#pragma acc parallel loop collapse (4) reduction(min : min_dt) copy(min_dt) default(present) present(m)
+        //#pragma acc parallel loop collapse (4) reduction(min : min_dt) copy(min_dt) present(m)
         for (int specIND = 0; specIND < m.NUMSPECIES; specIND ++){
             for (int kk = m.x3s; kk < m.x3l ; kk++){
                 for (int jj = m.x2s; jj < m.x2l; jj++){
