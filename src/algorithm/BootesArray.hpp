@@ -148,6 +148,10 @@ class BootesArray {
     }
 
     // #pragma acc routine seq   // openACC // inline needed because in header files, if not inline multiple defs are created.
+    __host__ __device__ inline T *data() {
+	return arr_;
+    }
+
     __host__ __device__ inline T &operator() (const int x1) {
         #ifdef DEBUG
             CHECKOK(x1);
@@ -243,7 +247,7 @@ class BootesArray {
         }
     }
 
-    private:
+    public:
         T *arr_;
         int size1_;
         int size2_;

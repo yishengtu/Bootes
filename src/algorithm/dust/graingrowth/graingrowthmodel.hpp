@@ -5,7 +5,7 @@
 
 
 #pragma acc routine seq
-void grain_growth_model_stick(double &s1, double &s2, double &dv, double res[2]);
+//__device__ void grain_growth_model_stick(double &s1, double &s2, double &dv, double res[2]);
 
 
 #endif // GRAINGROWTHMODEL_HPP_

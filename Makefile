@@ -1,6 +1,8 @@
 CC := nvc++
-CFLAGS := -I /home/vhatz6ed/hdf5/include/ -L /home/vhatz6ed/hdf5/lib/ -g -lhdf5 -lhdf5_cpp #-acc -Minfo=accel -gpu=managed,lineinfo,ptxinfo
-EXE_DIR := bin
+C_CUDA :=nvcc
+CFLAGS := -I /home/vhatz6ed/hdf5/include/ -L /home/vhatz6ed/hdf5/lib/ -g -lhdf5 -lhdf5_cpp -cuda -gpu=nordc#-acc -Minfo=accel -gpu=managed,lineinfo,ptxinfo
+CUDA_FLAGS := -ccbin=nvc++ 
+EXE_DIR := bin/
 EXECUTABLE := $(EXE_DIR)bootes.out
 
 SRC_FILES := $(wildcard src/algorithm/*.cpp) \
@@ -20,7 +22,8 @@ SRC_FILES := $(wildcard src/algorithm/*.cpp) \
 	     $(wildcard src/main.cpp)
 
 OBJ_DIR := obj/
-OBJ_FILES := $(addprefix $(OBJ_DIR), $(notdir $(SRC_FILES:.cpp=.o)))
+OBJ_FILES := $(addprefix $(OBJ_DIR), $(notdir $(SRC_FILES:.cpp=.o))) obj/coagulation.o
+#OBJ_FILES := $(addprefix $(OBJ_DIR), $(notdir $(SRC_FILES:.cpp=.o)), obj/coagulation.o)
 SRC_DIRS := $(dir $(SRC_FILES))
 VPATH := $(SRC_DIRS)
 
@@ -37,6 +40,9 @@ $(EXECUTABLE) : $(OBJ_FILES)
 
 $(OBJ_DIR)%.o : %.cpp
 	$(CC) $(CFLAGS) -c $< -o $@
+
+obj/coagulation.o : src/algorithm/dust/graingrowth/coagulation.cu
+	$(C_CUDA) $(CUDA_FLAGS) -c $< -o $@
 
 
 clean:

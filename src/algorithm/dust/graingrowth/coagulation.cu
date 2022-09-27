@@ -7,10 +7,15 @@
 #include "../terminalvel.hpp"
 #include <cmath>
 
+__device__ void grain_growth_model_stick(double &s1, double &s2, double &dv, double res[2]){
+    res[0] = dv * M_PI * pow((s1 + s2), 2.0);
+    res[1] = 0.0;
+}
+
 
 __global__ void grain_growth_one_cell(double *num,
                            double *vr, double *vtheta, double *vphi, double *num_here, double *Mmat,
-                           BootesArray<double> *grain_size_list, BootesArray<double> *grain_mass_list, double dt, int NUM_SPECIES){
+                           double *grain_size_list, double *grain_mass_list, double dt, int NUM_SPECIES){
     double dt_here = dt;
 
     int index = threadIdx.x + blockIdx.x * blockDim.x;
@@ -35,47 +40,47 @@ __global__ void grain_growth_one_cell(double *num,
             for (int k = j; k < NUM_SPECIES; ++ k){
 		//if (k < j) continue;
                 double dv_bulk = sqrt(pow((vr[j] - vr[k]), 2) + pow((vtheta[j] - vtheta[k]), 2) + pow((vphi[j] - vphi[k]), 2));
-                // double dv_vortex = dv_ormel(grain_size_list(j), grain_size_list(k), rhogas, tempgas);
+                // double dv_vortex = dv_ormel(grain_size_list[j], grain_size_list[k], rhogas, tempgas);
                 double dv = dv_bulk;
 
                 double KL1[2];                  //K1 = KL1[0], L1 = KL1[1]
                 double KL2[2];
-                grain_growth_model_stick(grain_size_list(j), grain_size_list(k), dv, KL1);
-                grain_growth_model_stick(grain_size_list(k), grain_size_list(j), dv, KL2);
+                grain_growth_model_stick(grain_size_list[j], grain_size_list[k], dv, KL1);
+                grain_growth_model_stick(grain_size_list[k], grain_size_list[j], dv, KL2);
 
                 // replace the for statement here with new method, use V1.8's for if needed
                 // gain via coagulation
                 double numjtimesnumk = num_here[j] * num_here[k];
                 int cog_res = 0;        // the following loop is equivalent to searchsorted in numpy
                 while (cog_res < NUM_SPECIES){
-                    if (grain_mass_list(cog_res) >= (grain_mass_list(j) + grain_mass_list(k))){
+                    if (grain_mass_list[cog_res] >= (grain_mass_list[j] + grain_mass_list[k])){
                         break;
                     }
                     cog_res += 1;
                 }
                 if (j == k){
                     if (cog_res == NUM_SPECIES){
-                        Mmat[cog_res - 1] += 0.5 * (KL1[0] * grain_mass_list(k) + KL2[0] * grain_mass_list(j)) / grain_mass_list(cog_res - 1) * numjtimesnumk;
+                        Mmat[cog_res - 1] += 0.5 * (KL1[0] * grain_mass_list[k] + KL2[0] * grain_mass_list[j]) / grain_mass_list[cog_res - 1] * numjtimesnumk;
                     }
                     else{
-                        double eps = (grain_mass_list(j) + grain_mass_list(k) - grain_mass_list(cog_res - 1)) / (grain_mass_list(cog_res) - grain_mass_list(cog_res - 1));
-                        Mmat[cog_res]     += 0.5 * (KL1[0] * grain_mass_list(k) + KL2[0] * grain_mass_list(j)) / grain_mass_list(cog_res) * numjtimesnumk * eps;
-                        Mmat[cog_res - 1] += 0.5 * (KL1[0] * grain_mass_list(k) + KL2[0] * grain_mass_list(j)) / grain_mass_list(cog_res - 1) * numjtimesnumk * (1.0 - eps);
+                        double eps = (grain_mass_list[j] + grain_mass_list[k] - grain_mass_list[cog_res - 1]) / (grain_mass_list[cog_res] - grain_mass_list[cog_res - 1]);
+                        Mmat[cog_res]     += 0.5 * (KL1[0] * grain_mass_list[k] + KL2[0] * grain_mass_list[j]) / grain_mass_list[cog_res] * numjtimesnumk * eps;
+                        Mmat[cog_res - 1] += 0.5 * (KL1[0] * grain_mass_list[k] + KL2[0] * grain_mass_list[j]) / grain_mass_list[cog_res - 1] * numjtimesnumk * (1.0 - eps);
                     }
                 }
                 else{
                     if (cog_res == NUM_SPECIES){
-                        Mmat[cog_res - 1] += (KL1[0] * grain_mass_list(k) + KL2[0] * grain_mass_list(j)) / grain_mass_list(cog_res - 1)* numjtimesnumk;
+                        Mmat[cog_res - 1] += (KL1[0] * grain_mass_list[k] + KL2[0] * grain_mass_list[j]) / grain_mass_list[cog_res - 1]* numjtimesnumk;
                     }
                     else{
-                        double eps =  (grain_mass_list(j) + grain_mass_list(k) - grain_mass_list(cog_res - 1)) / (grain_mass_list(cog_res) - grain_mass_list(cog_res - 1));
-                        Mmat[cog_res]     += (KL1[0] * grain_mass_list(k) + KL2[0] * grain_mass_list(j)) / grain_mass_list(cog_res)* numjtimesnumk * eps;
-                        Mmat[cog_res - 1] += (KL1[0] * grain_mass_list(k) + KL2[0] * grain_mass_list(j)) / grain_mass_list(cog_res - 1)* numjtimesnumk * (1.0 - eps);
+                        double eps =  (grain_mass_list[j] + grain_mass_list[k] - grain_mass_list[cog_res - 1]) / (grain_mass_list[cog_res] - grain_mass_list[cog_res - 1]);
+                        Mmat[cog_res]     += (KL1[0] * grain_mass_list[k] + KL2[0] * grain_mass_list[j]) / grain_mass_list[cog_res]* numjtimesnumk * eps;
+                        Mmat[cog_res - 1] += (KL1[0] * grain_mass_list[k] + KL2[0] * grain_mass_list[j]) / grain_mass_list[cog_res - 1]* numjtimesnumk * (1.0 - eps);
                     }
                 }
                 // gain via fragmentation
-                Mmat[0] += KL1[1] * grain_mass_list(k) / grain_mass_list(0) * numjtimesnumk;
-                Mmat[0] += KL2[1] * grain_mass_list(j) / grain_mass_list(0) * numjtimesnumk;
+                Mmat[0] += KL1[1] * grain_mass_list[k] / grain_mass_list[0] * numjtimesnumk;
+                Mmat[0] += KL2[1] * grain_mass_list[j] / grain_mass_list[0] * numjtimesnumk;
                 // lost via coagulation and fragmentation
                 Mmat[k] -= (KL1[0] + KL1[1]) * numjtimesnumk;
                 if (k != j){
@@ -162,17 +167,17 @@ void grain_growth(mesh &m, BootesArray<double> &stoppingtimemesh, double &dt){
 		    cudaMemPrefetchAsync(num_here, nspbytes, device_id);
 		    cudaMemPrefetchAsync(Mmat, nspbytes, device_id);
                 //cout << endl << flush;
-                size_t grnbytes = sizeof(BootesArray);//m.GrainSizeList.size1*sizeof(double);
-		BootesArray *d_GrainSizeList;
-		BootesArray *d_GrainMassList;
-		cudaMalloc(&d_GrainSizeList, grnbytes);
-		cudaMalloc(&d_GrainMassList, grnbytes);
-                cudaMemcpy(d_GrainSizeList, m.GrainSizeList, grnbytes, cudaMemcpyHostToDevice);
-                cudaMemcpy(d_GrainMassList, m.GrainMassList, grnbytes, cudaMemcpyHostToDevice);
+                size_t grnbytes = m.GrainSizeList.shape()[0]*sizeof(double);
+		double *d_GrainSizeList_arr;
+		double *d_GrainMassList_arr;
+		cudaMalloc(&d_GrainSizeList_arr, grnbytes);
+		cudaMalloc(&d_GrainMassList_arr, grnbytes);
+                cudaMemcpy(d_GrainSizeList_arr, m.GrainSizeList.data(), grnbytes, cudaMemcpyHostToDevice);
+                cudaMemcpy(d_GrainMassList_arr, m.GrainMassList.data(), grnbytes, cudaMemcpyHostToDevice);
                 int MB=1;
                 grain_growth_one_cell<<<NUMSPECIES/MB, MB>>>(grain_number_array,
                                       grain_vr_array, grain_vtheta_array, grain_vphi_array, num_here, Mmat,
-                                      d_GrainSizeList, d_GrainMassList, dt, m.NUMSPECIES);
+                                      d_GrainSizeList_arr, d_GrainMassList_arr, dt, m.NUMSPECIES);
                 // copy 1-cell results from grain_number_array to m.dcons
 
                 for (int specIND = 0; specIND < m.NUMSPECIES; specIND ++) {
