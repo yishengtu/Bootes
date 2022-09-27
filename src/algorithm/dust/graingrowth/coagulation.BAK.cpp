@@ -8,17 +8,13 @@
 #include <cmath>
 
 
-__global__ void grain_growth_one_cell(double *num,
-                           double *vr, double *vtheta, double *vphi, double *num_here, double *Mmat,
-                           BootesArray<double> *grain_size_list, BootesArray<double> *grain_mass_list, double dt, int NUM_SPECIES){
+#pragma acc routine vector
+void grain_growth_one_cell(double num[],
+                           double vr[], double vtheta[], double vphi[], double num_here[], double Mmat[],
+                           BootesArray<double> &grain_size_list, BootesArray<double> &grain_mass_list, double dt, int NUM_SPECIES){
     double dt_here = dt;
-
-    int index = threadIdx.x + blockIdx.x * blockDim.x;
-    int stride = blockDim.x * gridDim.x;
-
-    for (int i = index; i < NUM_SPECIES; i+=stride) {num_here[i] = num[i];}
-    __syncthreads();
-
+    #pragma acc loop vector
+    for (int i = 0; i < NUM_SPECIES; i++){num_here[i] = num[i];}
     bool redo = true;
     double dt_tot = 0;
     while (redo || dt_tot < dt)
@@ -26,12 +22,12 @@ __global__ void grain_growth_one_cell(double *num,
         redo = false;   // set it to false first
         // BootesArray<double> Mmat; Mmat.NewBootesArray(NUM_SPECIES);         // initialize with 0s
 
-        for (int k = index; k < NUM_SPECIES; k+=stride){
+        #pragma acc loop vector
+        for (int k = 0; k < NUM_SPECIES; k++){
             Mmat[k] = 0;
         }
-	  __syncthreads();
-
-        for (int j = index; j < NUM_SPECIES; j+=stride){
+	#pragma acc loop vector //collapse (2) 
+        for (int j = 0; j < NUM_SPECIES; ++ j){
             for (int k = j; k < NUM_SPECIES; ++ k){
 		//if (k < j) continue;
                 double dv_bulk = sqrt(pow((vr[j] - vr[k]), 2) + pow((vtheta[j] - vtheta[k]), 2) + pow((vphi[j] - vphi[k]), 2));
@@ -55,30 +51,40 @@ __global__ void grain_growth_one_cell(double *num,
                 }
                 if (j == k){
                     if (cog_res == NUM_SPECIES){
+#pragma acc atomic update
                         Mmat[cog_res - 1] += 0.5 * (KL1[0] * grain_mass_list(k) + KL2[0] * grain_mass_list(j)) / grain_mass_list(cog_res - 1) * numjtimesnumk;
                     }
                     else{
                         double eps = (grain_mass_list(j) + grain_mass_list(k) - grain_mass_list(cog_res - 1)) / (grain_mass_list(cog_res) - grain_mass_list(cog_res - 1));
+#pragma acc atomic update
                         Mmat[cog_res]     += 0.5 * (KL1[0] * grain_mass_list(k) + KL2[0] * grain_mass_list(j)) / grain_mass_list(cog_res) * numjtimesnumk * eps;
+#pragma acc atomic update
                         Mmat[cog_res - 1] += 0.5 * (KL1[0] * grain_mass_list(k) + KL2[0] * grain_mass_list(j)) / grain_mass_list(cog_res - 1) * numjtimesnumk * (1.0 - eps);
                     }
                 }
                 else{
                     if (cog_res == NUM_SPECIES){
+#pragma acc atomic update
                         Mmat[cog_res - 1] += (KL1[0] * grain_mass_list(k) + KL2[0] * grain_mass_list(j)) / grain_mass_list(cog_res - 1)* numjtimesnumk;
                     }
                     else{
                         double eps =  (grain_mass_list(j) + grain_mass_list(k) - grain_mass_list(cog_res - 1)) / (grain_mass_list(cog_res) - grain_mass_list(cog_res - 1));
+#pragma acc atomic update
                         Mmat[cog_res]     += (KL1[0] * grain_mass_list(k) + KL2[0] * grain_mass_list(j)) / grain_mass_list(cog_res)* numjtimesnumk * eps;
+#pragma acc atomic update
                         Mmat[cog_res - 1] += (KL1[0] * grain_mass_list(k) + KL2[0] * grain_mass_list(j)) / grain_mass_list(cog_res - 1)* numjtimesnumk * (1.0 - eps);
                     }
                 }
                 // gain via fragmentation
+#pragma acc atomic update
                 Mmat[0] += KL1[1] * grain_mass_list(k) / grain_mass_list(0) * numjtimesnumk;
+#pragma acc atomic update
                 Mmat[0] += KL2[1] * grain_mass_list(j) / grain_mass_list(0) * numjtimesnumk;
                 // lost via coagulation and fragmentation
+#pragma acc atomic update
                 Mmat[k] -= (KL1[0] + KL1[1]) * numjtimesnumk;
                 if (k != j){
+#pragma acc atomic update
                     Mmat[j] -= (KL2[0] + KL2[1]) * numjtimesnumk;
                 }
                 // break if there is a problem
@@ -92,23 +98,20 @@ __global__ void grain_growth_one_cell(double *num,
                 */
             }
         }
-        __syncthreads();
-
         dt_tot += dt_here;
-        for (int i = index; i < NUM_SPECIES; i+=stride){
+#pragma acc loop vector
+        for (int i = 0; i < NUM_SPECIES; ++ i){
             num_here[i] += Mmat[i] * dt_here;
             if (num_here[i] < 0)
             {
                 num_here[i] = 0;
             }
         }
-	  __syncthreads();
-
         //cout << dt_tot << '\t' << min_dt << '\t' << dt << '\n' << flush;
     }
-      __syncthreads();
+    #pragma acc loop vector
 
-    for (int i = index; i < NUM_SPECIES; i+=stride){num[i] = num_here[i];}
+    for (int i = 0; i < NUM_SPECIES; i++){num[i] = num_here[i];}
 }
 
 
@@ -118,27 +121,17 @@ void grain_growth(mesh &m, BootesArray<double> &stoppingtimemesh, double &dt){
     //double *grain_vr_array     = new double[NUMSPECIES];
     //double *grain_vtheta_array = new double[NUMSPECIES];
     //double *grain_vphi_array   = new double[NUMSPECIES];
-    double *grain_number_array;
-    double *grain_vr_array;
-    double *grain_vtheta_array;
-    double *grain_vphi_array;
-    double *num_here;
-    double *Mmat;
-    
+    double grain_number_array[NUMSPECIES];
+    double grain_vr_array[NUMSPECIES];
+    double grain_vtheta_array[NUMSPECIES];
+    double grain_vphi_array[NUMSPECIES];
+    double num_here[NUMSPECIES];
+    double Mmat[NUMSPECIES];
 
-    size_t nspbytes = NUMSPECIES*sizeof(double);
-    
-    int device_id;
-    
-    cudaGetDevice(&device_id);
-
-    cudaMallocManaged(&grain_number_array, nspbytes);
-    cudaMallocManaged(&grain_vr_array, nspbytes);
-    cudaMallocManaged(&grain_vtheta_array, nspbytes);
-    cudaMallocManaged(&grain_vphi_array, nspbytes);
-    cudaMallocManaged(&num_here, nspbytes);
-    cudaMallocManaged(&Mmat, nspbytes);
-
+	// #pragma omp parallel for collapse (3) schedule(dynamic) private (grain_number_array, grain_vr_array, grain_vtheta_array, grain_vphi_array)
+    #pragma acc parallel loop gang worker collapse (3) vector_length(32) default (present) firstprivate(dt) \
+        private (grain_number_array[0:NUMSPECIES], grain_vr_array[0:NUMSPECIES], grain_vtheta_array[0:NUMSPECIES], grain_vphi_array[0:NUMSPECIES], \
+        num_here[0:NUMSPECIES], Mmat[0:NUMSPECIES])
 	for (int kk = m.x3s; kk < m.x3l; kk ++){
         for (int jj = m.x2s; jj < m.x2l; jj ++){
             for (int ii = m.x1s; ii < m.x1l; ii ++){
@@ -147,6 +140,7 @@ void grain_growth(mesh &m, BootesArray<double> &stoppingtimemesh, double &dt){
                     continue;
                 }
                 */
+                #pragma acc loop vector
                 for (int specIND = 0; specIND < m.NUMSPECIES; specIND ++){
                     //double gas_rho = m.dcons(specIND, IDN, kk, jj, ii);
                     grain_number_array[specIND] = m.dcons(specIND, IDN, kk, jj, ii) / m.GrainMassList(specIND);
@@ -155,26 +149,13 @@ void grain_growth(mesh &m, BootesArray<double> &stoppingtimemesh, double &dt){
                     grain_vphi_array[specIND]   = m.dcons(specIND, IM3, kk, jj, ii) / m.dcons(specIND, IDN, kk, jj, ii);
                     //cout << m.dcons(specIND, IM1, kk, jj, ii) << '\t';
                 }
-		    cudaMemPrefetchAsync(grain_number_array, nspbytes, device_id);
-		    cudaMemPrefetchAsync(grain_vr_array, nspbytes, device_id);
-		    cudaMemPrefetchAsync(grain_vtheta_array, nspbytes, device_id);
-		    cudaMemPrefetchAsync(grain_vphi_array, nspbytes, device_id);
-		    cudaMemPrefetchAsync(num_here, nspbytes, device_id);
-		    cudaMemPrefetchAsync(Mmat, nspbytes, device_id);
                 //cout << endl << flush;
-                size_t grnbytes = sizeof(BootesArray);//m.GrainSizeList.size1*sizeof(double);
-		BootesArray *d_GrainSizeList;
-		BootesArray *d_GrainMassList;
-		cudaMalloc(&d_GrainSizeList, grnbytes);
-		cudaMalloc(&d_GrainMassList, grnbytes);
-                cudaMemcpy(d_GrainSizeList, m.GrainSizeList, grnbytes, cudaMemcpyHostToDevice);
-                cudaMemcpy(d_GrainMassList, m.GrainMassList, grnbytes, cudaMemcpyHostToDevice);
-                int MB=1;
-                grain_growth_one_cell<<<NUMSPECIES/MB, MB>>>(grain_number_array,
+                grain_growth_one_cell(grain_number_array,
                                       grain_vr_array, grain_vtheta_array, grain_vphi_array, num_here, Mmat,
-                                      d_GrainSizeList, d_GrainMassList, dt, m.NUMSPECIES);
+                                      m.GrainSizeList, m.GrainMassList, dt, m.NUMSPECIES);
                 // copy 1-cell results from grain_number_array to m.dcons
 
+                #pragma acc loop vector
                 for (int specIND = 0; specIND < m.NUMSPECIES; specIND ++) {
                     if (grain_number_array[specIND] * m.GrainMassList(specIND) < m.dminDensity) {
                         m.dcons(specIND, IDN, kk, jj, ii) = m.dminDensity;
@@ -226,4 +207,5 @@ void grain_growth(mesh &m, BootesArray<double> &stoppingtimemesh, double &dt){
     delete[] grain_vtheta_array;
     delete[] grain_vphi_array;
     */
+    #pragma omp barrier
 }

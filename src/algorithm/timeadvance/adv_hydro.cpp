@@ -13,9 +13,11 @@
 #include "../index_def.hpp"
 #include "../mesh/mesh.hpp"
 #include "../eos/eos.hpp"
-
+#include "nvtx3/nvToolsExt.h"
 
 void calc_flux(mesh &m, double &dt, BootesArray<double> &fcons, BootesArray<double> &valsL, BootesArray<double> &valsR){
+    /** nvtxRangePush**/
+    nvtxRangePushA("cal_flux");
     // store the reconstructed value
     // index: (advecting direction, quantity, kk, jj, ii)
     // #pragma acc parallel loop gang default (present) firstprivate(dt)
@@ -27,11 +29,13 @@ void calc_flux(mesh &m, double &dt, BootesArray<double> &fcons, BootesArray<doub
         else if (axis == 1){ x1excess = 0; x2excess = 1; x3excess = 0; IMP = IM2;}
         else if (axis == 2){ x1excess = 0; x2excess = 0; x3excess = 1; IMP = IM3;}
         else { ; }
-
+        nvtxRangePushA("reconstruct");
         reconstruct_minmod(m, valsL, valsR, x1excess, x2excess, x3excess, axis, IMP, dt);
-        // update to device
+	// update to device
         valsL.updatedev();
         valsR.updatedev();
+	nvtxRangePop(); // recons
+        nvtxRangePushA("Riemann");
         // step 1.2: solve the Riemann problem. Use HLL for now, update conservative vars
         //#pragma omp parallel for collapse (3) schedule (static)
         // present: if it's already there, don't do anything.
@@ -65,6 +69,8 @@ void calc_flux(mesh &m, double &dt, BootesArray<double> &fcons, BootesArray<doub
                 }
             }
         }
+	nvtxRangePop(); // riemann
+        nvtxRangePop(); // flux
     }
     // Need to set unused values in the fdcons to zeros.
     // To do so the axis goes from "number of active axis" to 3

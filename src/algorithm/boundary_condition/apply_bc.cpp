@@ -1,6 +1,6 @@
 #include "apply_bc.hpp"
 #include "../mesh/mesh.hpp"
-
+#include "nvtx3/nvToolsExt.h"
 /*
 void apply_boundary_condition(mesh &m){
     outflow_boundary_condition_x1i(m.cons, m.x1s, m.x1l, m.ng1,
@@ -49,6 +49,7 @@ void apply_boundary_condition(mesh &m){
 
 
 void apply_boundary_condition(mesh &m){
+        nvtxRangePushA("applyBC");
     standard_boundary_condition_x1i(m.cons, m.x1s, m.x1l, m.ng1,
                                            m.x2s, m.x2l, m.ng2,
                                            m.x3s, m.x3l, m.ng3);
@@ -90,5 +91,7 @@ void apply_boundary_condition(mesh &m){
     standard_boundary_condition_x3o(m.cons, m.x1s, m.x1l, m.ng1,
                                            m.x2s, m.x2l, m.ng2,
                                            m.x3s, m.x3l, m.ng3);
+    nvtxRangePop(); 
+
 }
 

@@ -1,0 +1,16 @@
+srun --ntasks=5 --nodes=1 --cpus-per-task=2 \
+     --partition=gpu --time=4:00:00 --gres=gpu:1 \
+     --pty /bin/bash
+
+
+module load compilers
+export LD_LIBRARY_PATH=/home/vhatz6ed/hdf5/lib
+module load nsight-systems/2021.5.1
+
+nsys profile -t openacc,nvtx,cuda,osrt --stats=true --force-overwrite true --gpu-metrics-device=all ./bootes.out -i input.txt.shearboxdisk
+
+ncu -o reportname --set=full -f ./bootes.out -i input.txt.shearboxdisk
+
+
+module load gcc/9.3.0/cmake
+

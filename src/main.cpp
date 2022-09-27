@@ -29,6 +29,7 @@
 #endif // DEBUG
 
 #include "setup/shearboxdisk.cpp"
+#include "nvtx3/nvToolsExt.h"
 
 void doloop(double &ot, double &next_exit_loop_time, mesh &m, double &CFL){
     int loop_cycle = 0;
@@ -57,19 +58,21 @@ void doloop(double &ot, double &next_exit_loop_time, mesh &m, double &CFL){
 
         /** step 5: work after loop **/
         work_after_loop(m, dt);
-
+        nvtxRangePushA("cons_to_prim");
         /** step 3: use E.O.S. and relations to get primitive variables. **/
         cons_to_prim(m);
         #ifdef ENABLE_DUSTFLUID
         cons_to_prim_dust(m);
         #endif // ENABLE_DUSTFLUID
-
+	nvtxRangePop(); // cons-to-prim
+        nvtxRangePushA("boundary_c");
         /** step 4: apply boundary conditions **/
         apply_boundary_condition(m);
         #ifdef ENABLE_DUSTFLUID
         apply_boundary_condition_dust(m);
         #endif
         apply_user_extra_boundary_condition(m);
+	nvtxRangePop(); // boundary condition
 
 
         #ifdef DEBUG
@@ -89,9 +92,11 @@ void doloop(double &ot, double &next_exit_loop_time, mesh &m, double &CFL){
 
 
 int main(int argc, char *argv[]){
+    /** nvtxRangePush**/
+    nvtxRangePushA("Total");
     /** start timer **/
     auto start = std::chrono::steady_clock::now();
-
+    nvtxRangePushA("Ini_total");
     /** >>> these lines exist for output use only **/
     const int outputIDN = static_cast<int>(IDN);
     const int outputIM1 = static_cast<int>(IM1);
@@ -212,7 +217,8 @@ int main(int argc, char *argv[]){
         ot = 0;
         cycle = 0;
     }
-
+    nvtxRangePop(); // ini_total
+    nvtxRangePushA("set_for_Restart");
     if (start_restart){
         ReadOutput frestart(restart_filename);
 
@@ -289,7 +295,7 @@ int main(int argc, char *argv[]){
         m.minTemp = frestart.getAttribute<double>("mintemp");
         #endif // ENABLE_TEMPERATURE_PROTECTION
     }
-
+    nvtxRangePop(); // set_for_Restart
     /** initialize decisions in loop **/
     double next_output_time = ot;
     double next_exit_loop_time = next_output_time;
@@ -308,6 +314,7 @@ int main(int argc, char *argv[]){
 
     std::cout << "setup complete" << std::endl << flush;
     /** main loop **/
+    nvtxRangePushA("main_loop");
     while (ot < t_tot){
         // step 1: determine when to exit the time integration loop
         next_exit_loop_time = min(next_output_time, t_tot);
@@ -423,5 +430,7 @@ int main(int argc, char *argv[]){
         cycle += 1;
         cout << "main cycle: " << cycle << "    time: " << ot << endl << flush;
     }
+    nvtxRangePop(); // main_loop
+    nvtxRangePop(); // total - main
     return 0;
 }

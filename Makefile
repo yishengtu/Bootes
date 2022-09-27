@@ -1,6 +1,6 @@
 CC := nvc++
-CFLAGS := -g -lhdf5 -lhdf5_cpp -acc -Minfo=accel -gpu=managed
-EXE_DIR := bin/
+CFLAGS := -I /home/vhatz6ed/hdf5/include/ -L /home/vhatz6ed/hdf5/lib/ -g -lhdf5 -lhdf5_cpp #-acc -Minfo=accel -gpu=managed,lineinfo,ptxinfo
+EXE_DIR := bin
 EXECUTABLE := $(EXE_DIR)bootes.out
 
 SRC_FILES := $(wildcard src/algorithm/*.cpp) \
