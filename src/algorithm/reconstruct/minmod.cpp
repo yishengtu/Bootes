@@ -59,7 +59,6 @@ void reconstruct_minmod(mesh &m,
                    double dt
                    ){
     // Computation starts in first ghost zone, for first active cell left boundary flux
-    double zero = 0;
     // #pragma omp parallel for collapse (3) schedule (static)
     //#pragma acc loop collapse (3) vector
     #pragma acc parallel loop collapse (3) default(present) // firstprivate(dt)

@@ -55,8 +55,8 @@ void dust_standard_boundary_condition_x2i(BootesArray<double> &quan, int &x1s, i
     int shape1 = quan.shape()[1];
     //#pragma omp parallel for collapse(5)
     #pragma acc parallel loop collapse(5) default (present) firstprivate(x1s, x1l, ng1, x2s, x2l, ng2, x3s, x3l, ng3)
-    for (int specIND = 0; specIND < quan.shape()[0]; specIND ++){
-        for (int valIND = 0; valIND < quan.shape()[1]; valIND ++){
+    for (int specIND = 0; specIND < shape0; specIND ++){
+        for (int valIND = 0; valIND < shape1; valIND ++){
             for (int kk = x3s; kk < x3l; kk++){
                 for (int gind2 = 0; gind2 < ng2; gind2 ++){
                     for (int ii = x1s; ii < x1l; ii++){

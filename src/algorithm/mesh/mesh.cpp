@@ -63,6 +63,9 @@ void mesh::SetupCartesian(int dimension,
     cons.NewBootesArray(NUMCONS, x3v.shape()[0], x2v.shape()[0], x1v.shape()[0]);
     prim.NewBootesArray(NUMPRIM, x3v.shape()[0], x2v.shape()[0], x1v.shape()[0]);
 
+    valsL.NewBootesArray(3, NUMCONS, nx3 + 1, nx2 + 1, nx1 + 1);
+    valsR.NewBootesArray(3, NUMCONS, nx3 + 1, nx2 + 1, nx1 + 1);
+    fcons.NewBootesArray(NUMCONS, 3, nx3 + 1, nx2 + 1, nx1 + 1);
     // allocate memory for other necessary fields
     #if defined (ENABLE_GRAVITY)
         grav->setup_Phimesh(x3v.shape()[0], x2v.shape()[0], x1v.shape()[0]);
@@ -219,5 +222,9 @@ void mesh::setupDustFluidMesh(int NS){
     NUMSPECIES = NS;
     dcons.NewBootesArray(NS, NUMCONS, x3v.shape()[0], x2v.shape()[0], x1v.shape()[0]);
     dprim.NewBootesArray(NS, NUMPRIM, x3v.shape()[0], x2v.shape()[0], x1v.shape()[0]);
+    dvalsL.NewBootesArray(NUMSPECIES, 3, NUMCONS - 1, nx3 + 1, nx2 + 1, nx1 + 1);
+    dvalsR.NewBootesArray(NUMSPECIES, 3, NUMCONS - 1, nx3 + 1, nx2 + 1, nx1 + 1);
+    fdcons.NewBootesArray(NUMSPECIES, NUMCONS - 1, 3, nx3 + 1, nx2 + 1, nx1 + 1);
+    stoppingtime_mesh.NewBootesArray(NUMSPECIES, x3v.shape()[0], x2v.shape()[0], x1v.shape()[0]);
 }
 #endif

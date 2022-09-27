@@ -216,7 +216,7 @@ void grain_growth(mesh &m, BootesArray<double> &stoppingtimemesh, double &dt){
 	// #pragma omp parallel for collapse (3) schedule(dynamic) private (grain_number_array, grain_vr_array, grain_vtheta_array, grain_vphi_array)
 	// add worker if need to pair vector length and work-load (in this case NUMSPECIES)
 	//int NUM_GANGS = std::min((m.x3l-m.x3s)*(m.x2l-m.x2s)*(m.x1l-m.x1s), 1000);
-    #pragma acc parallel loop gang worker collapse (3) vector_length(32) default (present) firstprivate(dt) \
+    #pragma acc parallel loop gang worker num_gangs (128) collapse (3) vector_length(32) default (present) firstprivate(dt) \
         private (grain_number_array[0:NUMSPECIES], grain_vr_array[0:NUMSPECIES], grain_vtheta_array[0:NUMSPECIES], grain_vphi_array[0:NUMSPECIES], \
         num_here[0:NUMSPECIES], Mmat[0:NUMSPECIES])
 	for (int kk = m.x3s; kk < m.x3l; kk ++){

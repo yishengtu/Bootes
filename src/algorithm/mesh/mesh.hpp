@@ -58,6 +58,11 @@ class mesh{
         /** prim **/
         BootesArray<double> prim;            // 4D (5, z, y, x)
 
+        /** auxiliary array for flux **/
+        BootesArray<double> valsL;
+        BootesArray<double> valsR;
+        BootesArray<double> fcons;
+
         /** multi-fluid for dust **/
         int NUMSPECIES;
         double rhodm;                                   // material density of dust grain. (1D array)
@@ -67,6 +72,11 @@ class mesh{
         BootesArray<double> GrainSizeTimesGrainDensity; // rhodm * s
         BootesArray<double> dcons;
         BootesArray<double> dprim;
+        // auxiliary array for flux
+        BootesArray<double> dvalsL;
+        BootesArray<double> dvalsR;
+        BootesArray<double> fdcons;
+        BootesArray<double> stoppingtime_mesh;
 
         /** grav **/
         #if defined (ENABLE_GRAVITY)

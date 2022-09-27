@@ -179,12 +179,13 @@ namespace {
     }
 
 
-    void work_after_loop(mesh &m, double &dt){
+    void work_after_loop(mesh &m, double dt){
         // calculate accretion rate
         ;
         // re-calculate effective gravity based on situation now
         m.grav->zero_gravity(m);
-        #pragma omp parallel for collapse (3)
+        // #pragma omp parallel for collapse (3)
+        #pragma acc parallel loop collapse (3)
         for (int kk = m.x3s; kk < m.x3l; kk ++){
             for (int jj = m.x2s; jj < m.x2l; jj ++){
                 for (int ii = m.x1s; ii < m.x1l; ii ++){
@@ -226,7 +227,8 @@ namespace {
         }
 
         // Put back in the pseudo-temperature profile
-        #pragma omp parallel for collapse (3)
+        // #pragma omp parallel for collapse (3)
+        #pragma acc parallel loop collapse (3)
         for (int kk = m.x3s; kk < m.x3l; kk ++){
             for (int jj = m.x2s; jj < m.x2l; jj ++){
                 for (int ii = m.x1s; ii < m.x1l; ii ++){
@@ -240,7 +242,8 @@ namespace {
         }
 
         // Damp up-going z-direction sped
-        #pragma omp parallel for collapse (3)
+        // #pragma omp parallel for collapse (3)
+        #pragma acc parallel loop collapse (3)
         for (int kk = m.x3s; kk < m.x3l; kk ++){
             for (int jj = m.x2s; jj < m.x2l; jj ++){
                 for (int ii = m.x1s; ii < m.x1l; ii ++){
@@ -254,7 +257,8 @@ namespace {
 
     void apply_user_extra_boundary_condition(mesh &m){
         // upper boundary has fixed density of initial density
-        #pragma omp parallel for collapse(3)
+        // #pragma omp parallel for collapse(3)
+        #pragma acc parallel loop collapse (3)
         for (int gind3 = 0; gind3 < m.ng3; gind3 ++){
             for (int jj = m.x2s; jj < m.x2l; jj++){
                 for (int ii = m.x1s; ii < m.x1l; ii++){
@@ -275,7 +279,8 @@ namespace {
         }
 
         // outer radial (x) boundary always has 0 radial speed.
-        #pragma omp parallel for collapse(3) schedule (static)
+        // #pragma omp parallel for collapse(3) schedule (static)
+        #pragma acc parallel loop collapse (3)
         for (int gind1 = 0; gind1 < m.ng1; gind1 ++){
             for (int kk = m.x3s; kk < m.x3l; kk++){
                 for (int jj = m.x2s; jj < m.x2l; jj++){
@@ -294,7 +299,8 @@ namespace {
         // upper boundary fixed density
 
         // upper boundary has fixed density of initial density
-        #pragma omp parallel for collapse(4)
+        // #pragma omp parallel for collapse(4)
+        #pragma acc parallel loop collapse (4)
         for (int ss = 0; ss < m.NUMSPECIES; ss++){
             for (int gind3 = 0; gind3 < m.ng3; gind3 ++){
                 for (int jj = m.x2s; jj < m.x2l; jj++){
@@ -313,7 +319,8 @@ namespace {
         }
 
         // TODO: outer radial boundary
-        #pragma omp parallel for collapse(4)
+        // #pragma omp parallel for collapse(4)
+        #pragma acc parallel loop collapse (4)
         for (int ss = 0; ss < m.NUMSPECIES; ss++){
             for (int gind1 = 0; gind1 < m.ng1; gind1 ++){
                 for (int kk = m.x3s; kk < m.x3l; kk++){

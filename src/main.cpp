@@ -30,10 +30,14 @@
 
 #include "setup/shearboxdisk.cpp"
 
+#include "nvtx3/nvToolsExt.h"
+
 void doloop(double &ot, double &next_exit_loop_time, mesh &m, double &CFL){
     int loop_cycle = 0;
     while (ot < next_exit_loop_time){
+        //nvtxRangePushA("dt");
         double dt = timestep(m, CFL);
+        //nvtxRangePop(); // dt
         //cout << "dt (CFL) = " << dt << endl << flush;
         dt = min(dt, next_exit_loop_time - ot);
         if (dt < 0){
@@ -46,7 +50,9 @@ void doloop(double &ot, double &next_exit_loop_time, mesh &m, double &CFL){
             calculate_nu_vis(m);
         #endif // ENABLE_VISCOSITY
         // step 1: evolve the hydro by dt
+        //nvtxRangePushA("FirstOrder");
         first_order(m, dt);
+        //nvtxRangePop(); // UserExtraBoundaryCondition
         // step 2: update other fields
         // step 2.1: calculate source terms
         // step 2.1.1: gravity
@@ -56,21 +62,32 @@ void doloop(double &ot, double &next_exit_loop_time, mesh &m, double &CFL){
         //#endif // defined (ENABLE_GRAVITY)
 
         /** step 5: work after loop **/
+        //nvtxRangePushA("WorkAfterLoop");
         work_after_loop(m, dt);
+        //nvtxRangePop(); // WorkAfterLoop
 
         /** step 3: use E.O.S. and relations to get primitive variables. **/
+        //nvtxRangePushA("ConsToPrim");
         cons_to_prim(m);
+        //nvtxRangePop(); // ConsToPrim
         #ifdef ENABLE_DUSTFLUID
+        //nvtxRangePushA("DustCONSTOPRIM");
         cons_to_prim_dust(m);
+        //nvtxRangePop(); // DustCONSTOPRIM
         #endif // ENABLE_DUSTFLUID
 
         /** step 4: apply boundary conditions **/
+        //nvtxRangePushA("ApplyBoundaryCondition");
         apply_boundary_condition(m);
+        //nvtxRangePop(); // ApplyBoundaryCondition
         #ifdef ENABLE_DUSTFLUID
+        //nvtxRangePushA("DustApplyBoundaryCondition");
         apply_boundary_condition_dust(m);
+        //nvtxRangePop(); // DustApplyBoundaryCondition
         #endif
+        //nvtxRangePushA("UserExtraBoundaryCondition");
         apply_user_extra_boundary_condition(m);
-
+        //nvtxRangePop(); // UserExtraBoundaryCondition
 
         #ifdef DEBUG
             /** check the values are fine in program **/
