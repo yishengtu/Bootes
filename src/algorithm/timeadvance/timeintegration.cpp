@@ -56,6 +56,7 @@ void first_order(mesh &m, double &dt){
     // TODO
     # pragma acc enter data copyin(dvalsL, dvalsR, fdcons)
     calc_flux_dust(m, dt, m.NUMSPECIES, fdcons, dvalsL, dvalsR);
+    // Another way to do this is by creating a structured data region by putting {} around a region.
     #endif
 
     /** step 2: hydro: time integrate to update CONSERVATIVE variables, solve Riemann Problem **/
@@ -77,6 +78,7 @@ void first_order(mesh &m, double &dt){
         #ifdef ENABLE_DUST_GRAINGROWTH
             grain_growth(m, stoppingtime_mesh, dt);
         #endif // ENABLE_DUST_GRAINGROWTH
+        #pragma acc exit data delete(stoppingtime_mesh)
     #endif // ENABLE_DUSTFLUID
 
     /** step 4: protections **/
@@ -86,6 +88,12 @@ void first_order(mesh &m, double &dt){
     #ifdef ENABLE_TEMPERATURE_PROTECTION
         temperature_protection(m, m.minTemp);
     #endif // ENABLE_TEMPERATURE_PROTECTION
+
+    #pragma acc exit data delete(valsL, valsR, fcons)
+    #ifdef ENABLE_DUSTFLUID
+        #pragma acc exit data delete(dvalsL, dvalsR, fdcons)
+        #pragma acc exit data delete(stoppingtime_mesh)
+    #endif // ENABLE_DUSTFLUID
 }
 
 

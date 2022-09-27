@@ -88,8 +88,12 @@ double timestep(mesh &m, double &CFL){
         #endif // ENABLE_DUSTFLUID
     }
     else{
+        // #pragma acc present_dump
+        // a hash keeping track of host-device memory address,
+        // which matches the associated host memeory address and device memory address
+        //#pragma acc update device(min_dt) if_present
         //#pragma omp parallel for collapse(3) reduction(min : min_dt)
-        //#pragma acc parallel loop collapse (3) reduction(min : min_dt) copy(min_dt) present(m)
+        #pragma acc parallel loop collapse (3) reduction(min : min_dt) copy(min_dt) present(m)
         for (int kk = m.x3s; kk < m.x3l ; kk++){
             for (int jj = m.x2s; jj < m.x2l; jj++){
                 for (int ii = m.x1s; ii < m.x1l; ii++){
@@ -113,10 +117,9 @@ double timestep(mesh &m, double &CFL){
                 }
             }
         }
-        # pragma acc wait
         #ifdef ENABLE_DUSTFLUID
         //#pragma omp parallel for collapse(4) reduction (min: min_dt)
-        //#pragma acc parallel loop collapse (4) reduction(min : min_dt) copy(min_dt) present(m)
+        #pragma acc parallel loop collapse (4) reduction(min : min_dt) copy(min_dt) present(m)
         for (int specIND = 0; specIND < m.NUMSPECIES; specIND ++){
             for (int kk = m.x3s; kk < m.x3l ; kk++){
                 for (int jj = m.x2s; jj < m.x2l; jj++){
@@ -140,8 +143,8 @@ double timestep(mesh &m, double &CFL){
                 }
             }
         }
-        # pragma acc wait
         #endif // ENABLE_DUSTFLUID
+        //# pragma acc update self(min_dt) if_present
     }
     //std::cout << "numeric_limit = " << '\t' << std::numeric_limits<double>::max() << std::endl << std::flush;
     //std::cout << "dt in time_step.cpp" << '\t' << min_dt << std::endl << std::flush;

@@ -30,14 +30,14 @@ void grain_growth_one_cell_stick(double num[],
             // replace the for statement here with new method, use V1.8's for if needed
             // gain via coagulation
             double numjtimesnumk = num_here[j] * num_here[k];
-            //int cog_res = 0;        // the following loop is equivalent to searchsorted in numpy
-            //while (cog_res < NUM_SPECIES){
-            //    if (grain_mass_list(cog_res) >= (grain_mass_list(j) + grain_mass_list(k))){
-            //        break;
-            //    }
-            //    cog_res += 1;
-            //}
-            int cog_res = searchsorted(grain_mass_list(j) + grain_mass_list(k), grain_mass_list) - 1;
+            int cog_res = 0;        // the following loop is equivalent to searchsorted in numpy
+            while (cog_res < NUM_SPECIES){
+                if (grain_mass_list(cog_res) >= (grain_mass_list(j) + grain_mass_list(k))){
+                    break;
+                }
+                cog_res += 1;
+            }
+            // int cog_res = searchsorted(grain_mass_list(j) + grain_mass_list(k), grain_mass_list) - 1;
             if (j == k){
                 if (cog_res == NUM_SPECIES){
 #pragma acc atomic update
@@ -215,6 +215,7 @@ void grain_growth(mesh &m, BootesArray<double> &stoppingtimemesh, double &dt){
 
 	// #pragma omp parallel for collapse (3) schedule(dynamic) private (grain_number_array, grain_vr_array, grain_vtheta_array, grain_vphi_array)
 	// add worker if need to pair vector length and work-load (in this case NUMSPECIES)
+	//int NUM_GANGS = std::min((m.x3l-m.x3s)*(m.x2l-m.x2s)*(m.x1l-m.x1s), 1000);
     #pragma acc parallel loop gang worker collapse (3) vector_length(32) default (present) firstprivate(dt) \
         private (grain_number_array[0:NUMSPECIES], grain_vr_array[0:NUMSPECIES], grain_vtheta_array[0:NUMSPECIES], grain_vphi_array[0:NUMSPECIES], \
         num_here[0:NUMSPECIES], Mmat[0:NUMSPECIES])
@@ -226,6 +227,7 @@ void grain_growth(mesh &m, BootesArray<double> &stoppingtimemesh, double &dt){
                     continue;
                 }
                 */
+
                 #pragma acc loop vector
                 for (int specIND = 0; specIND < m.NUMSPECIES; specIND ++){
                     //double gas_rho = m.dcons(specIND, IDN, kk, jj, ii);
@@ -320,7 +322,7 @@ void grain_growth(mesh &m, BootesArray<double> &stoppingtimemesh, double &dt){
 
                 #pragma acc loop vector
                 for (int specIND = 0; specIND < m.NUMSPECIES; specIND ++) {
-                    if (grain_number_array[specIND] * m.GrainMassList(specIND) < m.dminDensity) {
+                    if (grain_number_array[specIND] * m.GrainMassList(specIND) < m.dminDensity && false) {
                         m.dcons(specIND, IDN, kk, jj, ii) = m.dminDensity;
                         double rhogradphix1;
                         double rhogradphix2;
