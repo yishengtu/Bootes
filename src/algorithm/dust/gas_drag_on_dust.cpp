@@ -11,14 +11,14 @@ double stoppingtime(double &rhodmsize, double &rho, double &pres, double &vth_co
 }
 
 
-void calc_stoppingtimemesh(mesh &m, BootesArray<double> &stoppingtimemesh){
+void calc_stoppingtimemesh(mesh &m){
     //#pragma omp parallel for collapse (4)
     #pragma acc parallel loop collapse (4) default (present)
     for (int specIND = 0; specIND < m.NUMSPECIES; specIND ++){
         for (int kk = m.x3s; kk < m.x3l; kk ++){
             for (int jj = m.x2s; jj < m.x2l; jj ++){
                 for (int ii = m.x1s; ii < m.x1l; ii ++){
-                    stoppingtimemesh(specIND, kk, jj, ii) = stoppingtime(m.GrainSizeTimesGrainDensity(specIND), m.prim(IDN, kk, jj, ii), m.prim(IPN, kk, jj, ii), m.vth_coeff);
+                    m.stoppingtimemesh(specIND, kk, jj, ii) = stoppingtime(m.GrainSizeTimesGrainDensity(specIND), m.prim(IDN, kk, jj, ii), m.prim(IPN, kk, jj, ii), m.vth_coeff);
                 }
             }
         }
@@ -26,14 +26,14 @@ void calc_stoppingtimemesh(mesh &m, BootesArray<double> &stoppingtimemesh){
 }
 
 
-double find_smallest_stoppingtime(mesh &m, BootesArray<double> &stoppingtimemesh){
+double find_smallest_stoppingtime(mesh &m){
     double minstoppingtime = std::numeric_limits<double>::max();
     #pragma omp parallel for reduction (min : minstoppingtime)
     for (int specIND = 0; specIND < m.NUMSPECIES; specIND ++){
         for (int kk = m.x3s; kk < m.x3l; kk ++){
             for (int jj = m.x2s; jj < m.x2l; jj ++){
                 for (int ii = m.x1s; ii < m.x1l; ii ++){
-                    minstoppingtime = std::min(minstoppingtime, stoppingtimemesh(specIND, kk, jj, ii));
+                    minstoppingtime = std::min(minstoppingtime, m.stoppingtimemesh(specIND, kk, jj, ii));
                 }
             }
         }

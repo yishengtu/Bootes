@@ -3,9 +3,9 @@
 #include "standard_bc_dust.hpp"
 
 
-void dust_standard_boundary_condition_x1i(BootesArray<double> &quan, int &x1s, int &x1l, int &ng1,
-                                                                     int &x2s, int &x2l, int &ng2,
-                                                                     int &x3s, int &x3l, int &ng3){
+void dust_standard_boundary_condition_x1i(BootesArray<double> &quan, int x1s, int x1l, int ng1,
+                                                                     int x2s, int x2l, int ng2,
+                                                                     int x3s, int x3l, int ng3){
     // standard inflow/outflow boundary, simply copy the values from active zone to ghost zone.
     // #pragma omp parallel for collapse(5)
     int shape0 = quan.shape()[0];
@@ -25,9 +25,9 @@ void dust_standard_boundary_condition_x1i(BootesArray<double> &quan, int &x1s, i
 }
 
 
-void dust_standard_boundary_condition_x1o(BootesArray<double> &quan, int &x1s, int &x1l, int &ng1,
-                                                            int &x2s, int &x2l, int &ng2,
-                                                            int &x3s, int &x3l, int &ng3){
+void dust_standard_boundary_condition_x1o(BootesArray<double> &quan, int x1s, int x1l, int ng1,
+                                                            int x2s, int x2l, int ng2,
+                                                            int x3s, int x3l, int ng3){
     // standard inflow/outflow boundary, simply copy the values from active zone to ghost zone.
     int shape0 = quan.shape()[0];
     int shape1 = quan.shape()[1];
@@ -47,9 +47,9 @@ void dust_standard_boundary_condition_x1o(BootesArray<double> &quan, int &x1s, i
 }
 
 
-void dust_standard_boundary_condition_x2i(BootesArray<double> &quan, int &x1s, int &x1l, int &ng1,
-                                                            int &x2s, int &x2l, int &ng2,
-                                                            int &x3s, int &x3l, int &ng3){
+void dust_standard_boundary_condition_x2i(BootesArray<double> &quan, int x1s, int x1l, int ng1,
+                                                            int x2s, int x2l, int ng2,
+                                                            int x3s, int x3l, int ng3){
     // standard inflow/outflow boundary, simply copy the values from active zone to ghost zone.
     int shape0 = quan.shape()[0];
     int shape1 = quan.shape()[1];
@@ -68,9 +68,9 @@ void dust_standard_boundary_condition_x2i(BootesArray<double> &quan, int &x1s, i
     }
 }
 
-void dust_standard_boundary_condition_x2o(BootesArray<double> &quan, int &x1s, int &x1l, int &ng1,
-                                                                     int &x2s, int &x2l, int &ng2,
-                                                                     int &x3s, int &x3l, int &ng3){
+void dust_standard_boundary_condition_x2o(BootesArray<double> &quan, int x1s, int x1l, int ng1,
+                                                                     int x2s, int x2l, int ng2,
+                                                                     int x3s, int x3l, int ng3){
     // standard inflow/outflow boundary, simply copy the values from active zone to ghost zone.
     int shape0 = quan.shape()[0];
     int shape1 = quan.shape()[1];
@@ -90,9 +90,9 @@ void dust_standard_boundary_condition_x2o(BootesArray<double> &quan, int &x1s, i
 }
 
 
-void dust_standard_boundary_condition_x3i(BootesArray<double> &quan, int &x1s, int &x1l, int &ng1,
-                                                            int &x2s, int &x2l, int &ng2,
-                                                            int &x3s, int &x3l, int &ng3){
+void dust_standard_boundary_condition_x3i(BootesArray<double> &quan, int x1s, int x1l, int ng1,
+                                                            int x2s, int x2l, int ng2,
+                                                            int x3s, int x3l, int ng3){
     // standard inflow/outflow boundary, simply copy the values from active zone to ghost zone.
     int shape0 = quan.shape()[0];
     int shape1 = quan.shape()[1];
@@ -112,9 +112,9 @@ void dust_standard_boundary_condition_x3i(BootesArray<double> &quan, int &x1s, i
 }
 
 
-void dust_standard_boundary_condition_x3o(BootesArray<double> &quan, int &x1s, int &x1l, int &ng1,
-                                                            int &x2s, int &x2l, int &ng2,
-                                                            int &x3s, int &x3l, int &ng3){
+void dust_standard_boundary_condition_x3o(BootesArray<double> &quan, int x1s, int x1l, int ng1,
+                                                            int x2s, int x2l, int ng2,
+                                                            int x3s, int x3l, int ng3){
     // standard inflow/outflow boundary, simply copy the values from active zone to ghost zone.
     int shape0 = quan.shape()[0];
     int shape1 = quan.shape()[1];

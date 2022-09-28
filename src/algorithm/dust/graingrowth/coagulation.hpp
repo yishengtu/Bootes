@@ -7,7 +7,7 @@
 class mesh;
 
 
-void grain_growth(mesh &m, BootesArray<double> &stoppingtimemesh, double &dt);
+void grain_growth(mesh &m, double dt);
 
 
 #endif // COAGULATION_HPP_

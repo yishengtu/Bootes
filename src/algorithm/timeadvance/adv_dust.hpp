@@ -8,16 +8,16 @@
 class mesh;
 
 
-void calc_flux_dust(mesh &m, double &dt, int &NUMSPECIES, BootesArray<double> &fdcons, BootesArray<double> &valsL, BootesArray<double> &valsR);
+void calc_flux_dust(mesh &m, double dt);
 
 
-void advect_cons_dust(mesh &m, double &dt, int &NUMSPECIES, BootesArray<double> &fdcons, BootesArray<double> &valsL, BootesArray<double> &valsR, BootesArray<double> &stoppingtimemesh);
+void advect_cons_dust(mesh &m, double dt);
 
 
 #ifdef ENABLE_GRAVITY
-void apply_grav_source_terms_dust(mesh &m, double &dt);
+void apply_grav_source_terms_dust(mesh &m, double dt);
 #endif // ENABLE_GRAVITY
 
-void first_order_dust(mesh &m, double &dt);
+void first_order_dust(mesh &m, double dt);
 
 #endif // ADV_DUST_HPP_

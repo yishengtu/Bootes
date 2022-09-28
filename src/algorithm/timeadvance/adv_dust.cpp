@@ -12,7 +12,7 @@
 #include "../mesh/mesh.hpp"
 #include "../dust/terminalvel.hpp"
 
-void calc_flux_dust(mesh &m, double &dt, int &NUMSPECIES, BootesArray<double> &fdcons, BootesArray<double> &valsL, BootesArray<double> &valsR){
+void calc_flux_dust(mesh &m, double dt){
     // store the redconstructed value
     // index: (specIadvecting direction, quantity, kk, jj, ii)
     for (int axis = 0; axis < m.dim; axis ++){
@@ -24,47 +24,47 @@ void calc_flux_dust(mesh &m, double &dt, int &NUMSPECIES, BootesArray<double> &f
         else if (axis == 2){ x1excess = 0; x2excess = 0; x3excess = 1; IMP = IM3;}
         else { cout << "axis > 3!!!" << endl << flush; throw 1; }
 
-        reconstruct_dust_const(m, valsL, valsR, x1excess, x2excess, x3excess, axis, IMP, dt);
+        reconstruct_dust_const(m, m.dvalsL, m.dvalsR, x1excess, x2excess, x3excess, axis, IMP, dt);
         // step 1.2: solve the Riemann problem. Use HLL for now, update dconservative vars
         // #pragma omp parallel for collapse (3) schedule (static)
         #pragma acc parallel loop collapse (4) default (present)
-        for (int specIND = 0; specIND < NUMSPECIES; specIND++){
+        for (int specIND = 0; specIND < m.NUMSPECIES; specIND++){
             for (int kk = 0; kk < m.nx3 + x3excess; kk ++){
                 for (int jj = 0; jj < m.nx2 + x2excess; jj ++){
                     for (int ii = 0; ii < m.nx1 + x1excess; ii ++){
                         double valL[4];
                         double valR[4];
                         double fxs[4];
-                        valL[IDN] = valsL(specIND, axis, IDN, kk, jj, ii); valR[IDN] = valsR(specIND, axis, IDN, kk, jj, ii);
-                        valL[IM1] = valsL(specIND, axis, IM1, kk, jj, ii); valR[IM1] = valsR(specIND, axis, IM1, kk, jj, ii);
-                        valL[IM2] = valsL(specIND, axis, IM2, kk, jj, ii); valR[IM2] = valsR(specIND, axis, IM2, kk, jj, ii);
-                        valL[IM3] = valsL(specIND, axis, IM3, kk, jj, ii); valR[IM3] = valsR(specIND, axis, IM3, kk, jj, ii);
+                        valL[IDN] = m.dvalsL(specIND, axis, IDN, kk, jj, ii); valR[IDN] = m.dvalsR(specIND, axis, IDN, kk, jj, ii);
+                        valL[IM1] = m.dvalsL(specIND, axis, IM1, kk, jj, ii); valR[IM1] = m.dvalsR(specIND, axis, IM1, kk, jj, ii);
+                        valL[IM2] = m.dvalsL(specIND, axis, IM2, kk, jj, ii); valR[IM2] = m.dvalsR(specIND, axis, IM2, kk, jj, ii);
+                        valL[IM3] = m.dvalsL(specIND, axis, IM3, kk, jj, ii); valR[IM3] = m.dvalsR(specIND, axis, IM3, kk, jj, ii);
                         doner_cell_dust( valL, valR, fxs,
                                          IMP,                   // the momentum term to add pressure; shift by one index (since first index is density)
                                          m.hydro_gamma
                                          );
-                        fdcons(specIND, IDN, axis, kk, jj, ii) = fxs[IDN];
-                        fdcons(specIND, IM1, axis, kk, jj, ii) = fxs[IM1];
-                        fdcons(specIND, IM2, axis, kk, jj, ii) = fxs[IM2];
-                        fdcons(specIND, IM3, axis, kk, jj, ii) = fxs[IM3];
+                        m.fdcons(specIND, IDN, axis, kk, jj, ii) = fxs[IDN];
+                        m.fdcons(specIND, IM1, axis, kk, jj, ii) = fxs[IM1];
+                        m.fdcons(specIND, IM2, axis, kk, jj, ii) = fxs[IM2];
+                        m.fdcons(specIND, IM3, axis, kk, jj, ii) = fxs[IM3];
                     }
                 }
             }
         }
     }
-    // Need to set unused values in the fdcons to zeros.
+    // Need to set unused values in the m.fdcons to zeros.
     // To do so the axis goes from "number of active axis" to 3
     // #pragma omp parallel for collapse (5) schedule (static)
     #pragma acc parallel loop collapse (5) default (present)
     for (int axis = m.dim; axis < 3; axis ++){
-        for (int specIND = 0; specIND < NUMSPECIES; specIND++){
-            for (int kk = 0; kk < fdcons.shape()[3]; kk ++){
-                for (int jj = 0; jj < fdcons.shape()[4]; jj ++){
-                    for (int ii = 0; ii < fdcons.shape()[5]; ii ++){
-                        fdcons(specIND, IDN, axis, kk, jj, ii) = 0.0;
-                        fdcons(specIND, IM1, axis, kk, jj, ii) = 0.0;
-                        fdcons(specIND, IM2, axis, kk, jj, ii) = 0.0;
-                        fdcons(specIND, IM3, axis, kk, jj, ii) = 0.0;
+        for (int specIND = 0; specIND < m.NUMSPECIES; specIND++){
+            for (int kk = 0; kk < m.fdcons.shape()[3]; kk ++){
+                for (int jj = 0; jj < m.fdcons.shape()[4]; jj ++){
+                    for (int ii = 0; ii < m.fdcons.shape()[5]; ii ++){
+                        m.fdcons(specIND, IDN, axis, kk, jj, ii) = 0.0;
+                        m.fdcons(specIND, IM1, axis, kk, jj, ii) = 0.0;
+                        m.fdcons(specIND, IM2, axis, kk, jj, ii) = 0.0;
+                        m.fdcons(specIND, IM3, axis, kk, jj, ii) = 0.0;
                     }
                 }
             }
@@ -73,9 +73,9 @@ void calc_flux_dust(mesh &m, double &dt, int &NUMSPECIES, BootesArray<double> &f
 }
 
 #if defined(SPHERICAL_POLAR_COORD)
-void advect_cons_dust_sphericalpolar(mesh &m, double &dt, int &NUMSPECIES, BootesArray<double> &fdcons, BootesArray<double> &valsL, BootesArray<double> &valsR, BootesArray<double> &stoppingtimemesh){
+void advect_cons_dust_sphericalpolar(mesh &m, double dt){
     // #pragma omp parallel for collapse (4) schedule (static)
-    #pragma acc parallel loop collapse (4) default(present) firstprivate(dt)
+    #pragma acc parallel loop collapse (4) default(present)
     for (int specIND  = 0; specIND < m.NUMSPECIES; specIND++){
         for (int kk = m.x3s; kk < m.x3l; kk ++){
             for (int jj = m.x2s; jj < m.x2l; jj ++){
@@ -84,11 +84,11 @@ void advect_cons_dust_sphericalpolar(mesh &m, double &dt, int &NUMSPECIES, Boote
                     int jjf = jj - m.x2s;
                     int iif = ii - m.x1s;
                     // calculate density. If density < 0 or stopping time < dt: apply terminal velocity approximation.
-                    m.dcons(specIND, IDN, kk, jj, ii) -= (dt / m.vol(kk, jj, ii) * (fdcons(specIND, IDN, 0, kkf, jjf, iif + 1) * m.f1a(kk, jj, ii + 1) - fdcons(specIND, IDN, 0, kkf, jjf, iif) * m.f1a(kk, jj, ii))
-                                                        + dt / m.vol(kk, jj, ii) * (fdcons(specIND, IDN, 1, kkf, jjf + 1, iif) * m.f2a(kk, jj + 1, ii) - fdcons(specIND, IDN, 1, kkf, jjf, iif) * m.f2a(kk, jj, ii))
-                                                        + dt / m.vol(kk, jj, ii) * (fdcons(specIND, IDN, 2, kkf + 1, jjf, iif) * m.f3a(kk + 1, jj, ii) - fdcons(specIND, IDN, 2, kkf, jjf, iif) * m.f3a(kk, jj, ii)));
+                    m.dcons(specIND, IDN, kk, jj, ii) -= (dt / m.vol(kk, jj, ii) * (m.fdcons(specIND, IDN, 0, kkf, jjf, iif + 1) * m.f1a(kk, jj, ii + 1) - m.fdcons(specIND, IDN, 0, kkf, jjf, iif) * m.f1a(kk, jj, ii))
+                                                        + dt / m.vol(kk, jj, ii) * (m.fdcons(specIND, IDN, 1, kkf, jjf + 1, iif) * m.f2a(kk, jj + 1, ii) - m.fdcons(specIND, IDN, 1, kkf, jjf, iif) * m.f2a(kk, jj, ii))
+                                                        + dt / m.vol(kk, jj, ii) * (m.fdcons(specIND, IDN, 2, kkf + 1, jjf, iif) * m.f3a(kk + 1, jj, ii) - m.fdcons(specIND, IDN, 2, kkf, jjf, iif) * m.f3a(kk, jj, ii)));
                     bool denl0 = m.dcons(specIND, IDN, kk, jj, ii) < m.dminDensity;
-                    bool stldt = stoppingtimemesh(specIND, kk, jj, ii) < dt;
+                    bool stldt = m.stoppingtimemesh(specIND, kk, jj, ii) < dt;
                     if (denl0 || stldt){
                         if (denl0){
                             m.dcons(specIND, IDN, kk, jj, ii) = m.dminDensity;
@@ -107,7 +107,7 @@ void advect_cons_dust_sphericalpolar(mesh &m, double &dt, int &NUMSPECIES, Boote
                         #endif // ENABLE_GRAVITY
                         dust_terminalvelocityapprixmation_rtp(m.prim(IV1, kk, jj, ii), m.prim(IV2, kk, jj, ii), m.prim(IV3, kk, jj, ii),
                                                               rhogradphix1, rhogradphix2, rhogradphix3,
-                                                              m.dcons(specIND, IDN, kk, jj, ii), stoppingtimemesh(specIND, kk, jj, ii), m.x1v(ii), m.geo_cot(jj),
+                                                              m.dcons(specIND, IDN, kk, jj, ii), m.stoppingtimemesh(specIND, kk, jj, ii), m.x1v(ii), m.geo_cot(jj),
                                                               m.dcons(specIND, IM1, kk, jj, ii), m.dcons(specIND, IM2, kk, jj, ii), m.dcons(specIND, IM3, kk, jj, ii)
                                                               );
                         #ifdef DEBUG
@@ -119,9 +119,9 @@ void advect_cons_dust_sphericalpolar(mesh &m, double &dt, int &NUMSPECIES, Boote
                     else{
                         // if density is fine, then calculate everything self-consistantly.
                         for (int dconsIND = 1; dconsIND < NUMCONS - 1; dconsIND++){
-                            m.dcons(specIND, dconsIND, kk, jj, ii) -= (dt / m.vol(kk, jj, ii) * (fdcons(specIND, dconsIND, 0, kkf, jjf, iif + 1) * m.f1a(kk, jj, ii + 1) - fdcons(specIND, dconsIND, 0, kkf, jjf, iif) * m.f1a(kk, jj, ii))
-                                                                     + dt / m.vol(kk, jj, ii) * (fdcons(specIND, dconsIND, 1, kkf, jjf + 1, iif) * m.f2a(kk, jj + 1, ii) - fdcons(specIND, dconsIND, 1, kkf, jjf, iif) * m.f2a(kk, jj, ii))
-                                                                     + dt / m.vol(kk, jj, ii) * (fdcons(specIND, dconsIND, 2, kkf + 1, jjf, iif) * m.f3a(kk + 1, jj, ii) - fdcons(specIND, dconsIND, 2, kkf, jjf, iif) * m.f3a(kk, jj, ii)));
+                            m.dcons(specIND, dconsIND, kk, jj, ii) -= (dt / m.vol(kk, jj, ii) * (m.fdcons(specIND, dconsIND, 0, kkf, jjf, iif + 1) * m.f1a(kk, jj, ii + 1) - m.fdcons(specIND, dconsIND, 0, kkf, jjf, iif) * m.f1a(kk, jj, ii))
+                                                                     + dt / m.vol(kk, jj, ii) * (m.fdcons(specIND, dconsIND, 1, kkf, jjf + 1, iif) * m.f2a(kk, jj + 1, ii) - m.fdcons(specIND, dconsIND, 1, kkf, jjf, iif) * m.f2a(kk, jj, ii))
+                                                                     + dt / m.vol(kk, jj, ii) * (m.fdcons(specIND, dconsIND, 2, kkf + 1, jjf, iif) * m.f3a(kk + 1, jj, ii) - m.fdcons(specIND, dconsIND, 2, kkf, jjf, iif) * m.f3a(kk, jj, ii)));
                         }
                         // geometry term
 
@@ -157,7 +157,7 @@ void advect_cons_dust_sphericalpolar(mesh &m, double &dt, int &NUMSPECIES, Boote
                         double vgas2  = m.prim(IV2, kk, jj, ii);
                         double vdust3 = m.dcons(specIND, IV3, kk, jj, ii) / m.dcons(specIND, IDN, kk, jj, ii);
                         double vgas3  = m.prim(IV3, kk, jj, ii);
-                        double rhodt_stime = m.dcons(specIND, IDN, kk, jj, ii) * dt / stoppingtimemesh(specIND, kk, jj, ii);
+                        double rhodt_stime = m.dcons(specIND, IDN, kk, jj, ii) * dt / m.stoppingtimemesh(specIND, kk, jj, ii);
                         double dragMOM1 = rhodt_stime * (vgas1 - vdust1);
                         double dragMOM2 = rhodt_stime * (vgas2 - vdust2);
                         double dragMOM3 = rhodt_stime * (vgas3 - vdust3);
@@ -174,10 +174,10 @@ void advect_cons_dust_sphericalpolar(mesh &m, double &dt, int &NUMSPECIES, Boote
 
 
 #if defined(CARTESIAN_COORD)
-void advect_cons_dust_cartesian(mesh &m, double &dt, int &NUMSPECIES, BootesArray<double> &fdcons, BootesArray<double> &valsL, BootesArray<double> &valsR, BootesArray<double> &stoppingtimemesh){
+void advect_cons_dust_cartesian(mesh &m, double dt){
     // TODO: may need update
     // #pragma omp parallel for collapse (4) schedule (static)
-    #pragma acc parallel loop collapse (4) default(present) firstprivate(dt)
+    #pragma acc parallel loop collapse (4) default(present)
     for (int specIND  = 0; specIND < m.NUMSPECIES; specIND++){
         for (int kk = m.x3s; kk < m.x3l; kk ++){
             for (int jj = m.x2s; jj < m.x2l; jj ++){
@@ -186,11 +186,11 @@ void advect_cons_dust_cartesian(mesh &m, double &dt, int &NUMSPECIES, BootesArra
                     int jjf = jj - m.x2s;
                     int iif = ii - m.x1s;
                     m.dcons(specIND, IDN, kk, jj, ii)
-                                -= (dt / m.dx1(ii) * (fdcons(specIND, IDN, 0, kkf, jjf, iif + 1) - fdcons(specIND, IDN, 0, kkf, jjf, iif))
-                                  + dt / m.dx2(jj) * (fdcons(specIND, IDN, 1, kkf, jjf + 1, iif) - fdcons(specIND, IDN, 1, kkf, jjf, iif))
-                                  + dt / m.dx3(kk) * (fdcons(specIND, IDN, 2, kkf + 1, jjf, iif) - fdcons(specIND, IDN, 2, kkf, jjf, iif)));
+                                -= (dt / m.dx1(ii) * (m.fdcons(specIND, IDN, 0, kkf, jjf, iif + 1) - m.fdcons(specIND, IDN, 0, kkf, jjf, iif))
+                                  + dt / m.dx2(jj) * (m.fdcons(specIND, IDN, 1, kkf, jjf + 1, iif) - m.fdcons(specIND, IDN, 1, kkf, jjf, iif))
+                                  + dt / m.dx3(kk) * (m.fdcons(specIND, IDN, 2, kkf + 1, jjf, iif) - m.fdcons(specIND, IDN, 2, kkf, jjf, iif)));
                     bool denl0 = m.dcons(specIND, IDN, kk, jj, ii) < m.dminDensity;
-                    bool stldt = stoppingtimemesh(specIND, kk, jj, ii) < dt;
+                    bool stldt = m.stoppingtimemesh(specIND, kk, jj, ii) < dt;
                     if (denl0 || stldt){
                         if (denl0){
                             m.dcons(specIND, IDN, kk, jj, ii) = m.dminDensity;
@@ -209,7 +209,7 @@ void advect_cons_dust_cartesian(mesh &m, double &dt, int &NUMSPECIES, BootesArra
                         #endif // ENABLE_GRAVITY
                         dust_terminalvelocityapprixmation_xyz(m.prim(IV1, kk, jj, ii), m.prim(IV2, kk, jj, ii), m.prim(IV3, kk, jj, ii),
                                                               rhogradphix1, rhogradphix2, rhogradphix3,
-                                                              m.dcons(specIND, IDN, kk, jj, ii), stoppingtimemesh(specIND, kk, jj, ii),
+                                                              m.dcons(specIND, IDN, kk, jj, ii), m.stoppingtimemesh(specIND, kk, jj, ii),
                                                               m.dcons(specIND, IM1, kk, jj, ii), m.dcons(specIND, IM2, kk, jj, ii), m.dcons(specIND, IM3, kk, jj, ii)
                                                               );
                         #ifdef DEBUG
@@ -221,9 +221,9 @@ void advect_cons_dust_cartesian(mesh &m, double &dt, int &NUMSPECIES, BootesArra
                     else{
                         // if density is fine, then calculate everything self-consistantly.
                         for (int dconsIND = 1; dconsIND < NUMCONS - 1; dconsIND++){
-                            m.dcons(specIND, dconsIND, kk, jj, ii) -= (dt / m.dx1(ii) * (fdcons(specIND, dconsIND, 0, kkf, jjf, iif + 1) - fdcons(specIND, dconsIND, 0, kkf, jjf, iif))
-                                                                     + dt / m.dx2(jj) * (fdcons(specIND, dconsIND, 1, kkf, jjf + 1, iif) - fdcons(specIND, dconsIND, 1, kkf, jjf, iif))
-                                                                     + dt / m.dx3(kk) * (fdcons(specIND, dconsIND, 2, kkf + 1, jjf, iif) - fdcons(specIND, dconsIND, 2, kkf, jjf, iif)));
+                            m.dcons(specIND, dconsIND, kk, jj, ii) -= (dt / m.dx1(ii) * (m.fdcons(specIND, dconsIND, 0, kkf, jjf, iif + 1) - m.fdcons(specIND, dconsIND, 0, kkf, jjf, iif))
+                                                                     + dt / m.dx2(jj) * (m.fdcons(specIND, dconsIND, 1, kkf, jjf + 1, iif) - m.fdcons(specIND, dconsIND, 1, kkf, jjf, iif))
+                                                                     + dt / m.dx3(kk) * (m.fdcons(specIND, dconsIND, 2, kkf + 1, jjf, iif) - m.fdcons(specIND, dconsIND, 2, kkf, jjf, iif)));
                         }
                         // geometry term
 
@@ -252,7 +252,7 @@ void advect_cons_dust_cartesian(mesh &m, double &dt, int &NUMSPECIES, BootesArra
                         double vgas2  = m.prim(IV2, kk, jj, ii);
                         double vdust3 = m.dcons(specIND, IV3, kk, jj, ii) / m.dcons(specIND, IDN, kk, jj, ii);
                         double vgas3  = m.prim(IV3, kk, jj, ii);
-                        double rhodt_stime = m.dcons(specIND, IDN, kk, jj, ii) * dt / stoppingtimemesh(specIND, kk, jj, ii);
+                        double rhodt_stime = m.dcons(specIND, IDN, kk, jj, ii) * dt / m.stoppingtimemesh(specIND, kk, jj, ii);
                         double dragMOM1 = rhodt_stime * (vgas1 - vdust1);
                         double dragMOM2 = rhodt_stime * (vgas2 - vdust2);
                         double dragMOM3 = rhodt_stime * (vgas3 - vdust3);
@@ -267,11 +267,11 @@ void advect_cons_dust_cartesian(mesh &m, double &dt, int &NUMSPECIES, BootesArra
 }
 #endif
 
-void advect_cons_dust(mesh &m, double &dt, int &NUMSPECIES, BootesArray<double> &fdcons, BootesArray<double> &valsL, BootesArray<double> &valsR, BootesArray<double> &stoppingtimemesh){
+void advect_cons_dust(mesh &m, double dt){
     #if defined(CARTESIAN_COORD)
-    advect_cons_dust_cartesian(m, dt, NUMSPECIES, fdcons, valsL, valsR, stoppingtimemesh);
+    advect_cons_dust_cartesian(m, dt);
     #elif defined(SPHERICAL_POLAR_COORD)
-    advect_cons_dust_sphericalpolar(m, dt, NUMSPECIES, fdcons, valsL, valsR, stoppingtimemesh);
+    advect_cons_dust_sphericalpolar(m, dt);
     #else
         # error need coordinate defined
     #endif

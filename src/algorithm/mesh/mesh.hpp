@@ -72,11 +72,12 @@ class mesh{
         BootesArray<double> GrainSizeTimesGrainDensity; // rhodm * s
         BootesArray<double> dcons;
         BootesArray<double> dprim;
-        // auxiliary array for flux
+
+        /** auxiliary array for dust flux **/
         BootesArray<double> dvalsL;
         BootesArray<double> dvalsR;
         BootesArray<double> fdcons;
-        BootesArray<double> stoppingtime_mesh;
+        BootesArray<double> stoppingtimemesh;
 
         /** grav **/
         #if defined (ENABLE_GRAVITY)

@@ -5,7 +5,7 @@
 class mesh;
 
 
-void first_order(mesh &m, double &dt);
+void first_order(mesh &m, double dt);
 
 
 #endif // TIME_INTEGRATION_HPP_

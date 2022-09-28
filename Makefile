@@ -1,6 +1,6 @@
 CC := nvc++
 #CFLAGS := -g -lhdf5 -lhdf5_cpp -acc -Minfo=accel -gpu=managed
-CFLAGS := -lhdf5 -lhdf5_cpp -acc -Minfo=accel -gpu=managed,ptxinfo
+CFLAGS := -fast -Mlarge_arrays -mcmodel=medium -lhdf5 -lhdf5_cpp -acc -gpu=managed,ptxinfo
 EXE_DIR := bin/
 EXECUTABLE := $(EXE_DIR)bootes.out
 

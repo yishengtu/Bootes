@@ -9,18 +9,18 @@
 class mesh;
 
 
-void calc_flux(mesh &m, double &dt, BootesArray<double> &fcons, BootesArray<double> &valsL, BootesArray<double> &valsR);
+void calc_flux(mesh &m, double dt);
 
 
-void advect_cons(mesh &m, double &dt, BootesArray<double> &fcons, BootesArray<double> &valsL, BootesArray<double> &valsR);
+void advect_cons(mesh &m, double dt);
 
 
 #ifdef DENSITY_PROTECTION
-void protection(mesh &m, double &minDensity);
+void protection(mesh &m);
 #endif // DENSITY_PROTECTION
 
 #ifdef ENABLE_TEMPERATURE_PROTECTION
-void temperature_protection(mesh &m, double &minTemp);
+void temperature_protection(mesh &m);
 #endif // ENABLE_TEMPERATURE_PROTECTION
 
 #endif // ADV_HYDRO_HPP_

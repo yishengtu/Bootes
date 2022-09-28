@@ -225,6 +225,6 @@ void mesh::setupDustFluidMesh(int NS){
     dvalsL.NewBootesArray(NUMSPECIES, 3, NUMCONS - 1, nx3 + 1, nx2 + 1, nx1 + 1);
     dvalsR.NewBootesArray(NUMSPECIES, 3, NUMCONS - 1, nx3 + 1, nx2 + 1, nx1 + 1);
     fdcons.NewBootesArray(NUMSPECIES, NUMCONS - 1, 3, nx3 + 1, nx2 + 1, nx1 + 1);
-    stoppingtime_mesh.NewBootesArray(NUMSPECIES, x3v.shape()[0], x2v.shape()[0], x1v.shape()[0]);
+    stoppingtimemesh.NewBootesArray(NUMSPECIES, x3v.shape()[0], x2v.shape()[0], x1v.shape()[0]);
 }
 #endif

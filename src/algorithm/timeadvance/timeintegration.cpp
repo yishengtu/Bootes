@@ -28,25 +28,21 @@
 #endif // ENABLE_DUSTFLUID
 
 
-void first_order(mesh &m, double &dt){
+void first_order(mesh &m, double dt){
     // First order integration
     // (axis, z, y, x)
     /** Step 1: calculate flux **/
-    calc_flux(m, dt, m.fcons, m.valsL, m.valsR);
+    calc_flux(m, dt);
     #ifdef ENABLE_VISCOSITY
         apply_viscous_flux(m, dt, m.fcons, m.nu_vis);
     #endif // ENABLE_VISCOSITY
     #if defined(ENABLE_DUSTFLUID)
-    // TODO: the nan values probably comes from the fact that v_dust >> v_gas,
-    // so the CFL is not satisfied for dust. Periahps the way to get around this is to invoke
-    // adaptive time step, for grains which needs to evolve with more time steps
-    calc_flux_dust(m, dt, m.NUMSPECIES, m.fdcons, m.dvalsL, m.dvalsR);
-    // Another way to do this is by creating a structured data region by putting {} around a region.
+    calc_flux_dust(m, dt);
     #endif
 
     /** step 2: hydro: time integrate to update CONSERVATIVE variables, solve Riemann Problem **/
     /** step 2.1: hydro **/
-    advect_cons(m, dt, m.fcons, m.valsL, m.valsR);
+    advect_cons(m, dt);
     /** step 2.2: hydro source **/
     #if defined (ENABLE_GRAVITY)
         apply_grav_source_terms(m, dt);
@@ -54,20 +50,19 @@ void first_order(mesh &m, double &dt){
     /** step 3: dust: time integrate to update CONSERVATIVE variables, solve Riemann Problem **/
     /** step 3.1: dust **/
     #ifdef ENABLE_DUSTFLUID
-        calc_stoppingtimemesh(m, m.stoppingtime_mesh);
-
-        advect_cons_dust(m, dt, m.NUMSPECIES, m.fdcons, m.dvalsL, m.dvalsR, m.stoppingtime_mesh);
+        calc_stoppingtimemesh(m);
+        advect_cons_dust(m, dt);
         #ifdef ENABLE_DUST_GRAINGROWTH
-            grain_growth(m, m.stoppingtime_mesh, dt);
+            grain_growth(m, dt);
         #endif // ENABLE_DUST_GRAINGROWTH
     #endif // ENABLE_DUSTFLUID
 
     /** step 4: protections **/
     #if defined (DENSITY_PROTECTION)
-        protection(m, m.minDensity);
+        protection(m);
     #endif // defined(DENSITY_PROTECTION)
     #ifdef ENABLE_TEMPERATURE_PROTECTION
-        temperature_protection(m, m.minTemp);
+        temperature_protection(m);
     #endif // ENABLE_TEMPERATURE_PROTECTION
 }
 

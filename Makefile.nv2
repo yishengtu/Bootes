@@ -1,0 +1,141 @@
+CC := nvc++ -V22.7
+CFLAGS   := -w -L/local/home/mcolgrove/hdf5/lib -I/local/home/mcolgrove/hdf5/include -lhdf5 -lhdf5_cpp -acc -gpu=managed -fast
+CFLAGSO := -w -L/local/home/mcolgrove/hdf5/lib -I/local/home/mcolgrove/hdf5/include -lhdf5 -lhdf5_cpp -acc -gpu=managed 
+CFLAGS1 := -w -L/local/home/mcolgrove/hdf5/lib -I/local/home/mcolgrove/hdf5/include -lhdf5 -lhdf5_cpp -acc -gpu=managed -O1
+#CFLAGS := -L/local/home/mcolgrove/hdf5/lib -I/local/home/mcolgrove/hdf5/include -lhdf5 -lhdf5_cpp -acc -Minfo=accel 
+#CFLAGS := -cuda -L/local/home/mcolgrove/hdf5/lib -I/local/home/mcolgrove/hdf5/include -lhdf5 -lhdf5_cpp  
+EXE_DIR := bin/
+EXECUTABLE := $(EXE_DIR)bootes.out
+#DEFS := -DINLINE_ONE_CELL
+DEFS := 
+
+OBJS := obj/main.o obj/util.o obj/adv_hydro.o obj/adv_dust.o obj/timeintegration.o obj/gravity.o obj/momentum.o obj/eos.o obj/eos_dust.o obj/const_recon.o obj/minmod.o obj/MUSCL_Hancock.o obj/minmod_dust.o obj/const_reconst_dust.o obj/physical_constants.o obj/hlle.o obj/hllc.o obj/hll.o obj/hydrograv.o obj/hydroviscosity.o obj/hll_dust.o obj/gas_drag_on_dust.o obj/terminalvel.o obj/coagulation.o obj/graingrowthmodel.o obj/doner_dust.o obj/time_step.o obj/mesh.o obj/apply_bc.o obj/spherical_polar_pole.o obj/standard_bc.o obj/reflective_bc.o obj/periodic_bc.o obj/reflective_bc_dust.o obj/apply_bc_dust.o obj/standard_bc_dust.o obj/outflow_bc.o
+
+all : $(EXECUTABLE)
+
+objs: $(OBJ_FILES)
+
+dirs : $(EXE_DIR) $(OBJ_DIR)
+
+$(EXECUTABLE) : $(OBJS)
+	$(CC) $(CFLAGS) -o $@ $(OBJS)
+#?
+obj/main.o: src/main.cpp
+	$(CC) $(CFLAGSO) -c src/main.cpp -o obj/main.o
+
+obj/checkok.o: src/algorithm/util/checkok.cpp
+	$(CC) $(CFLAGS) -c src/algorithm/util/checkok.cpp -o obj/checkok.o
+
+obj/util.o: src/algorithm/util/util.cpp
+	$(CC) $(CFLAGS) -c src/algorithm/util/util.cpp -o obj/util.o
+
+obj/adv_hydro.o: src/algorithm/timeadvance/adv_hydro.cpp
+	$(CC) $(CFLAGS) -c src/algorithm/timeadvance/adv_hydro.cpp -o obj/adv_hydro.o
+
+obj/adv_dust.o: src/algorithm/timeadvance/adv_dust.cpp
+	$(CC) $(CFLAGS) -c src/algorithm/timeadvance/adv_dust.cpp -o obj/adv_dust.o
+
+obj/timeintegration.o: src/algorithm/timeadvance/timeintegration.cpp
+	$(CC) $(CFLAGS) -c src/algorithm/timeadvance/timeintegration.cpp -o obj/timeintegration.o
+
+obj/gravity.o: src/algorithm/gravity/gravity.cpp
+	$(CC) $(CFLAGS) -c src/algorithm/gravity/gravity.cpp -o obj/gravity.o
+
+obj/momentum.o: src/algorithm/eos/momentum.cpp
+	$(CC) $(CFLAGS) -c src/algorithm/eos/momentum.cpp -o obj/momentum.o
+
+obj/eos.o: src/algorithm/eos/eos.cpp
+	$(CC) $(CFLAGS) -c src/algorithm/eos/eos.cpp -o obj/eos.o
+
+obj/eos_dust.o: src/algorithm/eos/eos_dust.cpp
+	$(CC) $(CFLAGS) -c src/algorithm/eos/eos_dust.cpp -o obj/eos_dust.o
+
+obj/const_recon.o: src/algorithm/reconstruct/const_recon.cpp
+	$(CC) $(CFLAGS) -c src/algorithm/reconstruct/const_recon.cpp -o obj/const_recon.o
+
+obj/minmod.o: src/algorithm/reconstruct/minmod.cpp
+	$(CC) $(CFLAGS) -c src/algorithm/reconstruct/minmod.cpp -o obj/minmod.o
+
+obj/MUSCL_Hancock.o: src/algorithm/reconstruct/MUSCL_Hancock.cpp
+	$(CC) $(CFLAGS) -c src/algorithm/reconstruct/MUSCL_Hancock.cpp -o obj/MUSCL_Hancock.o
+
+obj/minmod_dust.o: src/algorithm/reconstruct/minmod_dust.cpp
+	$(CC) $(CFLAGS) -c src/algorithm/reconstruct/minmod_dust.cpp -o obj/minmod_dust.o
+
+obj/const_reconst_dust.o: src/algorithm/reconstruct/const_reconst_dust.cpp
+	$(CC) $(CFLAGS) -c src/algorithm/reconstruct/const_reconst_dust.cpp -o obj/const_reconst_dust.o
+
+obj/physical_constants.o: src/algorithm/physical_constants.cpp
+	$(CC) $(CFLAGS) -c src/algorithm/physical_constants.cpp -o obj/physical_constants.o
+
+obj/hlle.o: src/algorithm/hydro/hlle.cpp
+	$(CC) $(CFLAGS) -c src/algorithm/hydro/hlle.cpp -o obj/hlle.o
+
+obj/hllc.o: src/algorithm/hydro/hllc.cpp
+	$(CC) $(CFLAGS) -c src/algorithm/hydro/hllc.cpp -o obj/hllc.o
+
+obj/hll.o: src/algorithm/hydro/hll.cpp
+	$(CC) $(CFLAGS) -c src/algorithm/hydro/hll.cpp -o obj/hll.o
+
+obj/hydrograv.o: src/algorithm/hydro/srcterm/hydrograv.cpp
+	$(CC) $(CFLAGS) -c src/algorithm/hydro/srcterm/hydrograv.cpp -o obj/hydrograv.o
+
+obj/hydroviscosity.o: src/algorithm/hydro/srcterm/hydroviscosity.cpp
+	$(CC) $(CFLAGS) -c src/algorithm/hydro/srcterm/hydroviscosity.cpp -o obj/hydroviscosity.o
+
+obj/hll_dust.o: src/algorithm/dust/hll_dust.cpp
+	$(CC) $(CFLAGS) -c src/algorithm/dust/hll_dust.cpp -o obj/hll_dust.o
+
+obj/gas_drag_on_dust.o: src/algorithm/dust/gas_drag_on_dust.cpp
+	$(CC) $(CFLAGS) -c src/algorithm/dust/gas_drag_on_dust.cpp -o obj/gas_drag_on_dust.o
+
+obj/terminalvel.o: src/algorithm/dust/terminalvel.cpp
+	$(CC) $(CFLAGS) -c src/algorithm/dust/terminalvel.cpp -o obj/terminalvel.o
+#!
+obj/coagulation.o: src/algorithm/dust/graingrowth/coagulation.cpp
+	$(CC) $(CFLAGS) $(DEF) -c src/algorithm/dust/graingrowth/coagulation.cpp -o obj/coagulation.o
+
+obj/graingrowthmodel.o: src/algorithm/dust/graingrowth/graingrowthmodel.cpp
+	$(CC) $(CFLAGS) -c src/algorithm/dust/graingrowth/graingrowthmodel.cpp -o obj/graingrowthmodel.o
+
+obj/doner_dust.o: src/algorithm/dust/doner_dust.cpp
+	$(CC) $(CFLAGS) -c src/algorithm/dust/doner_dust.cpp -o obj/doner_dust.o
+
+obj/time_step.o: src/algorithm/time_step/time_step.cpp
+	$(CC) $(CFLAGS) -c src/algorithm/time_step/time_step.cpp -o obj/time_step.o
+
+obj/mesh.o: src/algorithm/mesh/mesh.cpp
+	$(CC) $(CFLAGS) -c src/algorithm/mesh/mesh.cpp -o obj/mesh.o
+
+obj/apply_bc.o: src/algorithm/boundary_condition/apply_bc.cpp
+	$(CC) $(CFLAGS) -c src/algorithm/boundary_condition/apply_bc.cpp -o obj/apply_bc.o
+
+obj/spherical_polar_pole.o: src/algorithm/boundary_condition/spherical_polar_pole.cpp
+	$(CC) $(CFLAGS) -c src/algorithm/boundary_condition/spherical_polar_pole.cpp -o obj/spherical_polar_pole.o
+
+obj/standard_bc.o: src/algorithm/boundary_condition/standard_bc.cpp
+	$(CC) $(CFLAGS) -c src/algorithm/boundary_condition/standard_bc.cpp -o obj/standard_bc.o
+#!
+obj/reflective_bc.o: src/algorithm/boundary_condition/reflective_bc.cpp
+	$(CC) $(CFLAGS) -c src/algorithm/boundary_condition/reflective_bc.cpp -o obj/reflective_bc.o
+
+obj/periodic_bc.o: src/algorithm/boundary_condition/periodic_bc.cpp
+	$(CC) $(CFLAGS) -c src/algorithm/boundary_condition/periodic_bc.cpp -o obj/periodic_bc.o
+#!
+obj/reflective_bc_dust.o: src/algorithm/boundary_condition/dust/reflective_bc_dust.cpp
+	$(CC) $(CFLAGS) -c src/algorithm/boundary_condition/dust/reflective_bc_dust.cpp -o obj/reflective_bc_dust.o
+
+obj/apply_bc_dust.o: src/algorithm/boundary_condition/dust/apply_bc_dust.cpp
+	$(CC) $(CFLAGS) -c src/algorithm/boundary_condition/dust/apply_bc_dust.cpp -o obj/apply_bc_dust.o
+#!
+obj/standard_bc_dust.o: src/algorithm/boundary_condition/dust/standard_bc_dust.cpp
+	$(CC) $(CFLAGS) -c src/algorithm/boundary_condition/dust/standard_bc_dust.cpp -o obj/standard_bc_dust.o
+
+obj/outflow_bc.o: src/algorithm/boundary_condition/outflow_bc.cpp
+	$(CC) $(CFLAGS) -c src/algorithm/boundary_condition/outflow_bc.cpp -o obj/outflow_bc.o
+
+clean:
+	rm obj/*
+	rm $(EXECUTABLE)
+
+

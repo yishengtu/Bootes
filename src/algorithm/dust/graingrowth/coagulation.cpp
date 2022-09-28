@@ -17,6 +17,7 @@ void grain_growth_one_cell_stick(double num[],
     for (int i = 0; i < NUM_SPECIES; i++){num_here[i] = num[i];}
     bool redo = true;
     double dt_tot = 0;
+    double tmp;
     redo = false;   // set it to false first
 #pragma acc loop vector //collapse (2)
     for (int j = 0; j < NUM_SPECIES; ++ j){
@@ -40,28 +41,34 @@ void grain_growth_one_cell_stick(double num[],
             // int cog_res = searchsorted(grain_mass_list(j) + grain_mass_list(k), grain_mass_list) - 1;
             if (j == k){
                 if (cog_res == NUM_SPECIES){
+		   tmp = 0.5 * (K * grain_mass_list(k) + K * grain_mass_list(j)) / grain_mass_list(cog_res - 1) * numjtimesnumk;
 #pragma acc atomic update
-                    Mmat[cog_res - 1] += 0.5 * (K * grain_mass_list(k) + K * grain_mass_list(j)) / grain_mass_list(cog_res - 1) * numjtimesnumk;
+                    Mmat[cog_res - 1] += tmp;
                 }
                 else{
                     double eps = (grain_mass_list(j) + grain_mass_list(k) - grain_mass_list(cog_res - 1)) / (grain_mass_list(cog_res) - grain_mass_list(cog_res - 1));
+		    tmp =  0.5 * (K * grain_mass_list(k) + K * grain_mass_list(j)) / grain_mass_list(cog_res) * numjtimesnumk * eps;
 #pragma acc atomic update
-                    Mmat[cog_res]     += 0.5 * (K * grain_mass_list(k) + K * grain_mass_list(j)) / grain_mass_list(cog_res) * numjtimesnumk * eps;
+                    Mmat[cog_res]     += tmp;
+		   tmp = 0.5 * (K * grain_mass_list(k) + K * grain_mass_list(j)) / grain_mass_list(cog_res - 1) * numjtimesnumk * (1.0 - eps);
 #pragma acc atomic update
-                    Mmat[cog_res - 1] += 0.5 * (K * grain_mass_list(k) + K * grain_mass_list(j)) / grain_mass_list(cog_res - 1) * numjtimesnumk * (1.0 - eps);
+                    Mmat[cog_res - 1] += tmp;
                 }
             }
             else{
                 if (cog_res == NUM_SPECIES){
+		    tmp =  (K * grain_mass_list(k) + K * grain_mass_list(j)) / grain_mass_list(cog_res - 1)* numjtimesnumk;
 #pragma acc atomic update
-                    Mmat[cog_res - 1] += (K * grain_mass_list(k) + K * grain_mass_list(j)) / grain_mass_list(cog_res - 1)* numjtimesnumk;
+                    Mmat[cog_res - 1] += tmp;
                 }
                 else{
                     double eps =  (grain_mass_list(j) + grain_mass_list(k) - grain_mass_list(cog_res - 1)) / (grain_mass_list(cog_res) - grain_mass_list(cog_res - 1));
+		    tmp = (K * grain_mass_list(k) + K * grain_mass_list(j)) / grain_mass_list(cog_res)* numjtimesnumk * eps;
 #pragma acc atomic update
-                    Mmat[cog_res]     += (K * grain_mass_list(k) + K * grain_mass_list(j)) / grain_mass_list(cog_res)* numjtimesnumk * eps;
+                    Mmat[cog_res]     += tmp;
+		    tmp = (K * grain_mass_list(k) + K * grain_mass_list(j)) / grain_mass_list(cog_res - 1)* numjtimesnumk * (1.0 - eps);
 #pragma acc atomic update
-                    Mmat[cog_res - 1] += (K * grain_mass_list(k) + K * grain_mass_list(j)) / grain_mass_list(cog_res - 1)* numjtimesnumk * (1.0 - eps);
+                    Mmat[cog_res - 1] += tmp;
                 }
             }
             // lost via coagulation
@@ -105,6 +112,7 @@ void grain_growth_one_cell(double num[],
     for (int i = 0; i < NUM_SPECIES; i++){num_here[i] = num[i];}
     bool redo = true;
     double dt_tot = 0;
+    double tmp;
     while (redo || dt_tot < dt)
     {
         redo = false;   // set it to false first
@@ -137,41 +145,51 @@ void grain_growth_one_cell(double num[],
                 }
                 if (j == k){
                     if (cog_res == NUM_SPECIES){
+			tmp = 0.5 * (KL1[0] * grain_mass_list(k) + KL2[0] * grain_mass_list(j)) / grain_mass_list(cog_res - 1) * numjtimesnumk;
 #pragma acc atomic update
-                        Mmat[cog_res - 1] += 0.5 * (KL1[0] * grain_mass_list(k) + KL2[0] * grain_mass_list(j)) / grain_mass_list(cog_res - 1) * numjtimesnumk;
+                        Mmat[cog_res - 1] += tmp;
                     }
                     else{
                         double eps = (grain_mass_list(j) + grain_mass_list(k) - grain_mass_list(cog_res - 1)) / (grain_mass_list(cog_res) - grain_mass_list(cog_res - 1));
+		        tmp = 0.5 * (KL1[0] * grain_mass_list(k) + KL2[0] * grain_mass_list(j)) / grain_mass_list(cog_res) * numjtimesnumk * eps;
 #pragma acc atomic update
-                        Mmat[cog_res]     += 0.5 * (KL1[0] * grain_mass_list(k) + KL2[0] * grain_mass_list(j)) / grain_mass_list(cog_res) * numjtimesnumk * eps;
+                        Mmat[cog_res]     += tmp;
+		        tmp =  0.5 * (KL1[0] * grain_mass_list(k) + KL2[0] * grain_mass_list(j)) / grain_mass_list(cog_res - 1) * numjtimesnumk * (1.0 - eps);
 #pragma acc atomic update
-                        Mmat[cog_res - 1] += 0.5 * (KL1[0] * grain_mass_list(k) + KL2[0] * grain_mass_list(j)) / grain_mass_list(cog_res - 1) * numjtimesnumk * (1.0 - eps);
+                        Mmat[cog_res - 1] += tmp;
                     }
                 }
                 else{
                     if (cog_res == NUM_SPECIES){
+			tmp = (KL1[0] * grain_mass_list(k) + KL2[0] * grain_mass_list(j)) / grain_mass_list(cog_res - 1)* numjtimesnumk;
 #pragma acc atomic update
-                        Mmat[cog_res - 1] += (KL1[0] * grain_mass_list(k) + KL2[0] * grain_mass_list(j)) / grain_mass_list(cog_res - 1)* numjtimesnumk;
+                        Mmat[cog_res - 1] += tmp;
                     }
                     else{
                         double eps =  (grain_mass_list(j) + grain_mass_list(k) - grain_mass_list(cog_res - 1)) / (grain_mass_list(cog_res) - grain_mass_list(cog_res - 1));
+		        tmp = (KL1[0] * grain_mass_list(k) + KL2[0] * grain_mass_list(j)) / grain_mass_list(cog_res)* numjtimesnumk * eps;
 #pragma acc atomic update
-                        Mmat[cog_res]     += (KL1[0] * grain_mass_list(k) + KL2[0] * grain_mass_list(j)) / grain_mass_list(cog_res)* numjtimesnumk * eps;
+                        Mmat[cog_res]     += tmp;
+			tmp = (KL1[0] * grain_mass_list(k) + KL2[0] * grain_mass_list(j)) / grain_mass_list(cog_res - 1)* numjtimesnumk * (1.0 - eps);
 #pragma acc atomic update
-                        Mmat[cog_res - 1] += (KL1[0] * grain_mass_list(k) + KL2[0] * grain_mass_list(j)) / grain_mass_list(cog_res - 1)* numjtimesnumk * (1.0 - eps);
+                        Mmat[cog_res - 1] += tmp;
                     }
                 }
                 // gain via fragmentation
+	        tmp = KL1[1] * grain_mass_list(k) / grain_mass_list(0) * numjtimesnumk;
 #pragma acc atomic update
-                Mmat[0] += KL1[1] * grain_mass_list(k) / grain_mass_list(0) * numjtimesnumk;
+                Mmat[0] += tmp;
+		tmp = KL2[1] * grain_mass_list(j) / grain_mass_list(0) * numjtimesnumk;
 #pragma acc atomic update
-                Mmat[0] += KL2[1] * grain_mass_list(j) / grain_mass_list(0) * numjtimesnumk;
+                Mmat[0] += tmp;
                 // lost via coagulation and fragmentation
+		tmp =  (KL1[0] + KL1[1]) * numjtimesnumk;
 #pragma acc atomic update
-                Mmat[k] -= (KL1[0] + KL1[1]) * numjtimesnumk;
+                Mmat[k] -= tmp;
                 if (k != j){
+		    tmp =  (KL2[0] + KL2[1]) * numjtimesnumk;
 #pragma acc atomic update
-                    Mmat[j] -= (KL2[0] + KL2[1]) * numjtimesnumk;
+                    Mmat[j] -= tmp;
                 }
                 // break if there is a problem
                 /*
@@ -200,7 +218,7 @@ void grain_growth_one_cell(double num[],
 }
 
 
-void grain_growth(mesh &m, BootesArray<double> &stoppingtimemesh, double &dt){
+void grain_growth(mesh &m, double dt){
     int NUMSPECIES = m.NUMSPECIES;
     //double *grain_number_array = new double[NUMSPECIES];
     //double *grain_vr_array     = new double[NUMSPECIES];
@@ -238,13 +256,15 @@ void grain_growth(mesh &m, BootesArray<double> &stoppingtimemesh, double &dt){
                     //cout << m.dcons(specIND, IM1, kk, jj, ii) << '\t';
                 }
                 //cout << endl << flush;
+
+#ifdef INLINE_ONE_CELL
                 /** START OF GRAIN GROWTH IN ONE CELL **/
-                /*
                 double dt_here = dt;
             #pragma acc loop vector
                 for (int i = 0; i < NUMSPECIES; i++){num_here[i] = grain_number_array[i];}
                 bool redo = true;
                 double dt_tot = 0;
+	        double tmp;
                 redo = false;   // set it to false first
             #pragma acc loop vector //collapse (2)
                 for (int j = 0; j < NUMSPECIES; ++ j){
@@ -267,28 +287,34 @@ void grain_growth(mesh &m, BootesArray<double> &stoppingtimemesh, double &dt){
                         }
                         if (j == k){
                             if (cog_res == NUMSPECIES){
+				tmp = 0.5 * (K * m.GrainMassList(k) + K * m.GrainMassList(j)) / m.GrainMassList(cog_res - 1) * numjtimesnumk;
             #pragma acc atomic update
-                                Mmat[cog_res - 1] += 0.5 * (K * m.GrainMassList(k) + K * m.GrainMassList(j)) / m.GrainMassList(cog_res - 1) * numjtimesnumk;
+                                Mmat[cog_res - 1] += tmp;
                             }
                             else{
                                 double eps = (m.GrainMassList(j) + m.GrainMassList(k) - m.GrainMassList(cog_res - 1)) / (m.GrainMassList(cog_res) - m.GrainMassList(cog_res - 1));
+			       tmp =  0.5 * (K * m.GrainMassList(k) + K * m.GrainMassList(j)) / m.GrainMassList(cog_res) * numjtimesnumk * eps;
             #pragma acc atomic update
-                                Mmat[cog_res]     += 0.5 * (K * m.GrainMassList(k) + K * m.GrainMassList(j)) / m.GrainMassList(cog_res) * numjtimesnumk * eps;
+                                Mmat[cog_res]     += tmp;
+			        tmp = 0.5 * (K * m.GrainMassList(k) + K * m.GrainMassList(j)) / m.GrainMassList(cog_res - 1) * numjtimesnumk * (1.0 - eps);
             #pragma acc atomic update
-                                Mmat[cog_res - 1] += 0.5 * (K * m.GrainMassList(k) + K * m.GrainMassList(j)) / m.GrainMassList(cog_res - 1) * numjtimesnumk * (1.0 - eps);
+                                Mmat[cog_res - 1] += tmp;
                             }
                         }
                         else{
                             if (cog_res == NUMSPECIES){
+				tmp =  (K * m.GrainMassList(k) + K * m.GrainMassList(j)) / m.GrainMassList(cog_res - 1)* numjtimesnumk;
             #pragma acc atomic update
-                                Mmat[cog_res - 1] += (K * m.GrainMassList(k) + K * m.GrainMassList(j)) / m.GrainMassList(cog_res - 1)* numjtimesnumk;
+                                Mmat[cog_res - 1] += tmp;
                             }
                             else{
                                 double eps =  (m.GrainMassList(j) + m.GrainMassList(k) - m.GrainMassList(cog_res - 1)) / (m.GrainMassList(cog_res) - m.GrainMassList(cog_res - 1));
+			       tmp = (K * m.GrainMassList(k) + K * m.GrainMassList(j)) / m.GrainMassList(cog_res)* numjtimesnumk * eps;
             #pragma acc atomic update
-                                Mmat[cog_res]     += (K * m.GrainMassList(k) + K * m.GrainMassList(j)) / m.GrainMassList(cog_res)* numjtimesnumk * eps;
+                                Mmat[cog_res]     += tmp;
+				tmp =  (K * m.GrainMassList(k) + K * m.GrainMassList(j)) / m.GrainMassList(cog_res - 1)* numjtimesnumk * (1.0 - eps);
             #pragma acc atomic update
-                                Mmat[cog_res - 1] += (K * m.GrainMassList(k) + K * m.GrainMassList(j)) / m.GrainMassList(cog_res - 1)* numjtimesnumk * (1.0 - eps);
+                                Mmat[cog_res - 1] += tmp;
                             }
                         }
                         // lost via coagulation
@@ -314,9 +340,11 @@ void grain_growth(mesh &m, BootesArray<double> &stoppingtimemesh, double &dt){
                 for (int i = 0; i < NUMSPECIES; i++){grain_number_array[i] = num_here[i];}
                 */
                 /** END OF GRAIN GROWTH IN ONE CELL **/
+#else
                 grain_growth_one_cell_stick(grain_number_array,
                                       grain_vr_array, grain_vtheta_array, grain_vphi_array, num_here, Mmat,
                                       m.GrainSizeList, m.GrainMassList, dt, m.NUMSPECIES);
+#endif
 
                 // copy 1-cell results from grain_number_array to m.dcons
 
@@ -339,14 +367,14 @@ void grain_growth(mesh &m, BootesArray<double> &stoppingtimemesh, double &dt){
                         #ifdef CARTESIAN_COORD
                         dust_terminalvelocityapprixmation_xyz(m.prim(IV1, kk, jj, ii), m.prim(IV2, kk, jj, ii), m.prim(IV3, kk, jj, ii),
                                                               rhogradphix1, rhogradphix2, rhogradphix3,
-                                                              m.dcons(specIND, IDN, kk, jj, ii), stoppingtimemesh(specIND, kk, jj, ii),
+                                                              m.dcons(specIND, IDN, kk, jj, ii), m.stoppingtimemesh(specIND, kk, jj, ii),
                                                               m.dcons(specIND, IM1, kk, jj, ii), m.dcons(specIND, IM2, kk, jj, ii), m.dcons(specIND, IM3, kk, jj, ii)
                                                               );
                         #endif // CARTESIAN_COORD
                         #ifdef SPHERICAL_POLAR_COORD
                         dust_terminalvelocityapprixmation_rtp(m.prim(IV1, kk, jj, ii), m.prim(IV2, kk, jj, ii), m.prim(IV3, kk, jj, ii),
                                                               rhogradphix1, rhogradphix2, rhogradphix3,
-                                                              m.dcons(specIND, IDN, kk, jj, ii), stoppingtimemesh(specIND, kk, jj, ii), m.x1v(ii), m.geo_cot(jj),
+                                                              m.dcons(specIND, IDN, kk, jj, ii), m.stoppingtimemesh(specIND, kk, jj, ii), m.x1v(ii), m.geo_cot(jj),
                                                               m.dcons(specIND, IM1, kk, jj, ii), m.dcons(specIND, IM2, kk, jj, ii), m.dcons(specIND, IM3, kk, jj, ii)
                                                               );
                         #endif // SPHERICAL_POLAR_COORD
