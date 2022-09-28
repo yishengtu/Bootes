@@ -17,6 +17,49 @@ void check(T err, const char * const errStr, const char * const file, const int 
     }
 }
 
+struct meshsim
+{
+double *Phi_grav_x1surface;
+double *Phi_grav_x2surface;
+double *Phi_grav_x3surface;
+
+double *dx1p;
+double *dx2p;
+double *dx3p;
+meshsim(int size)
+{
+   int state = 0;
+   cudaMalloc(&Phi_grav_x1surface, size*sizeof(double));
+   cudaMalloc(&Phi_grav_x2surface, size*sizeof(double));
+   cudaMalloc(&Phi_grav_x3surface, size*sizeof(double));
+   cudaMalloc(&dx1p, size*sizeof(double));
+   cudaMalloc(&dx2p, size*sizeof(double));
+   cudaMalloc(&dx3p, size*sizeof(double));
+   //cudaMemcpy(Phi_grav_x1surface, &state, sizeof(double), cudaMemcpyHostToDevice);
+}
+
+~meshsim()
+{
+   cudaFree(Phi_grav_x1surface);
+   cudaFree(Phi_grav_x2surface);
+   cudaFree(Phi_grav_x3surface);
+   cudaFree(dx1p);
+   cudaFree(dx2p);
+   cudaFree(dx3p);
+}
+
+/*
+__device__ void lock() {
+   while(atomicCAS(mutex,0,1) != 0);
+}
+
+__device__ void unlock() {
+   atomicExch(mutex, 0);
+}
+*/
+};
+
+
 __device__ void grain_growth_model_stick(double &s1, double &s2, double &dv, double res[2]){
     res[0] = dv * M_PI * pow((s1 + s2), 2.0);
     res[1] = 0.0;
@@ -31,7 +74,7 @@ __device__ void cu_dust_terminalvelocityapprixmation_xyz(double &vg1, double &vg
     pd3 = rhod * vg3 + g3 * ts;
     }
 
-__global__ void growth(double *dcons, double *prim, double *stoppingtimemesh, double dt, double NUMSPECIES, double dminDensity, int *shape,
+__global__ void growth(double *dcons, double *prim, double *stoppingtimemesh, meshsim grav, double dt, double NUMSPECIES, double dminDensity, int *shape,
 		int x1s, int x1l, int x2s, int x2l, int x3s, int x3l,
                 double *grain_number_array, double *grain_vr_array, double *grain_vtheta_array,
                 double *grain_vphi_array, double *num_here, double *Mmat,
@@ -171,6 +214,8 @@ void grain_growth(mesh &m, BootesArray<double> &stoppingtimemesh, double &dt){
     
     int NG=2; 
     int size1=m.dcons.shape()[4]-2*NG, size2=m.dcons.shape()[3]-2*NG, size3=m.dcons.shape()[2]-2*NG;
+    int ncell = m.dcons.shape()[4]*m.dcons.shape()[3]*m.dcons.shape()[2];
+
     //std::cout<<"size1 "<<size1<<" size2 "<<size2<<" size3 "<<size3<<std::endl;
     int BLKX=32, BLKY=32, BLKZ=32;
     int MB=32;
@@ -186,6 +231,14 @@ void grain_growth(mesh &m, BootesArray<double> &stoppingtimemesh, double &dt){
     CHECK_CUDA_ERROR(cudaMemcpy(d_GrainMassList_arr, m.GrainMassList.data(), grnbytes, cudaMemcpyHostToDevice));
     CHECK_CUDA_ERROR(cudaMemcpy(d_stoppingtimemesh, stoppingtimemesh.data(), stpbytes, cudaMemcpyHostToDevice));
 
+    meshsim grav=meshsim(ncell);
+    CHECK_CUDA_ERROR(cudaMemcpy(grav.Phi_grav_x1surface,m.grav->Phi_grav_x1surface.data(),ncell*sizeof(double),cudaMemcpyHostToDevice));
+    CHECK_CUDA_ERROR(cudaMemcpy(grav.Phi_grav_x2surface,m.grav->Phi_grav_x2surface.data(),ncell*sizeof(double),cudaMemcpyHostToDevice));
+    CHECK_CUDA_ERROR(cudaMemcpy(grav.Phi_grav_x3surface,m.grav->Phi_grav_x3surface.data(),ncell*sizeof(double),cudaMemcpyHostToDevice));
+    CHECK_CUDA_ERROR(cudaMemcpy(grav.dx1p,m.dx1p.data(),ncell*sizeof(double),cudaMemcpyHostToDevice));
+    CHECK_CUDA_ERROR(cudaMemcpy(grav.dx2p,m.dx2p.data(),ncell*sizeof(double),cudaMemcpyHostToDevice));
+    CHECK_CUDA_ERROR(cudaMemcpy(grav.dx3p,m.dx3p.data(),ncell*sizeof(double),cudaMemcpyHostToDevice));
+    
 
     double *d_dcons = (double*)acc_deviceptr(m.dcons.data());
     double *d_prim = (double*)acc_deviceptr(m.prim.data());
@@ -195,14 +248,14 @@ void grain_growth(mesh &m, BootesArray<double> &stoppingtimemesh, double &dt){
     dim3 ThreadsperBlock(BLKX,BLKY,BLKZ); 
     int x1s = m.x1s;int x1l = m.x1l;int x2s = m.x2s;int x2l = m.x2l;int x3s = m.x3s;int x3l = m.x3l; 
     //std::cout<<"x1s "<<x1s<<" x1l "<<x1l<<" x2s "<<x2s<<" x2l "<<x2l<<" x3s "<<x3s<<" x3l "<<x3l<<std::endl;
-    growth<<<BlocksperGrid, ThreadsperBlock>>>(d_dcons, d_prim, d_stoppingtimemesh, dt, NUMSPECIES, dminDensity, shape_m, x1s, x1l, x2s, x2l, x3s, x3l,
+    growth<<<BlocksperGrid, ThreadsperBlock>>>(d_dcons, d_prim, d_stoppingtimemesh, grav, dt, NUMSPECIES, dminDensity, shape_m, x1s, x1l, x2s, x2l, x3s, x3l,
 		            grain_number_array, grain_vr_array, grain_vtheta_array, grain_vphi_array,
 				      num_here, Mmat, d_GrainSizeList_arr, d_GrainMassList_arr);
     cudaDeviceSynchronize();
 
 }
 
-__global__ void growth(double *dcons, double *prim, double *stoppingtimemesh, double dt, double NUMSPECIES,double dminDensity, int *shape,
+__global__ void growth(double *dcons, double *prim, double *stoppingtimemesh, meshsim grav, double dt, double NUMSPECIES,double dminDensity, int *shape,
 		                int x1s, int x1l, int x2s, int x2l, int x3s, int x3l,
 		double *grain_number_array, double *grain_vr_array, double *grain_vtheta_array, 
 		double *grain_vphi_array, double *num_here, double *Mmat,
@@ -288,10 +341,18 @@ __global__ void growth(double *dcons, double *prim, double *stoppingtimemesh, do
                         double rhogradphix1;
                         double rhogradphix2;
                         double rhogradphix3;
-                        #ifndef ENABLE_GRAVITY
-                        rhogradphix1 = dcons[idx_IDN] * (m.grav->Phi_grav_x1surface(kk, jj, ii + 1) - m.grav->Phi_grav_x1surface(kk, jj, ii)) / m.dx1p(kk, jj, ii);
-                        rhogradphix2 = dcons[idx_IDN] * (m.grav->Phi_grav_x2surface(kk, jj + 1, ii) - m.grav->Phi_grav_x2surface(kk, jj, ii)) / m.dx2p(kk, jj, ii);
-                        rhogradphix3 = dcons[idx_IDN] * (m.grav->Phi_grav_x3surface(kk + 1, jj, ii) - m.grav->Phi_grav_x3surface(kk, jj, ii)) / m.dx3p(kk, jj, ii);
+                        #ifdef ENABLE_GRAVITY
+			int kji = ii + size1*(jj + size2*kk);
+			int kji1 = ii + 1 + size1*(jj + size2*kk);
+			int kj1i = ii + size1*(jj + 1 + size2*kk);
+			int k1ji = ii + size1*(jj + (size2*kk+1));
+
+                        rhogradphix1 = dcons[idx_IDN] * (grav.Phi_grav_x1surface[kji1] - grav.Phi_grav_x1surface[kji]) / grav.dx1p[kji];
+                        rhogradphix2 = dcons[idx_IDN] * (grav.Phi_grav_x2surface[kj1i] - grav.Phi_grav_x2surface[kji]) / grav.dx2p[kji];
+                        rhogradphix3 = dcons[idx_IDN] * (grav.Phi_grav_x3surface[k1ji] - grav.Phi_grav_x3surface[kji]) / grav.dx3p[kji];
+                        //rhogradphix1 = dcons[idx_IDN] * (m.grav->Phi_grav_x1surface(kk, jj, ii + 1) - m.grav->Phi_grav_x1surface(kk, jj, ii)) / m.dx1p(kk, jj, ii);
+                        //rhogradphix2 = dcons[idx_IDN] * (m.grav->Phi_grav_x2surface(kk, jj + 1, ii) - m.grav->Phi_grav_x2surface(kk, jj, ii)) / m.dx2p(kk, jj, ii);
+                        //rhogradphix3 = dcons[idx_IDN] * (m.grav->Phi_grav_x3surface(kk + 1, jj, ii) - m.grav->Phi_grav_x3surface(kk, jj, ii)) / m.dx3p(kk, jj, ii);
                         #else   // set gravity to zero
                         rhogradphix1 = 0;
                         rhogradphix2 = 0;
