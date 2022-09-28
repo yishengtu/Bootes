@@ -4,25 +4,49 @@
 #include "../../index_def.hpp"
 #include "../../mesh/mesh.hpp"
 #include "../../../defs.hpp"
-#include "../terminalvel.hpp"
+//#include "../terminalvel.hpp"
 #include <cmath>
+
+#define CHECK_CUDA_ERROR(val) check( (val), #val, __FILE__, __LINE__)
+template <class T>
+void check(T err, const char * const errStr, const char * const file, const int line) {
+    if(err != cudaSuccess) {
+	    cerr << "CUDA error at: " << file << ":" << line << endl;
+	    cerr << cudaGetErrorString(err) << " : " << errStr << endl;
+	    exit(1);
+    }
+}
 
 __device__ void grain_growth_model_stick(double &s1, double &s2, double &dv, double res[2]){
     res[0] = dv * M_PI * pow((s1 + s2), 2.0);
     res[1] = 0.0;
 }
 
+__device__ void cu_dust_terminalvelocityapprixmation_xyz(double &vg1, double &vg2, double &vg3,
+                                           double &g1,  double &g2,  double &g3,
+                                           double &rhod, double &ts,
+                                           double &pd1, double &pd2, double &pd3){
+    pd1 = rhod * vg1 + g1 * ts;
+    pd2 = rhod * vg2 + g2 * ts;
+    pd3 = rhod * vg3 + g3 * ts;
+    }
 
-__global__ void grain_growth_one_cell(double *num,
+__global__ void growth(double *dcons, double *prim, double *stoppingtimemesh, double dt, double NUMSPECIES, double dminDensity, int *shape,
+		int x1s, int x1l, int x2s, int x2l, int x3s, int x3l,
+                double *grain_number_array, double *grain_vr_array, double *grain_vtheta_array,
+                double *grain_vphi_array, double *num_here, double *Mmat,
+		double *d_GrainSizeList_arr, double *d_GrainMassList_arr);
+
+__device__ void grain_growth_one_cell(double *num,
                            double *vr, double *vtheta, double *vphi, double *num_here, double *Mmat,
                            double *grain_size_list, double *grain_mass_list, double dt, int NUM_SPECIES){
     double dt_here = dt;
 
-    int index = threadIdx.x + blockIdx.x * blockDim.x;
-    int stride = blockDim.x * gridDim.x;
+    int index = 0;//threadIdx.x;// + blockIdx.x * blockDim.x;
+    int stride = 1;//blockIdx.x;//blockDim.x * gridDim.x;
 
     for (int i = index; i < NUM_SPECIES; i+=stride) {num_here[i] = num[i];}
-    __syncthreads();
+    //__syncthreads();
 
     bool redo = true;
     double dt_tot = 0;
@@ -34,7 +58,7 @@ __global__ void grain_growth_one_cell(double *num,
         for (int k = index; k < NUM_SPECIES; k+=stride){
             Mmat[k] = 0;
         }
-	  __syncthreads();
+	  //__syncthreads();
 
         for (int j = index; j < NUM_SPECIES; j+=stride){
             for (int k = j; k < NUM_SPECIES; ++ k){
@@ -97,7 +121,7 @@ __global__ void grain_growth_one_cell(double *num,
                 */
             }
         }
-        __syncthreads();
+        //__syncthreads();
 
         dt_tot += dt_here;
         for (int i = index; i < NUM_SPECIES; i+=stride){
@@ -107,11 +131,11 @@ __global__ void grain_growth_one_cell(double *num,
                 num_here[i] = 0;
             }
         }
-	  __syncthreads();
+	  //__syncthreads();
 
         //cout << dt_tot << '\t' << min_dt << '\t' << dt << '\n' << flush;
     }
-      __syncthreads();
+      //__syncthreads();
 
     for (int i = index; i < NUM_SPECIES; i+=stride){num[i] = num_here[i];}
 }
@@ -119,6 +143,7 @@ __global__ void grain_growth_one_cell(double *num,
 
 void grain_growth(mesh &m, BootesArray<double> &stoppingtimemesh, double &dt){
     int NUMSPECIES = m.NUMSPECIES;
+    double dminDensity = m.dminDensity;
     //double *grain_number_array = new double[NUMSPECIES];
     //double *grain_vr_array     = new double[NUMSPECIES];
     //double *grain_vtheta_array = new double[NUMSPECIES];
@@ -129,77 +154,154 @@ void grain_growth(mesh &m, BootesArray<double> &stoppingtimemesh, double &dt){
     double *grain_vphi_array;
     double *num_here;
     double *Mmat;
-    
+    //cudaError_t cerr;
 
     size_t nspbytes = NUMSPECIES*sizeof(double);
-    
     int device_id;
     
-    cudaGetDevice(&device_id);
+    CHECK_CUDA_ERROR(cudaGetDevice(&device_id));
 
-    cudaMallocManaged(&grain_number_array, nspbytes);
-    cudaMallocManaged(&grain_vr_array, nspbytes);
-    cudaMallocManaged(&grain_vtheta_array, nspbytes);
-    cudaMallocManaged(&grain_vphi_array, nspbytes);
-    cudaMallocManaged(&num_here, nspbytes);
-    cudaMallocManaged(&Mmat, nspbytes);
+    CHECK_CUDA_ERROR(cudaMallocManaged(&grain_number_array, nspbytes));
+    //std::cout<<"cerr "<<cerr<<std::endl;
+    CHECK_CUDA_ERROR(cudaMallocManaged(&grain_vr_array, nspbytes));
+    CHECK_CUDA_ERROR(cudaMallocManaged(&grain_vtheta_array, nspbytes));
+    CHECK_CUDA_ERROR(cudaMallocManaged(&grain_vphi_array, nspbytes));
+    CHECK_CUDA_ERROR(cudaMallocManaged(&num_here, nspbytes));
+    CHECK_CUDA_ERROR(cudaMallocManaged(&Mmat, nspbytes));
+    
+    int NG=2; 
+    int size1=m.dcons.shape()[4]-2*NG, size2=m.dcons.shape()[3]-2*NG, size3=m.dcons.shape()[2]-2*NG;
+    //std::cout<<"size1 "<<size1<<" size2 "<<size2<<" size3 "<<size3<<std::endl;
+    int BLKX=32, BLKY=32, BLKZ=32;
+    int MB=32;
+    size_t grnbytes = m.GrainSizeList.shape()[0]*sizeof(double);
+    double *d_GrainSizeList_arr;
+    double *d_GrainMassList_arr;
+    double *d_stoppingtimemesh;
+    size_t stpbytes = stoppingtimemesh.shape()[0]*stoppingtimemesh.shape()[1]*stoppingtimemesh.shape()[2]*stoppingtimemesh.shape()[3]*sizeof(double);
+    CHECK_CUDA_ERROR(cudaMalloc(&d_GrainSizeList_arr, grnbytes));
+    CHECK_CUDA_ERROR(cudaMalloc(&d_GrainMassList_arr, grnbytes));
+    CHECK_CUDA_ERROR(cudaMalloc(&d_stoppingtimemesh, stpbytes));
+    CHECK_CUDA_ERROR(cudaMemcpy(d_GrainSizeList_arr, m.GrainSizeList.data(), grnbytes, cudaMemcpyHostToDevice));
+    CHECK_CUDA_ERROR(cudaMemcpy(d_GrainMassList_arr, m.GrainMassList.data(), grnbytes, cudaMemcpyHostToDevice));
+    CHECK_CUDA_ERROR(cudaMemcpy(d_stoppingtimemesh, stoppingtimemesh.data(), stpbytes, cudaMemcpyHostToDevice));
 
-	for (int kk = m.x3s; kk < m.x3l; kk ++){
-        for (int jj = m.x2s; jj < m.x2l; jj ++){
-            for (int ii = m.x1s; ii < m.x1l; ii ++){
+
+    double *d_dcons = (double*)acc_deviceptr(m.dcons.data());
+    double *d_prim = (double*)acc_deviceptr(m.prim.data());
+
+    int *shape_m = m.dcons.shape();
+    dim3 BlocksperGrid(size1/BLKX+1,size2/BLKY+1, size3/BLKZ+1);
+    dim3 ThreadsperBlock(BLKX,BLKY,BLKZ); 
+    int x1s = m.x1s;int x1l = m.x1l;int x2s = m.x2s;int x2l = m.x2l;int x3s = m.x3s;int x3l = m.x3l; 
+    //std::cout<<"x1s "<<x1s<<" x1l "<<x1l<<" x2s "<<x2s<<" x2l "<<x2l<<" x3s "<<x3s<<" x3l "<<x3l<<std::endl;
+    growth<<<BlocksperGrid, ThreadsperBlock>>>(d_dcons, d_prim, d_stoppingtimemesh, dt, NUMSPECIES, dminDensity, shape_m, x1s, x1l, x2s, x2l, x3s, x3l,
+		            grain_number_array, grain_vr_array, grain_vtheta_array, grain_vphi_array,
+				      num_here, Mmat, d_GrainSizeList_arr, d_GrainMassList_arr);
+    cudaDeviceSynchronize();
+
+}
+
+__global__ void growth(double *dcons, double *prim, double *stoppingtimemesh, double dt, double NUMSPECIES,double dminDensity, int *shape,
+		                int x1s, int x1l, int x2s, int x2l, int x3s, int x3l,
+		double *grain_number_array, double *grain_vr_array, double *grain_vtheta_array, 
+		double *grain_vphi_array, double *num_here, double *Mmat,
+		double *GrainSizeList_arr, double *GrainMassList_arr){
+
+    int index = threadIdx.x + blockIdx.x * blockDim.x;
+    int stride = blockDim.x * gridDim.x;
+    //int index = blockIdx.x;
+    int stridex = blockDim.x * gridDim.x;
+    int stridey = blockDim.y * gridDim.y;
+    int stridez = blockDim.z * gridDim.z;
+    int index_x = threadIdx.x + blockDim.x*blockIdx.x;
+    int index_y = threadIdx.y + blockDim.y*blockIdx.y;
+    int index_z = threadIdx.z + blockDim.z*blockIdx.z;
+    //size_t nspbytes = NUMSPECIES*sizeof(double);
+    
+
+    int device_id;
+    int size1 = shape[4];
+    int size2 = shape[3];
+    int size3 = shape[2];
+    int size4 = shape[1];
+    
+    //cudaGetDevice(&device_id);
+
+    //for (int kk = index_z+x3s; kk < x3l; kk +=stridez){
+    //    for (int jj = index_y+x2s; jj <x2l; jj +=stridey){
+    //        for (int ii = index_x+x1s; ii < x1l; ii +=stridex){
+    int kk = index_z+x3s;
+    int jj = index_y+x2s;
+    int ii = index_x+x1s;
+    if (kk >= x3l) return;
+    if (jj >= x2l) return;
+    if (ii >= x1l) return;
                 /*
                 if (rhomesh(j)[i] < 4e-17){         // if density is below some threshold, just skip coagulation calculations.
                     continue;
                 }
                 */
-                for (int specIND = 0; specIND < m.NUMSPECIES; specIND ++){
+                for (int specIND = 0; specIND < NUMSPECIES; specIND ++){
                     //double gas_rho = m.dcons(specIND, IDN, kk, jj, ii);
-                    grain_number_array[specIND] = m.dcons(specIND, IDN, kk, jj, ii) / m.GrainMassList(specIND);
-                    grain_vr_array[specIND]     = m.dcons(specIND, IM1, kk, jj, ii) / m.dcons(specIND, IDN, kk, jj, ii);
-                    grain_vtheta_array[specIND] = m.dcons(specIND, IM2, kk, jj, ii) / m.dcons(specIND, IDN, kk, jj, ii);
-                    grain_vphi_array[specIND]   = m.dcons(specIND, IM3, kk, jj, ii) / m.dcons(specIND, IDN, kk, jj, ii);
+	            //std::cout<<"grain_number_array "<<grain_number_array[specIND]<<std::endl;
+		    int idx_IDN = ii + size1*(jj + size2*(kk + size3 * (IDN + size4 * specIND)));
+		    int idx_IM1 = ii + size1*(jj + size2*(kk + size3 * (IM1 + size4 * specIND)));
+		    int idx_IM2 = ii + size1*(jj + size2*(kk + size3 * (IM2 + size4 * specIND)));
+		    int idx_IM3 = ii + size1*(jj + size2*(kk + size3 * (IM3 + size4 * specIND)));
+                    grain_number_array[specIND] = dcons[idx_IDN] / GrainMassList_arr[specIND];
+                    grain_vr_array[specIND]     = dcons[idx_IM1] / dcons[idx_IDN];
+                    grain_vtheta_array[specIND] = dcons[idx_IM2] / dcons[idx_IDN];
+                    grain_vphi_array[specIND]   = dcons[idx_IM3] / dcons[idx_IDN];
+		    
                     //cout << m.dcons(specIND, IM1, kk, jj, ii) << '\t';
                 }
-		    cudaMemPrefetchAsync(grain_number_array, nspbytes, device_id);
-		    cudaMemPrefetchAsync(grain_vr_array, nspbytes, device_id);
-		    cudaMemPrefetchAsync(grain_vtheta_array, nspbytes, device_id);
-		    cudaMemPrefetchAsync(grain_vphi_array, nspbytes, device_id);
-		    cudaMemPrefetchAsync(num_here, nspbytes, device_id);
-		    cudaMemPrefetchAsync(Mmat, nspbytes, device_id);
+
+		//    cudaMemPrefetchAsync(grain_number_array, nspbytes, device_id);
+		//    cudaMemPrefetchAsync(grain_vr_array, nspbytes, device_id);
+		//    cudaMemPrefetchAsync(grain_vtheta_array, nspbytes, device_id);
+		//    cudaMemPrefetchAsync(grain_vphi_array, nspbytes, device_id);
+		//    cudaMemPrefetchAsync(num_here, nspbytes, device_id);
+		//    cudaMemPrefetchAsync(Mmat, nspbytes, device_id);
                 //cout << endl << flush;
-                size_t grnbytes = m.GrainSizeList.shape()[0]*sizeof(double);
-		double *d_GrainSizeList_arr;
-		double *d_GrainMassList_arr;
-		cudaMalloc(&d_GrainSizeList_arr, grnbytes);
-		cudaMalloc(&d_GrainMassList_arr, grnbytes);
-                cudaMemcpy(d_GrainSizeList_arr, m.GrainSizeList.data(), grnbytes, cudaMemcpyHostToDevice);
-                cudaMemcpy(d_GrainMassList_arr, m.GrainMassList.data(), grnbytes, cudaMemcpyHostToDevice);
-                int MB=1;
-                grain_growth_one_cell<<<NUMSPECIES/MB, MB>>>(grain_number_array,
+
+              
+                grain_growth_one_cell(grain_number_array,
                                       grain_vr_array, grain_vtheta_array, grain_vphi_array, num_here, Mmat,
-                                      d_GrainSizeList_arr, d_GrainMassList_arr, dt, m.NUMSPECIES);
+                                      GrainSizeList_arr, GrainMassList_arr, dt, NUMSPECIES);
                 // copy 1-cell results from grain_number_array to m.dcons
 
-                for (int specIND = 0; specIND < m.NUMSPECIES; specIND ++) {
-                    if (grain_number_array[specIND] * m.GrainMassList(specIND) < m.dminDensity) {
-                        m.dcons(specIND, IDN, kk, jj, ii) = m.dminDensity;
+                for (int specIND = 0; specIND < NUMSPECIES; specIND ++) {
+		    int idx_IDN = ii + size1*(jj + size2*(kk + size3 * (IDN + size4 * specIND)));
+		    int idx_IM1 = ii + size1*(jj + size2*(kk + size3 * (IM1 + size4 * specIND)));
+		    int idx_IM2 = ii + size1*(jj + size2*(kk + size3 * (IM2 + size4 * specIND)));
+		    int idx_IM3 = ii + size1*(jj + size2*(kk + size3 * (IM3 + size4 * specIND)));
+
+                    int idx_IV1 = ii + size1*(jj + size2*(kk + size3 * IV1)); 
+                    int idx_IV2 = ii + size1*(jj + size2*(kk + size3 * IV2)); 
+                    int idx_IV3 = ii + size1*(jj + size2*(kk + size3 * IV3)); 
+		    
+		    int idx_stop= ii + size1*(jj + size2*(kk + size3 * specIND));
+
+		    if (grain_number_array[specIND] * GrainMassList_arr[specIND] < dminDensity) {
+                        dcons[idx_IDN] = dminDensity;
                         double rhogradphix1;
                         double rhogradphix2;
                         double rhogradphix3;
-                        #ifdef ENABLE_GRAVITY
-                        rhogradphix1 = m.dcons(specIND, IDN, kk, jj, ii) * (m.grav->Phi_grav_x1surface(kk, jj, ii + 1) - m.grav->Phi_grav_x1surface(kk, jj, ii)) / m.dx1p(kk, jj, ii);
-                        rhogradphix2 = m.dcons(specIND, IDN, kk, jj, ii) * (m.grav->Phi_grav_x2surface(kk, jj + 1, ii) - m.grav->Phi_grav_x2surface(kk, jj, ii)) / m.dx2p(kk, jj, ii);
-                        rhogradphix3 = m.dcons(specIND, IDN, kk, jj, ii) * (m.grav->Phi_grav_x3surface(kk + 1, jj, ii) - m.grav->Phi_grav_x3surface(kk, jj, ii)) / m.dx3p(kk, jj, ii);
+                        #ifndef ENABLE_GRAVITY
+                        rhogradphix1 = dcons[idx_IDN] * (m.grav->Phi_grav_x1surface(kk, jj, ii + 1) - m.grav->Phi_grav_x1surface(kk, jj, ii)) / m.dx1p(kk, jj, ii);
+                        rhogradphix2 = dcons[idx_IDN] * (m.grav->Phi_grav_x2surface(kk, jj + 1, ii) - m.grav->Phi_grav_x2surface(kk, jj, ii)) / m.dx2p(kk, jj, ii);
+                        rhogradphix3 = dcons[idx_IDN] * (m.grav->Phi_grav_x3surface(kk + 1, jj, ii) - m.grav->Phi_grav_x3surface(kk, jj, ii)) / m.dx3p(kk, jj, ii);
                         #else   // set gravity to zero
                         rhogradphix1 = 0;
                         rhogradphix2 = 0;
                         rhogradphix3 = 0;
                         #endif // ENABLE_GRAVITY
                         #ifdef CARTESIAN_COORD
-                        dust_terminalvelocityapprixmation_xyz(m.prim(IV1, kk, jj, ii), m.prim(IV2, kk, jj, ii), m.prim(IV3, kk, jj, ii),
+                        cu_dust_terminalvelocityapprixmation_xyz(prim[idx_IV1], prim[idx_IV2], prim[idx_IV3],
                                                               rhogradphix1, rhogradphix2, rhogradphix3,
-                                                              m.dcons(specIND, IDN, kk, jj, ii), stoppingtimemesh(specIND, kk, jj, ii),
-                                                              m.dcons(specIND, IM1, kk, jj, ii), m.dcons(specIND, IM2, kk, jj, ii), m.dcons(specIND, IM3, kk, jj, ii)
+                                                              dcons[idx_IDN], stoppingtimemesh[idx_stop],
+                                                              dcons[idx_IM1], dcons[idx_IM2], dcons[idx_IM3]
                                                               );
                         #endif // CARTESIAN_COORD
                         #ifdef SPHERICAL_POLAR_COORD
@@ -209,22 +311,22 @@ void grain_growth(mesh &m, BootesArray<double> &stoppingtimemesh, double &dt){
                                                               m.dcons(specIND, IM1, kk, jj, ii), m.dcons(specIND, IM2, kk, jj, ii), m.dcons(specIND, IM3, kk, jj, ii)
                                                               );
                         #endif // SPHERICAL_POLAR_COORD
-                        #ifdef DEBUG
-                        std::cout << "drho < 0:\t" << specIND << '\t' << kk << '\t' << jj << '\t' << ii << '\t'
-                                  << m.dcons(specIND, IDN, kk, jj, ii) << '\t' << m.dcons(specIND, IM1, kk, jj, ii) << '\t'
-                                  << m.dcons(specIND, IM2, kk, jj, ii) << '\t' << m.dcons(specIND, IM3, kk, jj, ii) << std::endl << flush;
-                        #endif // DEBUG
+                        //#ifdef DEBUG
+                        //std::cout << "drho < 0:\t" << specIND << '\t' << kk << '\t' << jj << '\t' << ii << '\t'
+                        //          << m.dcons(specIND, IDN, kk, jj, ii) << '\t' << m.dcons(specIND, IM1, kk, jj, ii) << '\t'
+                        //          << m.dcons(specIND, IM2, kk, jj, ii) << '\t' << m.dcons(specIND, IM3, kk, jj, ii) << std::endl << flush;
+                        //#endif // DEBUG
                     }
                     else {
-                        m.dcons(specIND, IDN, kk, jj, ii) = grain_number_array[specIND] * m.GrainMassList(specIND);
-                        m.dcons(specIND, IM1, kk, jj, ii) = m.dcons(specIND, IDN, kk, jj, ii) * grain_vr_array[specIND];
-                        m.dcons(specIND, IM2, kk, jj, ii) = m.dcons(specIND, IDN, kk, jj, ii) * grain_vtheta_array[specIND];
-                        m.dcons(specIND, IM3, kk, jj, ii) = m.dcons(specIND, IDN, kk, jj, ii) * grain_vphi_array[specIND];
+                        dcons[idx_IDN] = grain_number_array[specIND] * GrainMassList_arr[specIND];
+                        dcons[idx_IM1] = dcons[idx_IDN] * grain_vr_array[specIND];
+                        dcons[idx_IM2] = dcons[idx_IDN] * grain_vtheta_array[specIND];
+                        dcons[idx_IM3] = dcons[idx_IDN] * grain_vphi_array[specIND];
                     }
-                }
-            }
-        }
-    }
+                }	
+    //        }
+    //    }
+   // }
     /*
     delete[] grain_number_array;
     delete[] grain_vr_array;
