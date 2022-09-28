@@ -1,7 +1,7 @@
 CC := nvc++
 C_CUDA :=nvcc
-CFLAGS := -I /home/vhatz6ed/hdf5/include/ -L /home/vhatz6ed/hdf5/lib/ -g -lhdf5 -lhdf5_cpp -cuda -gpu=nordc#-acc -Minfo=accel -gpu=managed,lineinfo,ptxinfo
-CUDA_FLAGS := -ccbin=nvc++ 
+CFLAGS := -I /home/vhatz6ed/hdf5/include/ -L /home/vhatz6ed/hdf5/lib/ -g -lhdf5 -lhdf5_cpp -cuda -acc -Minfo=accel -gpu=managed#,lineinfo,ptxinfo
+CUDA_FLAGS := -ccbin=nvc++ -g -arch=sm_80 -rdc=true
 EXE_DIR := bin/
 EXECUTABLE := $(EXE_DIR)bootes.out
 

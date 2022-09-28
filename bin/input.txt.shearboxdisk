@@ -15,7 +15,7 @@ nx1        = 100
 
 x2min      = -1
 x2max      = 1
-nx2        = 2
+nx2        = 1
 
 x3min      = 0
 x3max      = 0.1

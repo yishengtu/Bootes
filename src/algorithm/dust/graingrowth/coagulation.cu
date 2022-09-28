@@ -76,17 +76,17 @@ __device__ void cu_dust_terminalvelocityapprixmation_xyz(double &vg1, double &vg
 
 __global__ void growth(double *dcons, double *prim, double *stoppingtimemesh, meshsim grav, double dt, double NUMSPECIES, double dminDensity, int *shape,
 		int x1s, int x1l, int x2s, int x2l, int x3s, int x3l,
-                double *grain_number_array, double *grain_vr_array, double *grain_vtheta_array,
-                double *grain_vphi_array, double *num_here, double *Mmat,
+                //double *grain_number_array, double *grain_vr_array, double *grain_vtheta_array,
+                //double *grain_vphi_array, double *num_here, double *Mmat,
 		double *d_GrainSizeList_arr, double *d_GrainMassList_arr);
 
 __device__ void grain_growth_one_cell(double *num,
                            double *vr, double *vtheta, double *vphi, double *num_here, double *Mmat,
                            double *grain_size_list, double *grain_mass_list, double dt, int NUM_SPECIES){
     double dt_here = dt;
-
-    int index = 0;//threadIdx.x;// + blockIdx.x * blockDim.x;
-    int stride = 1;//blockIdx.x;//blockDim.x * gridDim.x;
+    double temp;
+    int index = threadIdx.x;// + blockIdx.x * blockDim.x;
+    int stride = blockDim.x;// * gridDim.x;
 
     for (int i = index; i < NUM_SPECIES; i+=stride) {num_here[i] = num[i];}
     //__syncthreads();
@@ -137,7 +137,10 @@ __device__ void grain_growth_one_cell(double *num,
                 }
                 else{
                     if (cog_res == NUM_SPECIES){
-                        Mmat[cog_res - 1] += (KL1[0] * grain_mass_list[k] + KL2[0] * grain_mass_list[j]) / grain_mass_list[cog_res - 1]* numjtimesnumk;
+                        temp = (KL1[0] * grain_mass_list[k] + KL2[0] * grain_mass_list[j]) / grain_mass_list[cog_res - 1]* numjtimesnumk;
+			//Mmat[cog_res - 1] += temp;
+			atomicAdd ( Mmat[cog_res - 1],temp);
+                    //    Mmat[cog_res - 1] += (KL1[0] * grain_mass_list[k] + KL2[0] * grain_mass_list[j]) / grain_mass_list[cog_res - 1]* numjtimesnumk;
                     }
                     else{
                         double eps =  (grain_mass_list[j] + grain_mass_list[k] - grain_mass_list[cog_res - 1]) / (grain_mass_list[cog_res] - grain_mass_list[cog_res - 1]);
@@ -246,19 +249,18 @@ void grain_growth(mesh &m, BootesArray<double> &stoppingtimemesh, double &dt){
     int *shape_m = m.dcons.shape();
     dim3 BlocksperGrid(size1/BLKX+1,size2/BLKY+1, size3/BLKZ+1);
     dim3 ThreadsperBlock(BLKX,BLKY,BLKZ); 
-    int x1s = m.x1s;int x1l = m.x1l;int x2s = m.x2s;int x2l = m.x2l;int x3s = m.x3s;int x3l = m.x3l; 
+    int x1s = m.x1s;int x1l = m.x1l;int x2s = m.x2s;int x2l = m.x2l;int x3s = m.x3s;int x3l = m.x3l;
+    int sharedbytes = 6*NUMSPECIES*sizeof(double); 
     //std::cout<<"x1s "<<x1s<<" x1l "<<x1l<<" x2s "<<x2s<<" x2l "<<x2l<<" x3s "<<x3s<<" x3l "<<x3l<<std::endl;
-    growth<<<BlocksperGrid, ThreadsperBlock>>>(d_dcons, d_prim, d_stoppingtimemesh, grav, dt, NUMSPECIES, dminDensity, shape_m, x1s, x1l, x2s, x2l, x3s, x3l,
-		            grain_number_array, grain_vr_array, grain_vtheta_array, grain_vphi_array,
-				      num_here, Mmat, d_GrainSizeList_arr, d_GrainMassList_arr);
+    growth<<<BlocksperGrid, ThreadsperBlock, sharedbytes>>>(d_dcons, d_prim, d_stoppingtimemesh, grav, dt, NUMSPECIES, dminDensity, shape_m, x1s, x1l, x2s, x2l, x3s, x3l, d_GrainSizeList_arr, d_GrainMassList_arr);
     cudaDeviceSynchronize();
 
 }
 
 __global__ void growth(double *dcons, double *prim, double *stoppingtimemesh, meshsim grav, double dt, double NUMSPECIES,double dminDensity, int *shape,
 		                int x1s, int x1l, int x2s, int x2l, int x3s, int x3l,
-		double *grain_number_array, double *grain_vr_array, double *grain_vtheta_array, 
-		double *grain_vphi_array, double *num_here, double *Mmat,
+		//double *grain_number_array, double *grain_vr_array, double *grain_vtheta_array, 
+		//double *grain_vphi_array, double *num_here, double *Mmat,
 		double *GrainSizeList_arr, double *GrainMassList_arr){
 
     int index = threadIdx.x + blockIdx.x * blockDim.x;
@@ -272,6 +274,13 @@ __global__ void growth(double *dcons, double *prim, double *stoppingtimemesh, me
     int index_z = threadIdx.z + blockDim.z*blockIdx.z;
     //size_t nspbytes = NUMSPECIES*sizeof(double);
     
+    index_x = blockId.x;
+    index_y = blockId.y;
+    index_z = blockId.z;
+
+    stridex = gridDim.x;
+    stridey = gridDim.y;
+    stridez = gridDim.z;
 
     int device_id;
     int size1 = shape[4];
@@ -279,23 +288,32 @@ __global__ void growth(double *dcons, double *prim, double *stoppingtimemesh, me
     int size3 = shape[2];
     int size4 = shape[1];
     
+    __shared__ grain_number_array[];
+    __shared__ grain_vr_array[];
+    __shared__ grain_vtheta_array[];
+    __shared__ grain_vphi_array[];
+    __shared__ num_here[];
+    __shared__ Mmat[];
+
     //cudaGetDevice(&device_id);
 
-    //for (int kk = index_z+x3s; kk < x3l; kk +=stridez){
-    //    for (int jj = index_y+x2s; jj <x2l; jj +=stridey){
-    //        for (int ii = index_x+x1s; ii < x1l; ii +=stridex){
-    int kk = index_z+x3s;
+    for (int kk = index_z+x3s; kk < x3l; kk +=stridez){
+        for (int jj = index_y+x2s; jj <x2l; jj +=stridey){
+            for (int ii = index_x+x1s; ii < x1l; ii +=stridex){
+    
+    /*int kk = index_z+x3s;
     int jj = index_y+x2s;
     int ii = index_x+x1s;
     if (kk >= x3l) return;
     if (jj >= x2l) return;
     if (ii >= x1l) return;
+    */
                 /*
                 if (rhomesh(j)[i] < 4e-17){         // if density is below some threshold, just skip coagulation calculations.
                     continue;
                 }
                 */
-                for (int specIND = 0; specIND < NUMSPECIES; specIND ++){
+                for (int specIND = theadId.x; specIND < NUMSPECIES; specIND +=blockDim.x){
                     //double gas_rho = m.dcons(specIND, IDN, kk, jj, ii);
 	            //std::cout<<"grain_number_array "<<grain_number_array[specIND]<<std::endl;
 		    int idx_IDN = ii + size1*(jj + size2*(kk + size3 * (IDN + size4 * specIND)));
@@ -309,7 +327,7 @@ __global__ void growth(double *dcons, double *prim, double *stoppingtimemesh, me
 		    
                     //cout << m.dcons(specIND, IM1, kk, jj, ii) << '\t';
                 }
-
+                __syncthreads();
 		//    cudaMemPrefetchAsync(grain_number_array, nspbytes, device_id);
 		//    cudaMemPrefetchAsync(grain_vr_array, nspbytes, device_id);
 		//    cudaMemPrefetchAsync(grain_vtheta_array, nspbytes, device_id);
@@ -322,6 +340,7 @@ __global__ void growth(double *dcons, double *prim, double *stoppingtimemesh, me
                 grain_growth_one_cell(grain_number_array,
                                       grain_vr_array, grain_vtheta_array, grain_vphi_array, num_here, Mmat,
                                       GrainSizeList_arr, GrainMassList_arr, dt, NUMSPECIES);
+		__syncthreads();
                 // copy 1-cell results from grain_number_array to m.dcons
 
                 for (int specIND = 0; specIND < NUMSPECIES; specIND ++) {
