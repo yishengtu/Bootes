@@ -59,9 +59,11 @@ void reconstruct_minmod(mesh &m,
                    double dt
                    ){
     // Computation starts in first ghost zone, for first active cell left boundary flux
-    // #pragma omp parallel for collapse (3) schedule (static)
-    //#pragma acc loop collapse (3) vector
+    #ifdef GPU
     #pragma acc parallel loop collapse (3) default(present) // firstprivate(dt)
+    #else
+    #pragma omp parallel for collapse (3) schedule (static)
+    #endif
     for (int kk = -x3excess; kk < m.nx3 + x3excess; kk++){
         for (int jj = -x2excess; jj < m.nx2 + x2excess; jj++){
             for (int ii = -x1excess; ii < m.nx1 + x1excess; ii++){

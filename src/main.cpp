@@ -29,8 +29,9 @@
 #endif // DEBUG
 
 #include "setup/shearboxdisk.cpp"
+//#include "setup/KH.dust.cpp"
 
-#include "nvtx3/nvToolsExt.h"
+//#include "nvtx3/nvToolsExt.h"
 
 void doloop(double &ot, double &next_exit_loop_time, mesh &m, double &CFL){
     int loop_cycle = 0;

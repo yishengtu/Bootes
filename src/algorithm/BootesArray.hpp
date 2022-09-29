@@ -228,16 +228,31 @@ class BootesArray {
     }
 
     inline void set_uniform(int x){
+        #ifdef GPU
+        #pragma acc parallel loop
+        #else
+        #pragma omp parallel for
+        #endif
         for (int ii = 0; ii < arrsize_; ii ++){
             arr_[ii] = (double) x;
         }
     }
     inline void set_uniform(float x){
+        #ifdef GPU
+        #pragma acc parallel loop
+        #else
+        #pragma omp parallel for
+        #endif
         for (int ii = 0; ii < arrsize_; ii ++){
             arr_[ii] = (double) x;
         }
     }
     inline void set_uniform(double x){
+        #ifdef GPU
+        #pragma acc parallel loop
+        #else
+        #pragma omp parallel for
+        #endif
         for (int ii = 0; ii < arrsize_; ii ++){
             arr_[ii] = (double) x;
         }

@@ -1,3 +1,5 @@
+/** COMPUTATION DEVICE, default CPU openMP **/
+//#define GPU
 
 /** COODINATE **/
 #define CARTESIAN_COORD

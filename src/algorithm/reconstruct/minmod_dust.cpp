@@ -40,7 +40,11 @@ void reconstruct_dust(mesh &m,
                    ){
     // Computation starts in first ghost zone, for first active cell left boundary flux
     double zero = 0;
-    #pragma omp parallel for collapse (3) schedule (static)
+    #ifdef GPU
+    #pragma acc parallel loop collapse (4) default(present) // firstprivate(dt)
+    #else
+    #pragma omp parallel for collapse (4) schedule (static)
+    #endif
     for (int specIND = 0; specIND < m.NUMSPECIES; specIND++){
         for (int kk = -x3excess; kk < m.nx3 + x3excess; kk++){
             for (int jj = -x2excess; jj < m.nx2 + x2excess; jj++){

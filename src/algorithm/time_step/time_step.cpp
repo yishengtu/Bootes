@@ -92,8 +92,11 @@ double timestep(mesh &m, double &CFL){
         // a hash keeping track of host-device memory address,
         // which matches the associated host memeory address and device memory address
         //#pragma acc update device(min_dt) if_present
-        //#pragma omp parallel for collapse(3) reduction(min : min_dt)
+        #ifdef GPU
         #pragma acc parallel loop collapse (3) reduction(min : min_dt) copy(min_dt) present(m)
+        #else
+        #pragma omp parallel for collapse(3) reduction(min : min_dt)
+        #endif
         for (int kk = m.x3s; kk < m.x3l ; kk++){
             for (int jj = m.x2s; jj < m.x2l; jj++){
                 for (int ii = m.x1s; ii < m.x1l; ii++){
@@ -118,8 +121,11 @@ double timestep(mesh &m, double &CFL){
             }
         }
         #ifdef ENABLE_DUSTFLUID
-        //#pragma omp parallel for collapse(4) reduction (min: min_dt)
+        #ifdef GPU
         #pragma acc parallel loop collapse (4) reduction(min : min_dt) copy(min_dt) present(m)
+        #else
+        #pragma omp parallel for collapse(4) reduction (min: min_dt)
+        #endif
         for (int specIND = 0; specIND < m.NUMSPECIES; specIND ++){
             for (int kk = m.x3s; kk < m.x3l ; kk++){
                 for (int jj = m.x2s; jj < m.x2l; jj++){

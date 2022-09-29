@@ -5,15 +5,18 @@
 #include "../eos/eos.hpp"
 
 
-double stoppingtime(double &rhodmsize, double &rho, double &pres, double &vth_coeff){
+double stoppingtime(double rhodmsize, double rho, double pres, double vth_coeff){
     // cout << rhodmsize << '\t' << rhodmsize / (rho * thermalspeed(rho, pres, vth_coeff)) << endl << flush;
     return rhodmsize / (rho * thermalspeed(rho, pres, vth_coeff));
 }
 
 
 void calc_stoppingtimemesh(mesh &m){
-    //#pragma omp parallel for collapse (4)
-    #pragma acc parallel loop collapse (4) default (present)
+    #ifdef GPU
+    #pragma acc parallel loop collapse (4) default(present)
+    #else
+    #pragma omp parallel for collapse (4) schedule (static)
+    #endif
     for (int specIND = 0; specIND < m.NUMSPECIES; specIND ++){
         for (int kk = m.x3s; kk < m.x3l; kk ++){
             for (int jj = m.x2s; jj < m.x2l; jj ++){
@@ -28,7 +31,11 @@ void calc_stoppingtimemesh(mesh &m){
 
 double find_smallest_stoppingtime(mesh &m){
     double minstoppingtime = std::numeric_limits<double>::max();
-    #pragma omp parallel for reduction (min : minstoppingtime)
+    #ifdef GPU
+    #pragma acc parallel loop collapse (4) default(present) reduction (min : minstoppingtime)
+    #else
+    #pragma omp parallel for collapse (4) schedule (static) reduction (min : minstoppingtime)
+    #endif
     for (int specIND = 0; specIND < m.NUMSPECIES; specIND ++){
         for (int kk = m.x3s; kk < m.x3l; kk ++){
             for (int jj = m.x2s; jj < m.x2l; jj ++){

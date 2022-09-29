@@ -1,5 +1,6 @@
 #include "../BootesArray.hpp"
 #include "../index_def.hpp"
+#include "../../defs.hpp"
 #include "reflective_bc.hpp"
 
 
@@ -7,8 +8,11 @@ void reflective_boundary_condition_x1i(BootesArray<double> &quan, int x1s, int x
                                                                 int x2s, int x2l, int ng2,
                                                                 int x3s, int x3l, int ng3){
     // standard inflow/outflow boundary, simply copy the values from active zone to ghost zone.
-    //#pragma omp parallel for collapse(3) schedule (static)
-    #pragma acc parallel loop collapse(3) default (present)
+    #ifdef GPU
+    #pragma acc parallel loop collapse (3) default (present)
+    #else
+    #pragma omp parallel for collapse (3) schedule (static)
+    #endif
     for (int gind1 = 0; gind1 < ng1; gind1 ++){
         for (int kk = x3s; kk < x3l; kk++){
             for (int jj = x2s; jj < x2l; jj++){
@@ -27,8 +31,11 @@ void reflective_boundary_condition_x1o(BootesArray<double> &quan, int x1s, int x
                                                                 int x2s, int x2l, int ng2,
                                                                 int x3s, int x3l, int ng3){
     // standard inflow/outflow boundary, simply copy the values from active zone to ghost zone.
-    //#pragma omp parallel for collapse(3) schedule (static)
-    #pragma acc parallel loop collapse(3) default (present)
+    #ifdef GPU
+    #pragma acc parallel loop collapse (3) default (present)
+    #else
+    #pragma omp parallel for collapse (3) schedule (static)
+    #endif
     for (int gind1 = 0; gind1 < ng1; gind1 ++){
         for (int kk = x3s; kk < x3l; kk++){
             for (int jj = x2s; jj < x2l; jj++){
@@ -47,8 +54,11 @@ void reflective_boundary_condition_x2i(BootesArray<double> &quan, int x1s, int x
                                                                 int x2s, int x2l, int ng2,
                                                                 int x3s, int x3l, int ng3){
     // standard inflow/outflow boundary, simply copy the values from active zone to ghost zone.
-    //#pragma omp parallel for collapse(3) schedule (static)
-    #pragma acc parallel loop collapse(3) default (present)
+    #ifdef GPU
+    #pragma acc parallel loop collapse (3) default (present)
+    #else
+    #pragma omp parallel for collapse (3) schedule (static)
+    #endif
     for (int gind2 = 0; gind2 < ng2; gind2 ++){
         for (int kk = x3s; kk < x3l; kk++){
             for (int ii = x1s; ii < x1l; ii++){
@@ -67,8 +77,11 @@ void reflective_boundary_condition_x2o(BootesArray<double> &quan, int x1s, int x
                                                                   int x2s, int x2l, int ng2,
                                                                   int x3s, int x3l, int ng3){
     // standard inflow/outflow boundary, simply copy the values from active zone to ghost zone.
-    //#pragma omp parallel for collapse(3) schedule (static)
-    #pragma acc parallel loop collapse(3) default (present)
+    #ifdef GPU
+    #pragma acc parallel loop collapse (3) default (present)
+    #else
+    #pragma omp parallel for collapse (3) schedule (static)
+    #endif
     for (int gind2 = 0; gind2 < ng2; gind2 ++){
         for (int kk = x3s; kk < x3l; kk++){
             for (int ii = x1s; ii < x1l; ii++){
@@ -87,8 +100,11 @@ void reflective_boundary_condition_x3i(BootesArray<double> &quan, int x1s, int x
                                                                   int x2s, int x2l, int ng2,
                                                                   int x3s, int x3l, int ng3){
     // standard inflow/outflow boundary, simply copy the values from active zone to ghost zone.
-    //#pragma omp parallel for collapse(3) schedule (static)
-    #pragma acc parallel loop collapse(3) default (present)
+    #ifdef GPU
+    #pragma acc parallel loop collapse (3) default (present)
+    #else
+    #pragma omp parallel for collapse (3) schedule (static)
+    #endif
     for (int gind3 = 0; gind3 < ng3; gind3 ++){
         for (int jj = x2s; jj < x2l; jj++){
             for (int ii = x1s; ii < x1l; ii++){
@@ -107,8 +123,11 @@ void reflective_boundary_condition_x3o(BootesArray<double> &quan, int x1s, int x
                                                                   int x2s, int x2l, int ng2,
                                                                   int x3s, int x3l, int ng3){
     // standard inflow/outflow boundary, simply copy the values from active zone to ghost zone.
-    //#pragma omp parallel for collapse(3) schedule (static)
-    #pragma acc parallel loop collapse(3) default (present)
+    #ifdef GPU
+    #pragma acc parallel loop collapse (3) default (present)
+    #else
+    #pragma omp parallel for collapse (3) schedule (static)
+    #endif
     for (int gind3 = 0; gind3 < ng3; gind3 ++){
         for (int jj = x2s; jj < x2l; jj++){
             for (int ii = x1s; ii < x1l; ii++){

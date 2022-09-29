@@ -108,6 +108,11 @@ void setup(mesh &m, input_file &finput){
 }
 
 
+void apply_user_extra_boundary_condition(mesh &m){
+    ;
+}
+
+
 void work_after_loop(mesh &m, double &dt){
     ;
 }

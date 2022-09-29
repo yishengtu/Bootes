@@ -11,10 +11,13 @@
 
 
 #ifdef ENABLE_GRAVITY
-void apply_grav_source_terms(mesh &m, double &dt){
+void apply_grav_source_terms(mesh &m, double dt){
     #if defined (CARTESIAN_COORD)
-        //#pragma omp parallel for collapse (3)
-        #pragma acc parallel loop collapse (3) default(present) firstprivate(dt)
+        #ifdef GPU
+        #pragma acc parallel loop collapse (3) default(present)
+        #else
+        #pragma omp parallel for collapse (3) schedule (static)
+        #endif
         for (int kk = m.x3s; kk < m.x3l; kk ++){
             for (int jj = m.x2s; jj < m.x2l; jj ++){
                 for (int ii = m.x1s; ii < m.x1l; ii ++){
@@ -30,8 +33,11 @@ void apply_grav_source_terms(mesh &m, double &dt){
         }
         // TODO
     #elif defined (SPHERICAL_POLAR_COORD)
-        // #pragma omp parallel for collapse (3)
-        #pragma acc parallel loop collapse (3) default(present) firstprivate(dt)
+        #ifdef GPU
+        #pragma acc parallel loop collapse (3) default(present)
+        #else
+        #pragma omp parallel for collapse (3) schedule (static)
+        #endif
         for (int kk = m.x3s; kk < m.x3l; kk ++){
             for (int jj = m.x2s; jj < m.x2l; jj ++){
                 for (int ii = m.x1s; ii < m.x1l; ii ++){

@@ -23,8 +23,11 @@ void gravity::setup_Phimesh(int &tot_nx3, int &tot_nx2, int &tot_nx1){
 
 
 void gravity::zero_gravity(mesh &m){
-    // #pragma omp parallel for collapse (3)
+    #ifdef GPU
     #pragma acc parallel loop collapse (3)
+    #else
+    #pragma omp parallel for collapse (3)
+    #endif
     for (int kk = m.x3s; kk < m.x3l; kk ++){
         for (int jj = m.x2s; jj < m.x2l; jj ++){
             for (int ii = m.x1s; ii < m.x1l; ii ++){
@@ -35,9 +38,12 @@ void gravity::zero_gravity(mesh &m){
 }
 
 
-void gravity::add_pointsource_grav(mesh &m, double &m_source, double &x1_s, double &x2_s, double &x3_s){
-    // #pragma omp parallel for collapse (3)
+void gravity::add_pointsource_grav(mesh &m, double m_source, double x1_s, double x2_s, double x3_s){
+    #ifdef GPU
     #pragma acc parallel loop collapse (3) firstprivate(m_source, x1_s, x2_s, x3_s)
+    #else
+    #pragma omp parallel for collapse (3)
+    #endif
     for (int kk = m.x3s; kk < m.x3l; kk ++){
         for (int jj = m.x2s; jj < m.x2l; jj ++){
             for (int ii = m.x1s; ii < m.x1l; ii ++){
@@ -69,8 +75,11 @@ void gravity::add_self_grav(mesh &m){
         }
         mass_in_shell(ii) = mass_in_last_shell;
     }
-    //#pragma omp parallel for
+    #ifdef GPU
     #pragma acc parallel loop
+    #else
+    #pragma omp parallel for
+    #endif
     for (int ii = m.x1s; ii < m.x1l; ii ++){
         double x1_h = m.x1v(ii);
         //double x2_h = m.x2v(jj);
@@ -91,10 +100,13 @@ void gravity::add_self_grav(mesh &m){
 
 void gravity::boundary_grav(mesh &m){
     // boundaries
-    //#pragma omp parallel
+    #pragma omp parallel
     {
-        //#pragma omp for collapse (3) nowait
+        #ifdef GPU
         #pragma acc parallel loop collapse (3)
+        #else
+        #pragma omp for collapse (3) nowait
+        #endif
         for (int gind1 = 0; gind1 < m.ng1; gind1 ++){
             for (int kk = m.x3s; kk < m.x3l; kk++){
                 for (int jj = m.x2s; jj < m.x2l; jj++){
@@ -103,8 +115,11 @@ void gravity::boundary_grav(mesh &m){
                 }
             }
         }
-        //#pragma omp for collapse (3) nowait
+        #ifdef GPU
         #pragma acc parallel loop collapse (3)
+        #else
+        #pragma omp for collapse (3) nowait
+        #endif
         for (int gind2 = 0; gind2 < m.ng2; gind2 ++){
             for (int kk = m.x3s; kk < m.x3l; kk++){
                 for (int ii = m.x1s; ii < m.x1l; ii++){
@@ -113,8 +128,11 @@ void gravity::boundary_grav(mesh &m){
                 }
             }
         }
-        //#pragma omp for collapse (3) nowait
+        #ifdef GPU
         #pragma acc parallel loop collapse (3)
+        #else
+        #pragma omp for collapse (3) nowait
+        #endif
         for (int gind3 = 0; gind3 < m.ng3; gind3 ++){
             for (int jj = m.x2s; jj < m.x2l; jj++){
                 for (int ii = m.x1s; ii < m.x1l; ii++){
@@ -124,13 +142,16 @@ void gravity::boundary_grav(mesh &m){
             }
         }
     }
-    //#pragma omp barrier
+    #pragma omp barrier
 }
 
 
 void gravity::calc_surface_vals(mesh &m){
-    // #pragma omp parallel for collapse (3)
+    #ifdef GPU
     #pragma acc parallel loop collapse (3)
+    #else
+    #pragma omp parallel for collapse (3)
+    #endif
     for (int kk = m.x3s; kk < m.x3l; kk ++){
         for (int jj = m.x2s; jj < m.x2l; jj ++){
             for (int ii = m.x1s; ii < m.x1l + 1; ii ++){
@@ -143,8 +164,11 @@ void gravity::calc_surface_vals(mesh &m){
             }
         }
     }
-    //#pragma omp parallel for collapse (3)
+    #ifdef GPU
     #pragma acc parallel loop collapse (3)
+    #else
+    #pragma omp parallel for collapse (3)
+    #endif
     for (int kk = m.x3s; kk < m.x3l; kk ++){
         for (int jj = m.x2s; jj < m.x2l; jj ++){
             for (int ii = m.x1s; ii < m.x1l; ii ++){
@@ -156,8 +180,11 @@ void gravity::calc_surface_vals(mesh &m){
         }
     }
     if (m.dim > 1){
-        //#pragma omp parallel for collapse (3)
+        #ifdef GPU
         #pragma acc parallel loop collapse (3)
+        #else
+        #pragma omp parallel for collapse (3)
+        #endif
         for (int kk = m.x3s; kk < m.x3l; kk ++){
             for (int jj = m.x2s; jj < m.x2l + 1; jj ++){
                 for (int ii = m.x1s; ii < m.x1l; ii ++){
@@ -170,8 +197,11 @@ void gravity::calc_surface_vals(mesh &m){
                 }
             }
         }
-        //#pragma omp parallel for collapse (3)
+        #ifdef GPU
         #pragma acc parallel loop collapse (3)
+        #else
+        #pragma omp parallel for collapse (3)
+        #endif
         for (int kk = m.x3s; kk < m.x3l; kk ++){
             for (int jj = m.x2s; jj < m.x2l; jj ++){
                 for (int ii = m.x1s; ii < m.x1l; ii ++){
@@ -188,8 +218,11 @@ void gravity::calc_surface_vals(mesh &m){
         grav_x2.set_uniform(0);
     }
     if (m.dim > 2){
-        //#pragma omp parallel for collapse (3)
+        #ifdef GPU
         #pragma acc parallel loop collapse (3)
+        #else
+        #pragma omp parallel for collapse (3)
+        #endif
         for (int kk = m.x3s; kk < m.x3l + 1; kk ++){
             for (int jj = m.x2s; jj < m.x2l; jj ++){
                 for (int ii = m.x1s; ii < m.x1l; ii ++){
@@ -203,8 +236,11 @@ void gravity::calc_surface_vals(mesh &m){
             }
         }
 
-        //#pragma omp parallel for collapse (3)
+        #ifdef GPU
         #pragma acc parallel loop collapse (3)
+        #else
+        #pragma omp parallel for collapse (3)
+        #endif
         for (int kk = m.x3s; kk < m.x3l; kk ++){
             for (int jj = m.x2s; jj < m.x2l; jj ++){
                 for (int ii = m.x1s; ii < m.x1l; ii ++){

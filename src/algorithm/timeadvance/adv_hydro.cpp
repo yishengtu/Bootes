@@ -33,10 +33,13 @@ void calc_flux(mesh &m, double dt){
         m.valsL.updatedev();
         m.valsR.updatedev();
         // step 1.2: solve the Riemann problem. Use HLL for now, update conservative vars
-        //#pragma omp parallel for collapse (3) schedule (static)
         // present: if it's already there, don't do anything.
         // #pragma acc loop collapse (3) vector // default (present)
+        #ifdef GPU
         #pragma acc parallel loop collapse (3) default (present)
+        #else
+        #pragma omp parallel for collapse (3) schedule (static)
+        #endif
         for (int kk = 0; kk < m.nx3 + x3excess; kk ++){
             for (int jj = 0; jj < m.nx2 + x2excess; jj ++){
                 // #pragma acc loop vector private (valL, valR, fxs)   // parallel nx1 on the x-dimension of the cuda block
@@ -68,8 +71,11 @@ void calc_flux(mesh &m, double dt){
     }
     // Need to set unused values in the fdcons to zeros.
     // To do so the axis goes from "number of active axis" to 3
-    // #pragma omp parallel for collapse (4) schedule (static)
+    #ifdef GPU
     #pragma acc parallel loop collapse (4) default (present)
+    #else
+    #pragma omp parallel for collapse (4) schedule (static)
+    #endif
     for (int axis = m.dim; axis < 3; axis ++){
         for (int kk = 0; kk < m.fcons.shape()[2]; kk ++){
             for (int jj = 0; jj < m.fcons.shape()[3]; jj ++){
@@ -90,8 +96,11 @@ void calc_flux(mesh &m, double dt){
 
 void advect_cons(mesh &m, double dt){
     #if defined(CARTESIAN_COORD)
-        //#pragma omp parallel for collapse (3) schedule (static)
+        #ifdef GPU
         #pragma acc parallel loop collapse (3) default(present)
+        #else
+        #pragma omp parallel for collapse (3) schedule (static)
+        #endif
         for (int kk = m.x3s; kk < m.x3l; kk ++){
             for (int jj = m.x2s; jj < m.x2l; jj ++){
                 for (int ii = m.x1s; ii < m.x1l; ii ++){
@@ -107,8 +116,11 @@ void advect_cons(mesh &m, double dt){
             }
         }
     #elif defined(SPHERICAL_POLAR_COORD)
-        // #pragma omp parallel for collapse (3) schedule (static)
+        #ifdef GPU
         #pragma acc parallel loop collapse (3) default(present)
+        #else
+        #pragma omp parallel for collapse (3) schedule (static)
+        #endif
         for (int kk = m.x3s; kk < m.x3l; kk ++){
             for (int jj = m.x2s; jj < m.x2l; jj ++){
                 for (int ii = m.x1s; ii < m.x1l; ii ++){
@@ -152,8 +164,11 @@ void advect_cons(mesh &m, double dt){
 
 #ifdef DENSITY_PROTECTION
 void protection(mesh &m){
-    //#pragma omp parallel for collapse (3)
+    #ifdef GPU
     #pragma acc parallel loop collapse (3) default(present)
+    #else
+    #pragma omp parallel for collapse (3) schedule (static)
+    #endif
     for (int kk = m.x3s; kk < m.x3l; kk ++){
         for (int jj = m.x2s; jj < m.x2l; jj ++){
             for (int ii = m.x1s; ii < m.x1l; ii ++){
@@ -180,8 +195,11 @@ void protection(mesh &m){
 
 #ifdef ENABLE_TEMPERATURE_PROTECTION
 void temperature_protection(mesh &m){
-    //#pragma omp parallel for collapse (3)
+    #ifdef GPU
     #pragma acc parallel loop collapse (3) default(present)
+    #else
+    #pragma omp parallel for collapse (3) schedule (static)
+    #endif
     for (int kk = m.x3s; kk < m.x3l; kk ++){
         for (int jj = m.x2s; jj < m.x2l; jj ++){
             for (int ii = m.x1s; ii < m.x1l; ii ++){

@@ -24,7 +24,7 @@ class gravity{
         void setup_Phimesh(int &tot_nx3, int &tot_nx2, int &tot_nx1);
         void zero_gravity(mesh &m);
         void add_self_grav(mesh &m);
-        void add_pointsource_grav(mesh &m, double &m_source, double &x1_s, double &x2_s, double &x3_s);
+        void add_pointsource_grav(mesh &m, double m_source, double x1_s, double x2_s, double x3_s);
         void calc_surface_vals(mesh &m);
         void boundary_grav(mesh &m);
         void self_grav(mesh &m);

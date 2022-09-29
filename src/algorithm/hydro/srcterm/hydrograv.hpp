@@ -10,7 +10,7 @@ class mesh;
 
 
 #if defined (ENABLE_GRAVITY)
-void apply_grav_source_terms(mesh &m, double &dt);
+void apply_grav_source_terms(mesh &m, double dt);
 #endif // defined (enable gravity)
 
 

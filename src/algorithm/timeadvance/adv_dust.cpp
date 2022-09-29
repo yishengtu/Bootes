@@ -26,8 +26,11 @@ void calc_flux_dust(mesh &m, double dt){
 
         reconstruct_dust_const(m, m.dvalsL, m.dvalsR, x1excess, x2excess, x3excess, axis, IMP, dt);
         // step 1.2: solve the Riemann problem. Use HLL for now, update dconservative vars
-        // #pragma omp parallel for collapse (3) schedule (static)
-        #pragma acc parallel loop collapse (4) default (present)
+        #ifdef GPU
+        #pragma acc parallel loop collapse (4) default(present)
+        #else
+        #pragma omp parallel for collapse (4) schedule (static)
+        #endif
         for (int specIND = 0; specIND < m.NUMSPECIES; specIND++){
             for (int kk = 0; kk < m.nx3 + x3excess; kk ++){
                 for (int jj = 0; jj < m.nx2 + x2excess; jj ++){
@@ -54,8 +57,11 @@ void calc_flux_dust(mesh &m, double dt){
     }
     // Need to set unused values in the m.fdcons to zeros.
     // To do so the axis goes from "number of active axis" to 3
-    // #pragma omp parallel for collapse (5) schedule (static)
-    #pragma acc parallel loop collapse (5) default (present)
+    #ifdef GPU
+    #pragma acc parallel loop collapse (5) default(present)
+    #else
+    #pragma omp parallel for collapse (5) schedule (static)
+    #endif
     for (int axis = m.dim; axis < 3; axis ++){
         for (int specIND = 0; specIND < m.NUMSPECIES; specIND++){
             for (int kk = 0; kk < m.fdcons.shape()[3]; kk ++){
@@ -74,8 +80,11 @@ void calc_flux_dust(mesh &m, double dt){
 
 #if defined(SPHERICAL_POLAR_COORD)
 void advect_cons_dust_sphericalpolar(mesh &m, double dt){
-    // #pragma omp parallel for collapse (4) schedule (static)
+    #ifdef GPU
     #pragma acc parallel loop collapse (4) default(present)
+    #else
+    #pragma omp parallel for collapse (4) schedule (static)
+    #endif
     for (int specIND  = 0; specIND < m.NUMSPECIES; specIND++){
         for (int kk = m.x3s; kk < m.x3l; kk ++){
             for (int jj = m.x2s; jj < m.x2l; jj ++){
@@ -176,8 +185,11 @@ void advect_cons_dust_sphericalpolar(mesh &m, double dt){
 #if defined(CARTESIAN_COORD)
 void advect_cons_dust_cartesian(mesh &m, double dt){
     // TODO: may need update
-    // #pragma omp parallel for collapse (4) schedule (static)
+    #ifdef GPU
     #pragma acc parallel loop collapse (4) default(present)
+    #else
+    #pragma omp parallel for collapse (4) schedule (static)
+    #endif
     for (int specIND  = 0; specIND < m.NUMSPECIES; specIND++){
         for (int kk = m.x3s; kk < m.x3l; kk ++){
             for (int jj = m.x2s; jj < m.x2l; jj ++){

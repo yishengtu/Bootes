@@ -5,7 +5,7 @@
 class mesh;
 
 
-double stoppingtime(double &rhodmsize, double &rho, double &pres, double &vth_coeff);
+double stoppingtime(double rhodmsize, double rho, double pres, double vth_coeff);
 
 
 void calc_stoppingtimemesh(mesh &m);
