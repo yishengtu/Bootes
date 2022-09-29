@@ -72,7 +72,7 @@ __device__ void cu_dust_terminalvelocityapprixmation_xyz(double &vg1, double &vg
     pd1 = rhod * vg1 + g1 * ts;
     pd2 = rhod * vg2 + g2 * ts;
     pd3 = rhod * vg3 + g3 * ts;
-    }
+}
 
 __global__ void growth(double *dcons, double *prim, double *stoppingtimemesh, meshsim grav, double dt, double NUMSPECIES, double dminDensity, int *shape,
 		int x1s, int x1l, int x2s, int x2l, int x3s, int x3l,
@@ -101,7 +101,7 @@ __device__ void grain_growth_one_cell(double *num,
         for (int k = index; k < NUM_SPECIES; k+=stride){
             Mmat[k] = 0;
         }
-	  //__syncthreads();
+	  __syncthreads();
 
         for (int j = index; j < NUM_SPECIES; j+=stride){
             for (int k = j; k < NUM_SPECIES; ++ k){
@@ -127,7 +127,10 @@ __device__ void grain_growth_one_cell(double *num,
                 }
                 if (j == k){
                     if (cog_res == NUM_SPECIES){
-                        Mmat[cog_res - 1] += 0.5 * (KL1[0] * grain_mass_list[k] + KL2[0] * grain_mass_list[j]) / grain_mass_list[cog_res - 1] * numjtimesnumk;
+
+                        temp = 0.5 * (KL1[0] * grain_mass_list[k] + KL2[0] * grain_mass_list[j]) / grain_mass_list[cog_res - 1] * numjtimesnumk;
+			atomicAdd ( &Mmat[cog_res - 1], temp);
+                        //Mmat[cog_res - 1] += 0.5 * (KL1[0] * grain_mass_list[k] + KL2[0] * grain_mass_list[j]) / grain_mass_list[cog_res - 1] * numjtimesnumk;
                     }
                     else{
                         double eps = (grain_mass_list[j] + grain_mass_list[k] - grain_mass_list[cog_res - 1]) / (grain_mass_list[cog_res] - grain_mass_list[cog_res - 1]);
@@ -139,22 +142,29 @@ __device__ void grain_growth_one_cell(double *num,
                     if (cog_res == NUM_SPECIES){
                         temp = (KL1[0] * grain_mass_list[k] + KL2[0] * grain_mass_list[j]) / grain_mass_list[cog_res - 1]* numjtimesnumk;
 			//Mmat[cog_res - 1] += temp;
-			atomicAdd ( Mmat[cog_res - 1],temp);
+			atomicAdd ( &Mmat[cog_res - 1],temp);
                     //    Mmat[cog_res - 1] += (KL1[0] * grain_mass_list[k] + KL2[0] * grain_mass_list[j]) / grain_mass_list[cog_res - 1]* numjtimesnumk;
                     }
                     else{
                         double eps =  (grain_mass_list[j] + grain_mass_list[k] - grain_mass_list[cog_res - 1]) / (grain_mass_list[cog_res] - grain_mass_list[cog_res - 1]);
-                        Mmat[cog_res]     += (KL1[0] * grain_mass_list[k] + KL2[0] * grain_mass_list[j]) / grain_mass_list[cog_res]* numjtimesnumk * eps;
-                        Mmat[cog_res - 1] += (KL1[0] * grain_mass_list[k] + KL2[0] * grain_mass_list[j]) / grain_mass_list[cog_res - 1]* numjtimesnumk * (1.0 - eps);
+                        temp = (KL1[0] * grain_mass_list[k] + KL2[0] * grain_mass_list[j]) / grain_mass_list[cog_res]* numjtimesnumk * eps;
+                        atomicAdd ( &Mmat[cog_res - 1], temp);// += (KL1[0] * grain_mass_list[k] + KL2[0] * grain_mass_list[j]) / grain_mass_list[cog_res - 1]* numjtimesnumk * (1.0 - eps);
+			temp = (KL1[0] * grain_mass_list[k] + KL2[0] * grain_mass_list[j]) / grain_mass_list[cog_res - 1]* numjtimesnumk * (1.0 - eps);
+                        atomicAdd ( &Mmat[cog_res - 1], temp);
                     }
                 }
                 // gain via fragmentation
-                Mmat[0] += KL1[1] * grain_mass_list[k] / grain_mass_list[0] * numjtimesnumk;
-                Mmat[0] += KL2[1] * grain_mass_list[j] / grain_mass_list[0] * numjtimesnumk;
+
+                temp = KL1[1] * grain_mass_list[k] / grain_mass_list[0] * numjtimesnumk;
+		atomicAdd( &Mmat[0], temp);
+                temp = KL2[1] * grain_mass_list[j] / grain_mass_list[0] * numjtimesnumk;
+		atomicAdd( &Mmat[0], temp);
                 // lost via coagulation and fragmentation
-                Mmat[k] -= (KL1[0] + KL1[1]) * numjtimesnumk;
+		temp = (KL1[0] + KL1[1]) * numjtimesnumk;
+                atomicAdd( &Mmat[k], temp);
                 if (k != j){
-                    Mmat[j] -= (KL2[0] + KL2[1]) * numjtimesnumk;
+		    temp = -1*(KL2[0] + KL2[1]) * numjtimesnumk;
+                    atomicAdd( &Mmat[j], temp);// -= (KL2[0] + KL2[1]) * numjtimesnumk;
                 }
                 // break if there is a problem
                 /*
@@ -274,9 +284,9 @@ __global__ void growth(double *dcons, double *prim, double *stoppingtimemesh, me
     int index_z = threadIdx.z + blockDim.z*blockIdx.z;
     //size_t nspbytes = NUMSPECIES*sizeof(double);
     
-    index_x = blockId.x;
-    index_y = blockId.y;
-    index_z = blockId.z;
+    index_x = blockIdx.x;
+    index_y = blockIdx.y;
+    index_z = blockIdx.z;
 
     stridex = gridDim.x;
     stridey = gridDim.y;
@@ -288,12 +298,12 @@ __global__ void growth(double *dcons, double *prim, double *stoppingtimemesh, me
     int size3 = shape[2];
     int size4 = shape[1];
     
-    __shared__ grain_number_array[];
-    __shared__ grain_vr_array[];
-    __shared__ grain_vtheta_array[];
-    __shared__ grain_vphi_array[];
-    __shared__ num_here[];
-    __shared__ Mmat[];
+    __shared__ double *grain_number_array;
+    __shared__ double *grain_vr_array;
+    __shared__ double *grain_vtheta_array;
+    __shared__ double *grain_vphi_array;
+    __shared__ double *num_here;
+    __shared__ double *Mmat;
 
     //cudaGetDevice(&device_id);
 
@@ -313,7 +323,7 @@ __global__ void growth(double *dcons, double *prim, double *stoppingtimemesh, me
                     continue;
                 }
                 */
-                for (int specIND = theadId.x; specIND < NUMSPECIES; specIND +=blockDim.x){
+                for (int specIND = threadIdx.x; specIND < NUMSPECIES; specIND +=blockDim.x){
                     //double gas_rho = m.dcons(specIND, IDN, kk, jj, ii);
 	            //std::cout<<"grain_number_array "<<grain_number_array[specIND]<<std::endl;
 		    int idx_IDN = ii + size1*(jj + size2*(kk + size3 * (IDN + size4 * specIND)));
@@ -343,7 +353,7 @@ __global__ void growth(double *dcons, double *prim, double *stoppingtimemesh, me
 		__syncthreads();
                 // copy 1-cell results from grain_number_array to m.dcons
 
-                for (int specIND = 0; specIND < NUMSPECIES; specIND ++) {
+                for (int specIND = threadIdx.x; specIND < NUMSPECIES; specIND +=blockDim.x) {
 		    int idx_IDN = ii + size1*(jj + size2*(kk + size3 * (IDN + size4 * specIND)));
 		    int idx_IM1 = ii + size1*(jj + size2*(kk + size3 * (IM1 + size4 * specIND)));
 		    int idx_IM2 = ii + size1*(jj + size2*(kk + size3 * (IM2 + size4 * specIND)));
@@ -404,9 +414,9 @@ __global__ void growth(double *dcons, double *prim, double *stoppingtimemesh, me
                         dcons[idx_IM3] = dcons[idx_IDN] * grain_vphi_array[specIND];
                     }
                 }	
-    //        }
-    //    }
-   // }
+            }
+        }
+    }
     /*
     delete[] grain_number_array;
     delete[] grain_vr_array;
